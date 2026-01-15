@@ -280,7 +280,7 @@ export default function InventoryDashboardClient() {
         }}
       >
         <Box>
-          <Typography variant="h4" component="h1" fontWeight={700} gutterBottom>
+          <Typography variant="h4" component="h1" fontWeight={700}>
             Inventory Dashboard
           </Typography>
           <Typography variant="body1" color="text.secondary">
