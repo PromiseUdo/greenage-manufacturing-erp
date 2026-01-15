@@ -295,16 +295,13 @@ export default function InventoryDashboardClient() {
         </Box>
 
         <Button
-          // variant="contained"
+          variant="outlined"
           // startIcon={<AddIcon />}
           // size="small"
           sx={{
             textTransform: 'uppercase',
-            backgroundColor: '#0F172A',
-            color: '#FFFFFF',
-            '&:hover': {
-              backgroundColor: '#020617',
-            },
+            borderColor: '#0F172A',
+            color: '#0F172A',
           }}
           onClick={() => router.push('/inventory/materials/new')}
           // sx={{ minWidth: 180 }}

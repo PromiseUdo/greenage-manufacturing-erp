@@ -49,20 +49,24 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
     >
       <Alert
         severity="warning"
+        sx={{
+          display: 'flex',
+        }}
         action={
           <IconButton size="small" onClick={() => setExpanded(!expanded)}>
             {expanded ? <CollapseIcon /> : <ExpandIcon />}
           </IconButton>
         }
       >
+        {/* A */}
         <AlertTitle
           sx={{
             fontSize: 14,
           }}
         >
-          {/* <strong>Stock Alerts</strong> */}
           Stock Alerts
         </AlertTitle>
+        {/* B */}
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Box>
             {criticalAlerts.length > 0 && (
