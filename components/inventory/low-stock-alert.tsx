@@ -80,6 +80,7 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
               label={`${criticalAlerts.length} Out of Stock`}
               color="error"
               size="small"
+              sx={{ fontSize: 11 }}
             />
           )}
           {warningAlerts.length > 0 && (
@@ -118,6 +119,11 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
                   <Button
                     size="small"
                     variant="outlined"
+                    sx={{
+                      textTransform: 'uppercase',
+                      borderColor: '#0F172A',
+                      color: '#0F172A',
+                    }}
                     onClick={() =>
                       router.push(`/inventory/materials/${alert.materialId}`)
                     }
@@ -134,6 +140,7 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
                         label={alert.partNumber}
                         size="small"
                         variant="outlined"
+                        sx={{ fontSize: 11 }}
                       />
                       <Chip
                         label={
@@ -143,11 +150,15 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
                         }
                         color={alert.severity}
                         size="small"
+                        sx={{ fontSize: 11 }}
                       />
                     </Box>
                   }
                   secondary={
-                    <Box component="span" sx={{ mt: 0.5, display: 'block' }}>
+                    <Box
+                      component="span"
+                      sx={{ mt: 0.5, display: 'block', fontSize: 12 }}
+                    >
                       Current Stock: <strong>{alert.currentStock}</strong> |
                       Reorder Level: <strong>{alert.reorderLevel}</strong>
                       {alert.alertType === 'OUT_OF_STOCK' && (
