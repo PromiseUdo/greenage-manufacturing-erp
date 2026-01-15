@@ -1,0 +1,569 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  email         String    @unique
+  name          String
+  password      String
+  role          UserRole
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  isVerified               Boolean  @default(false) // New: Tracks verification status
+  verificationToken        String?  // New: Hashed token
+  verificationTokenExpiry  DateTime? // New: Token expiration
+  // Relations
+  createdOrders Order[]   @relation("OrderCreator")
+  productionLogs ProductionLog[]
+  qcTests       QualityControl[]
+  activityLogs  ActivityLog[]
+  
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  OPERATION_MANAGER
+  PRODUCTION_MANAGER
+  STORE_KEEPER
+  PRODUCTION_STAFF
+  QC_TEAM
+  PACKAGING_TEAM
+  SALES_TEAM
+  DISPATCH_OFFICER
+  ACCOUNTANT
+}
+
+// ============================================
+// CUSTOMER & ORDERS
+// ============================================
+
+model Customer {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  email       String?
+  phone       String
+  address     String
+  contactPerson String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  orders      Order[]
+  
+  @@map("customers")
+}
+
+model Order {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  orderNumber     String      @unique
+  customerId      String      @db.ObjectId
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  
+  productType     String
+  quantity        Int
+  specifications  Json?
+  deliveryDate    DateTime
+  paymentTerms    String?
+  paymentStatus   PaymentStatus @default(PENDING)
+  
+  status          OrderStatus @default(PENDING_PLANNING)
+  priority        OrderPriority @default(NORMAL)
+  
+  createdById     String      @db.ObjectId
+  createdBy       User        @relation("OrderCreator", fields: [createdById], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  // Relations
+  productionPlan  ProductionPlan?
+  units           ProductionUnit[]
+  dispatch        Dispatch?
+  
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING_PLANNING
+  IN_PRODUCTION
+  QC_TESTING
+  PACKAGING
+  READY_FOR_DISPATCH
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+}
+
+enum OrderPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+// ============================================
+// PRODUCTION PLANNING
+// ============================================
+
+model ProductionPlan {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  orderId         String    @unique @db.ObjectId
+  order           Order     @relation(fields: [orderId], references: [id])
+  
+  scheduledStart  DateTime
+  estimatedEnd    DateTime
+  actualStart     DateTime?
+  actualEnd       DateTime?
+  
+  assignedOperators Json    // Array of {userId, stage, machineName}
+  notes           String?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("production_plans")
+}
+
+// ============================================
+// INVENTORY & MATERIALS
+// ============================================
+
+model Material {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  partNumber      String    @unique
+  category        MaterialCategory
+  unit            String    // pieces, kg, meters, etc.
+  
+  currentStock    Float     @default(0)
+  reorderLevel    Float
+  maxStockLevel   Float?
+  
+  unitCost        Float?
+  supplierId      String?   @db.ObjectId
+  supplier        Supplier? @relation(fields: [supplierId], references: [id])
+  
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  batches         MaterialBatch[]
+  issuances       MaterialIssuance[]
+  bomItems        BOMItem[]
+  
+  @@map("materials")
+}
+
+enum MaterialCategory {
+  PCB
+  ELECTRONIC_COMPONENT
+  CONNECTOR
+  WIRE_CABLE
+  ENCLOSURE
+  PACKAGING_MATERIAL
+  CONSUMABLE
+  OTHER
+}
+
+model MaterialBatch {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  materialId      String    @db.ObjectId
+  material        Material  @relation(fields: [materialId], references: [id])
+  
+  batchNumber     String    @unique
+  quantity        Float
+  expiryDate      DateTime?
+  supplierBatchNo String?
+  receivedDate    DateTime  @default(now())
+  
+  grnId           String?   @db.ObjectId
+  grn             GRN?      @relation(fields: [grnId], references: [id])
+  
+  createdAt       DateTime  @default(now())
+  
+  @@map("material_batches")
+}
+
+model GRN {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  grnNumber       String    @unique
+  supplierId      String    @db.ObjectId
+  supplier        Supplier  @relation(fields: [supplierId], references: [id])
+  
+  receivedDate    DateTime  @default(now())
+  invoiceNumber   String?
+  items           Json      // Array of {materialId, quantity, batchNumber}
+  
+  receivedBy      String    // User name or ID
+  notes           String?
+  
+  createdAt       DateTime  @default(now())
+  
+  batches         MaterialBatch[]
+  
+  @@map("grns")
+}
+
+model MaterialIssuance {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  materialId      String    @db.ObjectId
+  material        Material  @relation(fields: [materialId], references: [id])
+  
+  orderId         String?   
+  quantity        Float
+  batchNumber     String
+  
+  issuedTo        String    // Department or operator name
+  issuedBy        String    // Store keeper name
+  purpose         String?
+  
+  issuedAt        DateTime  @default(now())
+  
+  @@map("material_issuances")
+}
+
+model Supplier {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  contactPerson   String?
+  email           String?
+  phone           String
+  address         String?
+  
+  paymentTerms    String?
+  isActive        Boolean   @default(true)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  materials       Material[]
+  grns            GRN[]
+  
+  @@map("suppliers")
+}
+
+// Bill of Materials
+model BOM {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  productType     String    @unique
+  version         String    @default("1.0")
+  description     String?
+  
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  items           BOMItem[]
+  
+  @@map("boms")
+}
+
+model BOMItem {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  bomId           String    @db.ObjectId
+  bom             BOM       @relation(fields: [bomId], references: [id])
+  
+  materialId      String    @db.ObjectId
+  material        Material  @relation(fields: [materialId], references: [id])
+  
+  quantity        Float
+  notes           String?
+  
+  @@map("bom_items")
+}
+
+// ============================================
+// PRODUCTION
+// ============================================
+
+model ProductionUnit {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  orderId         String    @db.ObjectId
+  order           Order     @relation(fields: [orderId], references: [id])
+  
+  unitNumber      Int       // 1, 2, 3... within an order
+  serialNumber    String?   @unique
+  qrCode          String?
+  
+  currentStage    ProductionStage @default(SMD_PRODUCTION)
+  status          UnitStatus @default(IN_PROGRESS)
+  
+  // Stage timestamps
+  smdStarted      DateTime?
+  smdCompleted    DateTime?
+  solderingStarted DateTime?
+  solderingCompleted DateTime?
+  assemblyStarted DateTime?
+  assemblyCompleted DateTime?
+  qcStarted       DateTime?
+  qcCompleted     DateTime?
+  packagingStarted DateTime?
+  packagingCompleted DateTime?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  productionLogs  ProductionLog[]
+  qcTests         QualityControl[]
+  
+  @@map("production_units")
+}
+
+enum ProductionStage {
+  SMD_PRODUCTION
+  MANUAL_SOLDERING
+  UNIT_ASSEMBLY
+  QUALITY_CONTROL
+  PACKAGING
+  FINISHED_GOODS
+}
+
+enum UnitStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED_QC
+  REWORK
+  SCRAPPED
+}
+
+model ProductionLog {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  unitId          String    @db.ObjectId
+  unit            ProductionUnit @relation(fields: [unitId], references: [id])
+  
+  stage           ProductionStage
+  action          String    // "Started", "Completed", "Issue Reported", etc.
+  
+  operatorId      String    @db.ObjectId
+  operator        User      @relation(fields: [operatorId], references: [id])
+  
+  pcbBatchNumber  String?
+  machineUsed     String?
+  duration        Int?      // minutes
+  notes           String?
+  attachments     Json?     // Array of file URLs
+  
+  createdAt       DateTime  @default(now())
+  
+  @@map("production_logs")
+}
+
+// ============================================
+// QUALITY CONTROL
+// ============================================
+
+model QualityControl {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  unitId          String    @db.ObjectId
+  unit            ProductionUnit @relation(fields: [unitId], references: [id])
+  
+  inspectorId     String    @db.ObjectId
+  inspector       User      @relation(fields: [inspectorId], references: [id])
+  
+  testType        TestType
+  result          TestResult
+  
+  // Test readings
+  electricalTest  Json?     // {voltage, current, resistance, etc.}
+  functionalTest  Json?     // {chargeTest, dischargeTest, indicators, etc.}
+  loadTest        Json?     // {duration, maxLoad, temperature, etc.}
+  
+  failureReason   String?
+  attachments     Json?     // Photos, test data files
+  
+  testedAt        DateTime  @default(now())
+  
+  ncr             NCR?
+  
+  @@map("quality_controls")
+}
+
+enum TestType {
+  ELECTRICAL
+  FUNCTIONAL
+  LOAD
+  VISUAL_INSPECTION
+  FINAL_INSPECTION
+}
+
+enum TestResult {
+  PASS
+  FAIL
+  PENDING
+}
+
+// Non-Conformance Report
+model NCR {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  ncrNumber       String    @unique
+  
+  qcTestId        String    @unique @db.ObjectId
+  qcTest          QualityControl @relation(fields: [qcTestId], references: [id])
+  
+  description     String
+  rootCause       String?
+  correctiveAction String?
+  preventiveAction String?
+  
+  status          NCRStatus @default(OPEN)
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("ncrs")
+}
+
+enum NCRStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+// ============================================
+// PACKAGING & DISPATCH
+// ============================================
+
+model Dispatch {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  dispatchNumber  String    @unique
+  
+  orderId         String    @unique @db.ObjectId
+  order           Order     @relation(fields: [orderId], references: [id])
+  
+  vehicleNumber   String?
+  driverName      String?
+  driverPhone     String?
+  
+  dispatchDate    DateTime
+  deliveryDate    DateTime?
+  
+  status          DispatchStatus @default(PENDING)
+  
+  notes           String?
+  customerSignature String?   // URL to signature image
+  deliveryProof   Json?       // Photos, documents
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("dispatches")
+}
+
+enum DispatchStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  FAILED_DELIVERY
+  RETURNED
+}
+
+// ============================================
+// MAINTENANCE
+// ============================================
+
+model Machine {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  machineNumber   String    @unique
+  type            String    // Pick & Place, Reflow Oven, etc.
+  
+  location        String?
+  purchaseDate    DateTime?
+  lastMaintenance DateTime?
+  nextMaintenance DateTime?
+  
+  status          MachineStatus @default(OPERATIONAL)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  maintenanceLogs MaintenanceLog[]
+  
+  @@map("machines")
+}
+
+enum MachineStatus {
+  OPERATIONAL
+  UNDER_MAINTENANCE
+  BROKEN
+  RETIRED
+}
+
+model MaintenanceLog {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  machineId       String    @db.ObjectId
+  machine         Machine   @relation(fields: [machineId], references: [id])
+  
+  maintenanceType MaintenanceType
+  description     String
+  performedBy     String
+  
+  downtime        Int?      // minutes
+  cost            Float?
+  partsReplaced   Json?     // Array of parts
+  
+  performedAt     DateTime  @default(now())
+  
+  @@map("maintenance_logs")
+}
+
+enum MaintenanceType {
+  PREVENTIVE
+  CORRECTIVE
+  EMERGENCY
+  CALIBRATION
+}
+
+// ============================================
+// SYSTEM LOGS & ANALYTICS
+// ============================================
+
+model ActivityLog {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String    @db.ObjectId
+  user            User      @relation(fields: [userId], references: [id])
+  
+  action          String    // "Created Order", "Updated Inventory", etc.
+  module          String    // "Orders", "Inventory", "QC", etc.
+  details         Json?
+  ipAddress       String?
+  
+  createdAt       DateTime  @default(now())
+  
+  @@map("activity_logs")
+}
+
+model SystemSettings {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  key             String    @unique
+  value           Json
+  description     String?
+  
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("system_settings")
+}
