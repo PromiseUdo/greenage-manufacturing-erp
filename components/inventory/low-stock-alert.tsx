@@ -41,10 +41,10 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
     <Box
       sx={{
         mb: 3,
-        borderRadius: 1,
-        borderColor: 'divider',
-        borderWidth: !expanded ? 1 : 0,
-        borderStyle: 'solid',
+        // borderRadius: 1,
+        // borderColor: 'divider',
+        // borderWidth: !expanded ? 1 : 0,
+        // borderStyle: 'solid',
       }}
     >
       <Alert
