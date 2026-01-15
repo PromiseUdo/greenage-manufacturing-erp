@@ -454,13 +454,14 @@ export default function InventoryDashboardClient() {
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: 1,
+                  boxShadow: 'none',
                   transition: 'all 0.22s',
                   '&:hover': {
                     borderColor: `${color}.main`,
                     backgroundColor: '#D4F1F9',
                     // transform: 'translateY(-4px)',
                     boxShadow: (theme) =>
-                      `0 3px 8px ${alpha(theme.palette[color].main, 0.18)}`,
+                      `0 0px 0px 0px ${alpha(theme.palette[color].main, 0.18)}`,
                   },
                 }}
               >
