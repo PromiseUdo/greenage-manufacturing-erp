@@ -7,8 +7,10 @@ import { auth } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
+
   try {
     const session = await auth();
 
@@ -17,7 +19,7 @@ export async function GET(
     }
 
     const supplier = await prisma.supplier.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         _count: {
           select: {
@@ -47,8 +49,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await auth();
 
@@ -71,7 +74,7 @@ export async function PUT(
     }
 
     const supplier = await prisma.supplier.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name,
         contactPerson,
@@ -106,8 +109,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await auth();
 
@@ -121,7 +125,7 @@ export async function DELETE(
 
     // Soft delete
     const supplier = await prisma.supplier.update({
-      where: { id: params.id },
+      where: { id: id },
       data: { isActive: false },
     });
 
