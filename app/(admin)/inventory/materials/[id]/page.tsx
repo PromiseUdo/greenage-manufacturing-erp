@@ -28,12 +28,6 @@ import { useRouter } from 'next/navigation';
 import { MaterialWithRelations } from '@/types/inventory';
 import { format } from 'date-fns';
 
-// export default function MaterialDetailsPage({
-//   params,
-// }: {
-//   params: { id: string };
-// }) {
-
 export default function MaterialDetailsPage({
   params,
 }: {
@@ -123,7 +117,11 @@ export default function MaterialDetailsPage({
   const showAlert = material.currentStock <= material.reorderLevel;
 
   return (
-    <Box>
+    <Box
+      sx={{
+        pb: 3,
+      }}
+    >
       {/* Header */}
       <Box sx={{ mb: 3 }}>
         <Button
