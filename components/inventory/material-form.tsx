@@ -107,6 +107,7 @@ export default function MaterialForm({
                   {...field}
                   required
                   fullWidth
+                  variant="standard"
                   label="Material Name"
                   error={!!errors.name}
                   size="small"
@@ -129,7 +130,7 @@ export default function MaterialForm({
                   label="Part Number"
                   disabled={!!initialData}
                   error={!!errors.partNumber}
-                  variant="outlined"
+                  variant="standard"
                   size="small"
                   helperText={errors.partNumber?.message}
                 />
@@ -149,7 +150,7 @@ export default function MaterialForm({
                   label="Category"
                   fullWidth
                   select
-                  variant="outlined"
+                  variant="standard"
                   size="small"
                   required
                   error={!!errors.category}
@@ -182,6 +183,7 @@ export default function MaterialForm({
                       {...params}
                       label="Unit of Measurement"
                       required
+                      variant="standard"
                       size="small"
                       error={!!errors.unit}
                       helperText={errors.unit?.message}
@@ -217,8 +219,9 @@ export default function MaterialForm({
                   label="Current Stock"
                   type="number"
                   fullWidth
-                  variant="outlined"
+                  // variant="outlined"
                   size="small"
+                  variant="standard"
                   required
                   error={!!errors.currentStock}
                   helperText={errors.currentStock?.message}
@@ -250,7 +253,7 @@ export default function MaterialForm({
                   type="number"
                   value={field.value ?? ''}
                   fullWidth
-                  variant="outlined"
+                  variant="standard"
                   size="small"
                   required
                   error={!!errors.reorderLevel}
@@ -279,7 +282,7 @@ export default function MaterialForm({
                   type="number"
                   value={field.value ?? ''}
                   fullWidth
-                  variant="outlined"
+                  variant="standard"
                   size="small"
                   error={!!errors.maxStockLevel}
                   helperText={errors.maxStockLevel?.message}
@@ -317,7 +320,7 @@ export default function MaterialForm({
                   type="number"
                   value={field.value ?? ''}
                   fullWidth
-                  variant="outlined"
+                  variant="standard"
                   size="small"
                   error={!!errors.unitCost}
                   helperText={errors.unitCost?.message}
@@ -346,7 +349,7 @@ export default function MaterialForm({
                   {...field}
                   label="Supplier"
                   fullWidth
-                  variant="outlined"
+                  variant="standard"
                   size="small"
                   select
                   helperText="Optional - link to supplier"

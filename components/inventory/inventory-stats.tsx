@@ -72,7 +72,7 @@ export default function InventoryStats({
       bgColor: '#f3e5f5',
     },
     {
-      title: 'Issuances (7 days)',
+      title: 'Issuances',
       value: stats.recentIssuances,
       icon: IssuanceIcon,
       color: '#0288d1',
@@ -115,15 +115,6 @@ export default function InventoryStats({
                     mb: 2,
                   }}
                 >
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                    }}
-                    variant="body2"
-                    color="text.secondary"
-                  >
-                    {stat.title}
-                  </Typography>
                   <Box
                     sx={{
                       backgroundColor: stat.bgColor,
@@ -136,6 +127,16 @@ export default function InventoryStats({
                   >
                     <Icon sx={{ color: stat.color, fontSize: 16 }} />
                   </Box>
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                      fontWeight: '600',
+                    }}
+                    variant="body2"
+                    color="text.secondary"
+                  >
+                    {stat.title}
+                  </Typography>
                 </Box>
                 <Typography
                   variant="h4"
