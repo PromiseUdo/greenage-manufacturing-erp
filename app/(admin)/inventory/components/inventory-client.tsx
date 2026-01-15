@@ -522,9 +522,12 @@ export default function InventoryDashboardClient() {
         </Box>
       ) : stats?.categories?.length ? (
         <>
-          <Divider sx={{ my: 5 }} />
+          <Divider sx={{ my: 3, mt: 4 }} />
 
-          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          <Typography
+            variant="h6"
+            sx={{ mb: 2, fontWeight: 600, fontSize: 15 }}
+          >
             Inventory by Category
           </Typography>
 
