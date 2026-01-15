@@ -340,7 +340,7 @@ export default function InventoryDashboardClient() {
         elevation={0}
         sx={{
           mt: 1, // ← reduced from 4
-          //   borderRadius: 2,
+          borderRadius: 1,
           overflow: 'hidden',
           border: '1px solid',
           borderColor: 'divider',
@@ -453,7 +453,7 @@ export default function InventoryDashboardClient() {
                   height: '100%',
                   border: '1px solid',
                   borderColor: 'divider',
-                  borderRadius: 3,
+                  borderRadius: 1,
                   transition: 'all 0.22s',
                   '&:hover': {
                     borderColor: `${color}.main`,
