@@ -65,10 +65,14 @@ export default function CreateMaterialPage() {
 
   return (
     <Box>
-      <Typography variant="h4" fontWeight={600}>
+      <Typography variant="h6" fontWeight={600}>
         Add New Material
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        sx={{ mb: 3, fontSize: 14 }}
+      >
         Create a new material entry in your inventory
       </Typography>
 

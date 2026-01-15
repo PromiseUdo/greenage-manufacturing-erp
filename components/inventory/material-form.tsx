@@ -12,6 +12,7 @@ import {
   Typography,
   Autocomplete,
   InputAdornment,
+  Alert,
 } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import { MaterialFormData } from '@/types/inventory';
@@ -71,12 +72,30 @@ export default function MaterialForm({
   const totalValue = currentStock && unitCost ? currentStock * unitCost : 0;
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
+    <Paper
+      sx={{
+        p: 3,
+        backgroundColor: 'transparent',
+        boxShadow: 'none',
+        border: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'background.paper',
+      }}
+    >
+      {/* <Typography variant="h6" gutterBottom>
         {initialData ? 'Edit Material' : 'Add New Material'}
-      </Typography>
+      </Typography> */}
       <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
         <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ fontWeight: 600, mb: -2 }}
+            >
+              Material Details{' '}
+            </Typography>
+          </Grid>
           {/* Material Name */}
           <Grid item xs={12} md={6}>
             <Controller
@@ -86,10 +105,11 @@ export default function MaterialForm({
               render={({ field }) => (
                 <TextField
                   {...field}
-                  label="Material Name"
-                  fullWidth
                   required
+                  fullWidth
+                  label="Material Name"
                   error={!!errors.name}
+                  size="small"
                   helperText={errors.name?.message}
                 />
               )}
@@ -105,11 +125,12 @@ export default function MaterialForm({
               render={({ field }) => (
                 <TextField
                   {...field}
-                  label="Part Number"
                   fullWidth
-                  required
-                  disabled={!!initialData} // Can't change part number after creation
+                  label="Part Number"
+                  disabled={!!initialData}
                   error={!!errors.partNumber}
+                  variant="outlined"
+                  size="small"
                   helperText={errors.partNumber?.message}
                 />
               )}
@@ -128,6 +149,8 @@ export default function MaterialForm({
                   label="Category"
                   fullWidth
                   select
+                  variant="outlined"
+                  size="small"
                   required
                   error={!!errors.category}
                   helperText={errors.category?.message}
@@ -159,6 +182,7 @@ export default function MaterialForm({
                       {...params}
                       label="Unit of Measurement"
                       required
+                      size="small"
                       error={!!errors.unit}
                       helperText={errors.unit?.message}
                     />
@@ -166,6 +190,16 @@ export default function MaterialForm({
                 />
               )}
             />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ fontWeight: 600, mb: -1 }}
+            >
+              Stock Information
+            </Typography>
           </Grid>
 
           {/* Current Stock */}
@@ -183,6 +217,8 @@ export default function MaterialForm({
                   label="Current Stock"
                   type="number"
                   fullWidth
+                  variant="outlined"
+                  size="small"
                   required
                   error={!!errors.currentStock}
                   helperText={errors.currentStock?.message}
@@ -214,6 +250,8 @@ export default function MaterialForm({
                   type="number"
                   value={field.value ?? ''}
                   fullWidth
+                  variant="outlined"
+                  size="small"
                   required
                   error={!!errors.reorderLevel}
                   helperText={
@@ -241,6 +279,8 @@ export default function MaterialForm({
                   type="number"
                   value={field.value ?? ''}
                   fullWidth
+                  variant="outlined"
+                  size="small"
                   error={!!errors.maxStockLevel}
                   helperText={errors.maxStockLevel?.message}
                   onChange={(e) =>
@@ -253,6 +293,15 @@ export default function MaterialForm({
             />
           </Grid>
 
+          <Grid item xs={12}>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              sx={{ fontWeight: 600, mb: -1 }}
+            >
+              Material Costing
+            </Typography>
+          </Grid>
           {/* Unit Cost */}
           <Grid item xs={12} md={6}>
             <Controller
@@ -268,6 +317,8 @@ export default function MaterialForm({
                   type="number"
                   value={field.value ?? ''}
                   fullWidth
+                  variant="outlined"
+                  size="small"
                   error={!!errors.unitCost}
                   helperText={errors.unitCost?.message}
                   InputProps={{
@@ -295,6 +346,8 @@ export default function MaterialForm({
                   {...field}
                   label="Supplier"
                   fullWidth
+                  variant="outlined"
+                  size="small"
                   select
                   helperText="Optional - link to preferred supplier"
                 >
@@ -335,18 +388,10 @@ export default function MaterialForm({
           {/* Warning if stock below reorder level */}
           {currentStock <= reorderLevel && (
             <Grid item xs={12}>
-              <Paper
-                sx={{
-                  p: 2,
-                  backgroundColor: 'warning.light',
-                  color: 'warning.contrastText',
-                }}
-              >
-                <Typography variant="body2">
-                  <strong>Warning:</strong> Current stock is at or below reorder
-                  level.
-                </Typography>
-              </Paper>
+              <Alert severity="warning">
+                <strong>Warning:</strong> Current stock is at or below reorder
+                level.
+              </Alert>
             </Grid>
           )}
 
@@ -357,10 +402,27 @@ export default function MaterialForm({
                 variant="outlined"
                 onClick={onCancel}
                 disabled={isLoading}
+                sx={{
+                  borderColor: '#0F172A',
+                  color: '#0F172A',
+                  '&:hover': {
+                    borderColor: '#020617',
+                  },
+                }}
               >
                 Cancel
               </Button>
-              <Button type="submit" variant="contained" disabled={isLoading}>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isLoading}
+                sx={{
+                  backgroundColor: '#0F172A',
+                  '&:hover': {
+                    backgroundColor: '#020617',
+                  },
+                }}
+              >
                 {isLoading
                   ? 'Saving...'
                   : initialData
