@@ -280,7 +280,7 @@ export default function InventoryDashboardClient() {
         }}
       >
         <Box>
-          <Typography variant="h4" component="h1" fontWeight={700}>
+          <Typography variant="h6" component="h1" fontWeight={700}>
             Inventory Dashboard
           </Typography>
           <Typography
@@ -329,6 +329,7 @@ export default function InventoryDashboardClient() {
         sx={{
           mt: 5,
           mb: 1,
+          fontSize: 15,
           fontWeight: 600,
         }}
       >
@@ -416,7 +417,10 @@ export default function InventoryDashboardClient() {
       </Paper>
 
       {/* Quick Actions - Card style */}
-      <Typography variant="h6" sx={{ mt: 5, mb: 2, fontWeight: 600 }}>
+      <Typography
+        variant="h6"
+        sx={{ mt: 5, mb: 2, fontWeight: 600, fontSize: 15 }}
+      >
         Quick Actions
       </Typography>
 

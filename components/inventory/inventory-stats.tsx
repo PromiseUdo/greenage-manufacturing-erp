@@ -96,11 +96,13 @@ export default function InventoryStats({
           <Grid item xs={12} sm={6} md={4} lg={2} key={stat.title}>
             <Card
               sx={{
+                borderRadius: 1,
                 height: '100%',
+                boxShadow: ` 0 0 0 1px ${stat.color}33`,
                 position: 'relative',
                 overflow: 'visible',
                 ...(stat.alert && {
-                  boxShadow: `0 0 0 2px ${stat.color}`,
+                  boxShadow: `0 0 0 1px ${stat.color}`,
                 }),
               }}
             >
