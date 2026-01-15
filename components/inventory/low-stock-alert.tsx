@@ -43,7 +43,7 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
         mb: 3,
         borderRadius: 1,
         borderColor: 'divider',
-        borderWidth: 1,
+        borderWidth: !expanded ? 1 : 0,
         borderStyle: 'solid',
       }}
     >
@@ -160,7 +160,7 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
                           component="span"
                           sx={{ ml: 1, color: 'error.main', fontWeight: 600 }}
                         >
-                          ⚠️ Immediate action required
+                          Immediate action required
                         </Box>
                       )}
                     </Box>
