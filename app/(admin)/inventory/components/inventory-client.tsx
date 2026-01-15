@@ -221,21 +221,24 @@ const quickActions = [
     description: 'Create new raw material or item',
     icon: InventoryIcon,
     path: '/inventory/materials/new',
-    color: 'primary',
+    color: '#1976d2',
+    bgColor: '#e3f2fd',
   },
   {
     title: 'Issue Material',
     description: 'Record material issuance to production',
     icon: IssuanceIcon,
     path: '/inventory/issuance/new',
-    color: 'secondary',
+    color: '#9c27b0',
+    bgColor: '#f3e5f5',
   },
   {
     title: 'Create GRN',
     description: 'Register goods received from supplier',
     icon: GRNIcon,
     path: '/inventory/grn/new',
-    color: 'success',
+    color: '#2e7d32',
+    bgColor: '#e8f5e9',
   },
 ];
 
@@ -464,8 +467,8 @@ export default function InventoryDashboardClient() {
                     borderColor: `${color}.main`,
                     backgroundColor: '#D4F1F9',
                     // transform: 'translateY(-4px)',
-                    boxShadow: (theme) =>
-                      `0 0px 0px 0px ${alpha(theme.palette[color].main, 0.18)}`,
+                    // boxShadow: (theme) =>
+                    //   `0 0px 0px 0px ${alpha(theme.palette[color].main, 0.18)}`,
                   },
                 }}
               >
@@ -480,9 +483,34 @@ export default function InventoryDashboardClient() {
                     textAlign: 'left',
                   }}
                 >
-                  <Box sx={{ color: `${color}.main`, mb: 1 }}>
+                  <Box
+                    // sx={{ color: `${color}.main`, mb: 1 }}
+                    sx={{
+                      backgroundColor: action.bgColor,
+                      borderRadius: 2,
+                      p: 1,
+                      mb: 1,
+                      color: action.color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <Icon fontSize="large" />
                   </Box>
+
+                  {/* <Box
+                    sx={{
+                      backgroundColor: stat.bgColor,
+                      borderRadius: 2,
+                      p: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Icon sx={{ color: stat.color, fontSize: 16 }} />
+                  </Box> */}
 
                   <CardContent sx={{ p: 0, pt: 1 }}>
                     <Typography
