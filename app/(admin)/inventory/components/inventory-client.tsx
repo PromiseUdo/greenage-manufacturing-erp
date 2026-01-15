@@ -400,19 +400,31 @@ export default function InventoryDashboardClient() {
           <Tab
             label="Materials"
             sx={{
-              fontSize: 14,
+              fontSize: 13,
             }}
             onClick={() => router.push('/inventory/materials')}
           />
           <Tab
+            sx={{
+              fontSize: 13,
+            }}
             label="Suppliers"
             onClick={() => router.push('/inventory/suppliers')}
           />
           <Tab
+            sx={{
+              fontSize: 13,
+            }}
             label="Issuances"
             onClick={() => router.push('/inventory/issuance')}
           />
-          <Tab label="GRN" onClick={() => router.push('/inventory/grn')} />
+          <Tab
+            sx={{
+              fontSize: 13,
+            }}
+            label="GRN"
+            onClick={() => router.push('/inventory/grn')}
+          />
         </Tabs>
       </Paper>
 

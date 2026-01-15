@@ -38,7 +38,15 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
   const warningAlerts = alerts.filter((a) => a.alertType === 'LOW_STOCK');
 
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box
+      sx={{
+        mb: 3,
+        borderRadius: 1,
+        borderColor: 'divider',
+        borderWidth: 1,
+        borderStyle: 'solid',
+      }}
+    >
       <Alert
         severity="warning"
         action={
