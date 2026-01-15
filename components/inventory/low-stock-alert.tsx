@@ -91,7 +91,7 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
           sx={{
             mt: 2,
             p: 2,
-            border: '1px solid',
+            border: '0.5px solid',
             borderColor: 'warning.light',
             borderRadius: 1,
             backgroundColor: 'background.paper',
