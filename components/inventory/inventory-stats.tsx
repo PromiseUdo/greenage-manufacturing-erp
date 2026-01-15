@@ -137,7 +137,13 @@ export default function InventoryStats({
                 >
                   {stat.value}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                  }}
+                  variant="body2"
+                  color="text.secondary"
+                >
                   {stat.title}
                 </Typography>
               </CardContent>
