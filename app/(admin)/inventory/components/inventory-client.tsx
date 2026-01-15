@@ -296,9 +296,8 @@ export default function InventoryDashboardClient() {
 
         <Button
           variant="contained"
-          color="primary"
           // startIcon={<AddIcon />}
-          size="small"
+          // size="small"
           onClick={() => router.push('/inventory/materials/new')}
           // sx={{ minWidth: 180 }}
         >
