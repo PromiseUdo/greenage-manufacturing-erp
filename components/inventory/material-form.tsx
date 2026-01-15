@@ -349,7 +349,7 @@ export default function MaterialForm({
                   variant="outlined"
                   size="small"
                   select
-                  helperText="Optional - link to preferred supplier"
+                  helperText="Optional - link to supplier"
                 >
                   <MenuItem value="">
                     <em>None</em>
