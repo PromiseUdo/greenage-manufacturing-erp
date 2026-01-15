@@ -457,8 +457,8 @@ export default function InventoryDashboardClient() {
                   transition: 'all 0.22s',
                   '&:hover': {
                     borderColor: `${color}.main`,
-                    backgroundColor: 'action.hover',
-                    transform: 'translateY(-4px)',
+                    backgroundColor: '#D4F1F9',
+                    // transform: 'translateY(-4px)',
                     boxShadow: (theme) =>
                       `0 3px 8px ${alpha(theme.palette[color].main, 0.18)}`,
                   },
@@ -480,10 +480,23 @@ export default function InventoryDashboardClient() {
                   </Box>
 
                   <CardContent sx={{ p: 0, pt: 1 }}>
-                    <Typography variant="h6" component="div" gutterBottom>
+                    <Typography
+                      sx={{
+                        fontSize: 15,
+                      }}
+                      variant="h6"
+                      component="div"
+                      gutterBottom
+                    >
                       {action.title}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      sx={{
+                        fontSize: 14,
+                      }}
+                      variant="body2"
+                      color="text.secondary"
+                    >
                       {action.description}
                     </Typography>
                   </CardContent>
