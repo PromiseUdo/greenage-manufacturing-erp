@@ -324,7 +324,7 @@ export default function InventoryDashboardClient() {
 
       {stats && <InventoryStats stats={stats} loading={loading} />}
 
-      <Typography
+      {/* <Typography
         variant="h6"
         sx={{
           mt: 5,
@@ -426,7 +426,7 @@ export default function InventoryDashboardClient() {
             onClick={() => router.push('/inventory/grn')}
           />
         </Tabs>
-      </Paper>
+      </Paper> */}
 
       {/* Quick Actions - Card style */}
       <Typography
@@ -508,8 +508,7 @@ export default function InventoryDashboardClient() {
         })}
       </Grid>
 
-      {/* Category Breakdown */}
-      {loading ? (
+      {/* {loading ? (
         <Box sx={{ mt: 5 }}>
           <Skeleton variant="text" width="40%" height={40} />
           {[...Array(4)].map((_, i) => (
@@ -583,7 +582,7 @@ export default function InventoryDashboardClient() {
             ))}
           </Paper>
         </>
-      ) : null}
+      ) : null} */}
     </Box>
   );
 }
