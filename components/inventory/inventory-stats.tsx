@@ -123,12 +123,15 @@ export default function InventoryStats({
                       justifyContent: 'center',
                     }}
                   >
-                    <Icon sx={{ color: stat.color, fontSize: 28 }} />
+                    <Icon sx={{ color: stat.color, fontSize: 16 }} />
                   </Box>
                 </Box>
                 <Typography
                   variant="h4"
                   fontWeight={700}
+                  sx={{
+                    fontSize: 18,
+                  }}
                   color={stat.alert ? stat.color : 'text.primary'}
                   gutterBottom
                 >

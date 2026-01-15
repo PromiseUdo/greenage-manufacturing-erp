@@ -283,7 +283,13 @@ export default function InventoryDashboardClient() {
           <Typography variant="h4" component="h1" fontWeight={700}>
             Inventory Dashboard
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography
+            sx={{
+              fontSize: 14,
+            }}
+            variant="body1"
+            color="text.secondary"
+          >
             Manage materials, track stock levels and handle transactions
           </Typography>
         </Box>
@@ -392,6 +398,9 @@ export default function InventoryDashboardClient() {
         >
           <Tab
             label="Materials"
+            sx={{
+              fontSize: 14,
+            }}
             onClick={() => router.push('/inventory/materials')}
           />
           <Tab

@@ -47,7 +47,11 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
           </IconButton>
         }
       >
-        <AlertTitle>
+        <AlertTitle
+          sx={{
+            fontSize: 14,
+          }}
+        >
           <strong>Stock Alerts</strong>
         </AlertTitle>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -65,6 +69,9 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
                 label={`${warningAlerts.length} Low Stock`}
                 color="warning"
                 size="small"
+                sx={{
+                  fontSize: 11,
+                }}
               />
             )}
           </Box>
