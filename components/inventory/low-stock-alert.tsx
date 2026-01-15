@@ -49,46 +49,49 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
     >
       <Alert
         severity="warning"
-        sx={{
-          display: 'flex',
-        }}
         action={
           <IconButton size="small" onClick={() => setExpanded(!expanded)}>
             {expanded ? <CollapseIcon /> : <ExpandIcon />}
           </IconButton>
         }
       >
-        {/* A */}
-        <AlertTitle
+        {/* <Box
           sx={{
-            fontSize: 14,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            flexWrap: 'wrap',
           }}
         >
-          Stock Alerts
-        </AlertTitle>
+          <AlertTitle
+            sx={{
+              fontSize: 14,
+              mb: 0, 
+              lineHeight: 1.2,
+            }}
+          >
+            Stock Alerts
+          </AlertTitle> */}
+
         {/* B */}
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Box>
-            {criticalAlerts.length > 0 && (
-              <Chip
-                label={`${criticalAlerts.length} Out of Stock`}
-                color="error"
-                size="small"
-                sx={{ mr: 1 }}
-              />
-            )}
-            {warningAlerts.length > 0 && (
-              <Chip
-                label={`${warningAlerts.length} Low Stock`}
-                color="warning"
-                size="small"
-                sx={{
-                  fontSize: 11,
-                }}
-              />
-            )}
-          </Box>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          {criticalAlerts.length > 0 && (
+            <Chip
+              label={`${criticalAlerts.length} Out of Stock`}
+              color="error"
+              size="small"
+            />
+          )}
+          {warningAlerts.length > 0 && (
+            <Chip
+              label={`${warningAlerts.length} Low Stock`}
+              color="warning"
+              size="small"
+              sx={{ fontSize: 11 }}
+            />
+          )}
         </Box>
+        {/* </Box> */}
       </Alert>
 
       <Collapse in={expanded}>
