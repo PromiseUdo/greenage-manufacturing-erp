@@ -27,7 +27,7 @@ interface LowStockAlertProps {
 }
 
 export default function LowStockAlert({ alerts }: LowStockAlertProps) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const router = useRouter();
 
   if (alerts.length === 0) {
