@@ -1016,7 +1016,17 @@ import {
   ListItemIcon,
   ListItemText,
   CircularProgress,
+  useMediaQuery,
 } from '@mui/material';
+
+import {
+  Business as BusinessIcon,
+  Person as PersonIcon,
+  LocationOn as LocationOnIcon,
+  Payment as PaymentIcon,
+  Close as CloseIcon,
+} from '@mui/icons-material';
+
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -1032,6 +1042,7 @@ import Grid from '@mui/material/GridLegacy';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { SupplierFormData } from '@/types/inventory';
+import { theme } from '@/lib/theme';
 
 interface Supplier {
   id: string;
@@ -1084,6 +1095,7 @@ export default function SuppliersPage() {
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   // Export menu state
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(
@@ -1350,7 +1362,7 @@ export default function SuppliersPage() {
               </InputAdornment>
             ),
           }}
-          sx={{ maxWidth: 500 }}
+          sx={{ maxWidth: 500, fontSize: 14 }}
         />
       </Paper>
 
@@ -1554,13 +1566,42 @@ export default function SuppliersPage() {
         open={openDialog}
         onClose={handleCloseDialog}
         maxWidth="md"
-        fullWidth
+        // fullWidth
+        fullScreen={fullScreen}
       >
-        <DialogTitle>
+        {/* <DialogTitle>
           {editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}
         </DialogTitle>
+        <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.3 }}>
+          {editingSupplier
+            ? 'Update supplier information below'
+            : 'Enter supplier details to add to your system'}
+        </Typography> */}
+
+        <Box
+          sx={{
+            // color: 'white',
+            px: 3,
+            py: 2.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+          }}
+        >
+          <Box>
+            <Typography variant="h6" fontWeight={600}>
+              {editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.3 }}>
+              {editingSupplier
+                ? 'Update supplier information below'
+                : 'Enter supplier details to add to your system'}
+            </Typography>
+          </Box>
+        </Box>
+
         <form onSubmit={handleSubmit(handleSaveSupplier)}>
-          <DialogContent>
+          <DialogContent sx={{ px: 3, pt: 3, pb: 2 }}>
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
                 <Controller
@@ -1568,6 +1609,15 @@ export default function SuppliersPage() {
                   control={control}
                   rules={{ required: 'Supplier name is required' }}
                   render={({ field }) => (
+                    // <TextField
+                    //   {...field}
+                    //   label="Supplier Name"
+                    //   fullWidth
+                    //   required
+                    //   error={!!errors.name}
+                    //   helperText={errors.name?.message}
+                    // />
+
                     <TextField
                       {...field}
                       label="Supplier Name"
@@ -1575,6 +1625,22 @@ export default function SuppliersPage() {
                       required
                       error={!!errors.name}
                       helperText={errors.name?.message}
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <BusinessIcon fontSize="small" color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                        },
+                      }}
                     />
                   )}
                 />
@@ -1584,7 +1650,29 @@ export default function SuppliersPage() {
                   name="contactPerson"
                   control={control}
                   render={({ field }) => (
-                    <TextField {...field} label="Contact Person" fullWidth />
+                    // <TextField {...field} label="Contact Person" fullWidth />
+
+                    <TextField
+                      {...field}
+                      label="Contact Person"
+                      fullWidth
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <PersonIcon fontSize="small" color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                        },
+                      }}
+                    />
                   )}
                 />
               </Grid>
@@ -1594,13 +1682,38 @@ export default function SuppliersPage() {
                   control={control}
                   rules={{ required: 'Phone is required' }}
                   render={({ field }) => (
+                    // <TextField
+                    //   {...field}
+                    //   label="Phone"
+                    //   fullWidth
+                    //   required
+                    //   error={!!errors.phone}
+                    //   helperText={errors.phone?.message}
+                    // />
+
                     <TextField
                       {...field}
-                      label="Phone"
+                      label="Phone Number"
                       fullWidth
                       required
                       error={!!errors.phone}
                       helperText={errors.phone?.message}
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <PhoneIcon fontSize="small" color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                        },
+                      }}
                     />
                   )}
                 />
@@ -1610,11 +1723,34 @@ export default function SuppliersPage() {
                   name="email"
                   control={control}
                   render={({ field }) => (
+                    // <TextField
+                    //   {...field}
+                    //   label="Email"
+                    //   type="email"
+                    //   fullWidth
+                    // />
+
                     <TextField
                       {...field}
-                      label="Email"
+                      label="Email Address"
                       type="email"
                       fullWidth
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <EmailIcon fontSize="small" color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                        },
+                      }}
                     />
                   )}
                 />
@@ -1624,12 +1760,39 @@ export default function SuppliersPage() {
                   name="address"
                   control={control}
                   render={({ field }) => (
+                    // <TextField
+                    //   {...field}
+                    //   label="Address"
+                    //   fullWidth
+                    //   multiline
+                    //   rows={2}
+                    // />
+
                     <TextField
                       {...field}
                       label="Address"
                       fullWidth
                       multiline
-                      rows={2}
+                      rows={2.5}
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment
+                            position="start"
+                            sx={{ alignSelf: 'flex-start', mt: 1.5 }}
+                          >
+                            <LocationOnIcon fontSize="small" color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                        },
+                      }}
                     />
                   )}
                 />
@@ -1639,21 +1802,87 @@ export default function SuppliersPage() {
                   name="paymentTerms"
                   control={control}
                   render={({ field }) => (
+                    // <TextField
+                    //   {...field}
+                    //   label="Payment Terms"
+                    //   fullWidth
+                    //   placeholder="e.g., Net 30 days"
+                    // />
+
                     <TextField
                       {...field}
                       label="Payment Terms"
                       fullWidth
-                      placeholder="e.g., Net 30 days"
+                      placeholder="e.g., Net 30 days, 50% advance"
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <PaymentIcon fontSize="small" color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover fieldset': {
+                            borderColor: 'primary.main',
+                          },
+                        },
+                      }}
                     />
                   )}
                 />
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions>
+          {/* <DialogActions>
             <Button onClick={handleCloseDialog}>Cancel</Button>
+
             <Button type="submit" variant="contained">
               {editingSupplier ? 'Update' : 'Create'}
+            </Button>
+          </DialogActions> */}
+
+          <DialogActions
+            sx={{
+              px: 3,
+              py: 2.5,
+              bgcolor: alpha('#667eea', 0.03),
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              gap: 1.5,
+            }}
+          >
+            <Button
+              onClick={handleCloseDialog}
+              variant="outlined"
+              sx={
+                {
+                  // borderRadius: 2,
+                  // px: 3,
+                  // py: 1,
+                  // borderColor: 'divider',
+                  // color: 'text.secondary',
+                }
+              }
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disableElevation
+              sx={
+                {
+                  // borderRadius: 2,
+                  // px: 3.5,
+                  // py: 1,
+                  // fontWeight: 600,
+                }
+              }
+            >
+              {editingSupplier ? 'Update Supplier' : 'Create Supplier'}
             </Button>
           </DialogActions>
         </form>
