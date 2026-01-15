@@ -98,7 +98,7 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
         <Box
           sx={{
             mt: 2,
-            p: 2,
+            p: 0,
             border: '0.5px solid',
             borderColor: 'warning.light',
             borderRadius: 1,
@@ -147,19 +147,6 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
                     </Box>
                   }
                   secondary={
-                    // <Box sx={{ mt: 0.5 }}>
-                    //   Current Stock: <strong>{alert.currentStock}</strong> |
-                    //   Reorder Level: <strong>{alert.reorderLevel}</strong>
-                    //   {alert.alertType === 'OUT_OF_STOCK' && (
-                    //     <Box
-                    //       component="span"
-                    //       sx={{ ml: 1, color: 'error.main', fontWeight: 600 }}
-                    //     >
-                    //       ⚠️ Immediate action required
-                    //     </Box>
-                    //   )}
-                    // </Box>
-
                     <Box component="span" sx={{ mt: 0.5, display: 'block' }}>
                       Current Stock: <strong>{alert.currentStock}</strong> |
                       Reorder Level: <strong>{alert.reorderLevel}</strong>
