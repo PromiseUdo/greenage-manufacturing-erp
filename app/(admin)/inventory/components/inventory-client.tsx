@@ -551,6 +551,9 @@ export default function InventoryDashboardClient() {
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Chip
+                    sx={{
+                      fontSize: 12,
+                    }}
                     label={cat.category.replace(/_/g, ' ')}
                     size="small"
                     color={
