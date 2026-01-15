@@ -60,7 +60,8 @@ export default function LowStockAlert({ alerts }: LowStockAlertProps) {
             fontSize: 14,
           }}
         >
-          <strong>Stock Alerts</strong>
+          {/* <strong>Stock Alerts</strong> */}
+          Stock Alerts
         </AlertTitle>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Box>
