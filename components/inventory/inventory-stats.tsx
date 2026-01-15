@@ -38,7 +38,7 @@ export default function InventoryStats({
       bgColor: '#e3f2fd',
     },
     {
-      title: 'Total Inventory Value',
+      title: 'Total Inventory',
       value: new Intl.NumberFormat('en-NG', {
         style: 'currency',
         currency: 'NGN',
@@ -49,7 +49,7 @@ export default function InventoryStats({
       bgColor: '#e8f5e9',
     },
     {
-      title: 'Low Stock Items',
+      title: 'Low Stock',
       value: stats.lowStockItems,
       icon: WarningIcon,
       color: '#ed6c02',
@@ -97,7 +97,7 @@ export default function InventoryStats({
             <Card
               sx={{
                 borderRadius: 1,
-                height: '100%',
+                height: '85%',
                 boxShadow: ` 0 0 0 1px ${stat.color}33`,
                 position: 'relative',
                 overflow: 'visible',
@@ -115,6 +115,15 @@ export default function InventoryStats({
                     mb: 2,
                   }}
                 >
+                  <Typography
+                    sx={{
+                      fontSize: 12,
+                    }}
+                    variant="body2"
+                    color="text.secondary"
+                  >
+                    {stat.title}
+                  </Typography>
                   <Box
                     sx={{
                       backgroundColor: stat.bgColor,
@@ -139,7 +148,7 @@ export default function InventoryStats({
                 >
                   {stat.value}
                 </Typography>
-                <Typography
+                {/* <Typography
                   sx={{
                     fontSize: 12,
                   }}
@@ -147,7 +156,7 @@ export default function InventoryStats({
                   color="text.secondary"
                 >
                   {stat.title}
-                </Typography>
+                </Typography> */}
               </CardContent>
             </Card>
           </Grid>
