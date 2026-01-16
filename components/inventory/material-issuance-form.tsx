@@ -301,12 +301,25 @@ export default function MaterialIssuanceForm({
                 gap: 2,
               }}
             >
-              <Button variant="text" onClick={onCancel} disabled={isLoading}>
+              {/* <Button variant="text" onClick={onCancel} disabled={isLoading}>
+                Cancel
+              </Button> */}
+
+              <Button
+                variant="outlined"
+                onClick={onCancel}
+                disabled={isLoading}
+                size="medium"
+                sx={{ minWidth: 100 }}
+              >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 variant="contained"
+                sx={{
+                  fontWeight: 'bold',
+                }}
                 disabled={isLoading || insufficientStock || !selectedMaterial}
               >
                 {isLoading ? 'Issuing…' : 'Issue Material'}

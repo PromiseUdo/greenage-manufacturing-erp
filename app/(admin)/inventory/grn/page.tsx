@@ -774,7 +774,7 @@ export default function GRNPage() {
         </Box>
         <Button
           variant="contained"
-          startIcon={<AddIcon />}
+          // startIcon={<AddIcon />}
           onClick={() => router.push('/inventory/grn/new')}
           sx={{
             textTransform: 'uppercase',
@@ -884,7 +884,7 @@ export default function GRNPage() {
             <Button
               variant="contained"
               sx={{ mt: 2 }}
-              startIcon={<AddIcon />}
+              // startIcon={<AddIcon />}
               onClick={() => router.push('/inventory/grn/new')}
             >
               Create GRN

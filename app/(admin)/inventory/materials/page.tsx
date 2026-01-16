@@ -168,21 +168,6 @@ export default function MaterialsPage() {
         </Box>
 
         <Box sx={{ display: 'flex', gap: 1.5 }}>
-          {/* <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={fetchMaterials}
-            sx={{
-              textTransform: 'uppercase',
-              borderColor: '#0F172A',
-              color: '#0F172A',
-              // fontWeight: 'bold',
-              // fontSize: '14',
-            }}
-          >
-            Refresh
-          </Button> */}
-
           <Button
             variant="outlined"
             endIcon={

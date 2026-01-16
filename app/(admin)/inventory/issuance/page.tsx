@@ -23,12 +23,18 @@ import {
   IconButton,
   Tooltip,
   CircularProgress,
+  alpha,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Search as SearchIcon,
   TrendingDown as TrendingDownIcon,
   CalendarToday as CalendarIcon,
+  KeyboardArrowDown as ArrowDownIcon,
+  PictureAsPdf as PdfIcon,
+  TableChart as ExcelIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
@@ -49,6 +55,12 @@ export default function IssuancesPage() {
     last7Days: 0,
     last30Days: 0,
   });
+
+  const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+  const [exporting, setExporting] = useState(false);
+  const exportMenuOpen = Boolean(exportAnchorEl);
 
   useEffect(() => {
     fetchIssuances();
@@ -116,6 +128,46 @@ export default function IssuancesPage() {
     }).format(amount);
   };
 
+  const handleExportClick = (event: React.MouseEvent<HTMLElement>) => {
+    setExportAnchorEl(event.currentTarget);
+  };
+
+  const handleExportClose = () => {
+    setExportAnchorEl(null);
+  };
+
+  const handleExport = async (format: 'excel' | 'pdf') => {
+    handleExportClose();
+    setExporting(true);
+
+    try {
+      const params = new URLSearchParams({
+        format,
+        ...(search && { search }),
+      });
+
+      const res = await fetch(`/api/inventory/issuances/export?${params}`);
+
+      if (!res.ok) throw new Error('Export failed');
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `issuances_${new Date().toISOString().split('T')[0]}.${
+        format === 'excel' ? 'xlsx' : 'pdf'
+      }`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      // document.body.removeChild(a);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export issuances. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Box>
       {/* Header */}
@@ -141,18 +193,75 @@ export default function IssuancesPage() {
             Track all materials issued from inventory
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          // startIcon={<AddIcon />}
-          sx={{
-            fontWeight: 'bold',
-            textTransform: 'uppercase',
-          }}
-          onClick={() => router.push('/inventory/issuance/new')}
-        >
-          Issue Material
-        </Button>
+
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            endIcon={
+              exporting ? <CircularProgress size={16} /> : <ArrowDownIcon />
+            }
+            onClick={handleExportClick}
+            disabled={exporting || issuances.length === 0}
+            sx={{
+              textTransform: 'uppercase',
+              borderColor: '#0F172A',
+              color: '#0F172A',
+              fontWeight: 'bold',
+              fontSize: 14,
+              '&:hover': {
+                borderColor: '#0F172A',
+                bgcolor: alpha('#0F172A', 0.04),
+              },
+            }}
+          >
+            {exporting ? 'Exporting...' : 'Export'}
+          </Button>
+
+          <Button
+            variant="contained"
+            // startIcon={<AddIcon />}
+            sx={{
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+            }}
+            onClick={() => router.push('/inventory/issuance/new')}
+          >
+            Issue Material
+          </Button>
+        </Box>
       </Box>
+
+      {/* Export Menu */}
+      <Menu
+        anchorEl={exportAnchorEl}
+        open={exportMenuOpen}
+        onClose={handleExportClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            minWidth: 180,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            borderRadius: 2,
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => handleExport('excel')}
+          sx={{ py: 1.5, gap: 1.5 }}
+        >
+          <ExcelIcon fontSize="small" sx={{ color: '#107C41' }} />
+          <Typography variant="body2">Download as Excel</Typography>
+        </MenuItem>
+        <MenuItem
+          onClick={() => handleExport('pdf')}
+          sx={{ py: 1.5, gap: 1.5 }}
+        >
+          <PdfIcon fontSize="small" sx={{ color: '#DC2626' }} />
+          <Typography variant="body2">Download as PDF</Typography>
+        </MenuItem>
+      </Menu>
 
       <Paper
         elevation={0}
