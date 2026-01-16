@@ -90,18 +90,18 @@ export default function MaterialIssuanceForm({
     selectedMaterial && quantity > selectedMaterial.currentStock;
 
   return (
-    <Paper sx={{ p: 4, borderRadius: 2, marginBottom: '20px' }}>
+    <Paper sx={{ p: 4, borderRadius: 2 }}>
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         <Grid container spacing={4}>
           {/* Header */}
-          <Grid item xs={12}>
+          {/* <Grid item xs={12}>
             <Typography variant="h6" fontWeight={600}>
               Issue Material
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Record material issuance from inventory
             </Typography>
-          </Grid>
+          </Grid> */}
 
           {/* Material Selection */}
           <Grid item xs={12}>
