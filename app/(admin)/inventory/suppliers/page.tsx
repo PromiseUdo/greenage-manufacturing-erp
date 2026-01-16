@@ -380,7 +380,7 @@ export default function SuppliersPage() {
         sx={{
           p: 2,
           mb: 3,
-          borderRadius: 1,
+          borderRadius: 2,
           border: '1px solid',
           borderColor: 'divider',
           bgcolor: 'background.paper',
