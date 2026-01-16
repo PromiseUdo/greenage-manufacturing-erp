@@ -305,6 +305,8 @@ export default function InventoryDashboardClient() {
             textTransform: 'uppercase',
             borderColor: '#0F172A',
             color: '#0F172A',
+            fontWeight: 'bold',
+            fontSize: '14',
           }}
           onClick={() => router.push('/inventory/materials/new')}
           // sx={{ minWidth: 180 }}

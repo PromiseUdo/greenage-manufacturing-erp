@@ -391,7 +391,12 @@ export default function MaterialForm({
           {/* Warning if stock below reorder level */}
           {currentStock <= reorderLevel && (
             <Grid item xs={12}>
-              <Alert severity="warning">
+              <Alert
+                severity="warning"
+                sx={{
+                  fontSize: '14px',
+                }}
+              >
                 <strong>Warning:</strong> Current stock is at or below reorder
                 level.
               </Alert>
@@ -408,6 +413,8 @@ export default function MaterialForm({
                 sx={{
                   borderColor: '#0F172A',
                   color: '#0F172A',
+                  fontWeight: 'bold',
+                  fontSize: '14',
                   '&:hover': {
                     borderColor: '#020617',
                   },
@@ -421,6 +428,8 @@ export default function MaterialForm({
                 disabled={isLoading}
                 sx={{
                   backgroundColor: '#0F172A',
+                  fontWeight: 'bold',
+                  fontSize: '14',
                   '&:hover': {
                     backgroundColor: '#020617',
                   },
