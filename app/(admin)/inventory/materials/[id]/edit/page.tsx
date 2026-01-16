@@ -101,10 +101,14 @@ export default function EditMaterialPage() {
 
   return (
     <Box>
-      <Typography variant="h4" fontWeight={600} gutterBottom>
+      <Typography variant="h6" fontWeight={600}>
         Edit Material
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        sx={{ mb: 3, fontSize: '14px' }}
+      >
         Update material information - Part Number:{' '}
         <strong>{material?.partNumber}</strong>
       </Typography>
