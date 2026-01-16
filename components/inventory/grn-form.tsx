@@ -162,7 +162,7 @@ export default function GRNForm({
                   label="Invoice Number"
                   variant="standard"
                   fullWidth
-                  helperText="Supplier invoice reference"
+                  // helperText="Supplier invoice reference"
                 />
               )}
             />
