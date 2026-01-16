@@ -462,7 +462,7 @@ export default function InventoryDashboardClient() {
                   height: '100%',
                   border: '1px solid',
                   borderColor: 'divider',
-                  borderRadius: 1,
+                  borderRadius: 2,
                   boxShadow: 'none',
                   transition: 'all 0.22s',
                   '&:hover': {

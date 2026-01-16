@@ -78,6 +78,7 @@ export default function MaterialForm({
         backgroundColor: 'transparent',
         boxShadow: 'none',
         border: '1px solid',
+        borderRadius: 2,
         borderColor: 'divider',
         bgcolor: 'background.paper',
       }}
@@ -370,7 +371,17 @@ export default function MaterialForm({
           {/* Calculated Total Value */}
           {totalValue > 0 && (
             <Grid item xs={12}>
-              <Paper
+              <Alert severity="info">
+                <Typography variant="body2">
+                  <strong>Total Inventory Value:</strong>{' '}
+                  {new Intl.NumberFormat('en-NG', {
+                    style: 'currency',
+                    currency: 'NGN',
+                  }).format(totalValue)}
+                </Typography>
+              </Alert>
+
+              {/* <Paper
                 sx={{
                   p: 2,
                   backgroundColor: 'primary.light',
@@ -384,7 +395,7 @@ export default function MaterialForm({
                     currency: 'NGN',
                   }).format(totalValue)}
                 </Typography>
-              </Paper>
+              </Paper> */}
             </Grid>
           )}
 
@@ -413,7 +424,7 @@ export default function MaterialForm({
                 sx={{
                   borderColor: '#0F172A',
                   color: '#0F172A',
-                  fontWeight: 'bold',
+                  fontWeight: 'normal',
                   fontSize: '14',
                   '&:hover': {
                     borderColor: '#020617',

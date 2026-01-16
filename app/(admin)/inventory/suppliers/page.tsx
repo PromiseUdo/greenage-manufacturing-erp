@@ -1251,7 +1251,14 @@ export default function SuppliersPage() {
           <Typography variant="h6" fontWeight={700} component="h1">
             Suppliers
           </Typography>
-          <Typography color="text.secondary" variant="body2" mt={0.5}>
+          <Typography
+            color="text.secondary"
+            sx={{
+              fontSize: '14px',
+            }}
+            variant="body2"
+            mt={0.5}
+          >
             Manage all your vendors and suppliers
           </Typography>
         </div>

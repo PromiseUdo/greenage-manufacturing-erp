@@ -12,6 +12,7 @@ import {
   InputAdornment,
   FormControlLabel,
   Switch,
+  Paper,
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
 import {
@@ -95,10 +96,16 @@ export default function MaterialsPage() {
         }}
       >
         <Box>
-          <Typography variant="h4" fontWeight={600}>
+          <Typography variant="h6" fontWeight={600}>
             Materials
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{
+              fontSize: 14,
+            }}
+          >
             Manage your inventory materials and stock levels
           </Typography>
         </Box>
@@ -107,12 +114,26 @@ export default function MaterialsPage() {
             variant="outlined"
             startIcon={<RefreshIcon />}
             onClick={fetchMaterials}
+            sx={{
+              textTransform: 'uppercase',
+              borderColor: '#0F172A',
+              color: '#0F172A',
+              // fontWeight: 'bold',
+              // fontSize: '14',
+            }}
           >
             Refresh
           </Button>
           <Button
             variant="contained"
-            startIcon={<AddIcon />}
+            // startIcon={<AddIcon />}
+            sx={{
+              textTransform: 'uppercase',
+              bgcolor: '#0F172A',
+              color: '#ffffff',
+              // fontWeight: 'bold',
+              // fontSize: '14',
+            }}
             onClick={() => router.push('/inventory/materials/new')}
           >
             Add Material
@@ -121,15 +142,34 @@ export default function MaterialsPage() {
       </Box>
 
       {/* Filters */}
-      <Box sx={{ mb: 3 }}>
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 3,
+          borderRadius: 2,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+        }}
+      >
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
+              size="small"
               placeholder="Search by name or part number"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyPress={handleSearchKeyPress}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#0F172A',
+                    borderWidth: 1,
+                  },
+                },
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -144,7 +184,22 @@ export default function MaterialsPage() {
               fullWidth
               select
               label="Category"
+              size="small"
               value={category}
+              sx={{
+                '& .MuiInputLabel-root': {
+                  color: '#475569', // default label color
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#0F172A', // focused label color
+                },
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#0F172A',
+                    borderWidth: 1,
+                  },
+                },
+              }}
               onChange={(e) => {
                 setCategory(e.target.value);
                 setPage(1);
@@ -161,28 +216,48 @@ export default function MaterialsPage() {
             <FormControlLabel
               control={
                 <Switch
+                  size="small"
                   checked={lowStockOnly}
                   onChange={(e) => {
                     setLowStockOnly(e.target.checked);
                     setPage(1);
                   }}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: '#0F172A', // thumb color
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: '#0F172A', // track color
+                    },
+                  }}
                 />
               }
               label="Low Stock Only"
+              sx={{
+                '& .MuiFormControlLabel-label': {
+                  fontSize: '12px',
+                },
+              }}
             />
           </Grid>
-          <Grid item xs={12} md={2}>
+          {/* <Grid item xs={12} md={2}>
             <Button
-              fullWidth
               variant="contained"
               onClick={handleSearch}
-              startIcon={<SearchIcon />}
+              // startIcon={<SearchIcon />}
+              sx={{
+                textTransform: 'uppercase',
+                bgcolor: '#0F172A',
+                color: '#ffffff',
+                fontWeight: 'bold',
+                fontSize: '14',
+              }}
             >
               Search
             </Button>
-          </Grid>
+          </Grid> */}
         </Grid>
-      </Box>
+      </Paper>
 
       {/* Materials Table */}
       <MaterialsTable

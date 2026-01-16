@@ -4,15 +4,14 @@
 
 import { useState, useEffect } from 'react';
 import { Box, Typography, Alert, CircularProgress } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { MaterialFormData, MaterialWithRelations } from '@/types/inventory';
 import MaterialForm from '@/components/inventory/material-form';
 
-export default function EditMaterialPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function EditMaterialPage() {
+  const params = useParams();
+  const id = params.id as string;
+
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -71,7 +70,7 @@ export default function EditMaterialPage({
 
       setSuccess(true);
       setTimeout(() => {
-        router.push(`/dashboard/inventory/materials/${params.id}`);
+        router.push(`/inventory/materials/${params.id}`);
       }, 1500);
     } catch (err: any) {
       setError(err.message);
@@ -81,7 +80,7 @@ export default function EditMaterialPage({
   };
 
   const handleCancel = () => {
-    router.push(`/dashboard/inventory/materials/${params.id}`);
+    router.push(`/inventory/materials/${params.id}`);
   };
 
   if (loading) {
