@@ -13,13 +13,21 @@ import {
   FormControlLabel,
   Switch,
   Paper,
+  Menu,
+  alpha,
+  CircularProgress,
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
 import {
   Add as AddIcon,
   Search as SearchIcon,
   Refresh as RefreshIcon,
+  FileDownload as FileDownloadIcon,
+  PictureAsPdf as PdfIcon,
+  TableChart as ExcelIcon,
+  KeyboardArrowDown as ArrowDownIcon,
 } from '@mui/icons-material';
+
 import { useRouter } from 'next/navigation';
 import { MaterialWithRelations } from '@/types/inventory';
 import MaterialsTable from '@/components/inventory/materials-table';
@@ -46,6 +54,12 @@ export default function MaterialsPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [lowStockOnly, setLowStockOnly] = useState(false);
+
+  const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+  const [exporting, setExporting] = useState(false);
+  const exportMenuOpen = Boolean(exportAnchorEl);
 
   useEffect(() => {
     fetchMaterials();
@@ -84,6 +98,49 @@ export default function MaterialsPage() {
     }
   };
 
+  const handleExportClick = (event: React.MouseEvent<HTMLElement>) => {
+    setExportAnchorEl(event.currentTarget);
+  };
+
+  const handleExportClose = () => {
+    setExportAnchorEl(null);
+  };
+
+  const handleExport = async (format: 'excel' | 'pdf') => {
+    handleExportClose();
+    setExporting(true);
+
+    try {
+      const params = new URLSearchParams({
+        format,
+        ...(search && { search }),
+        ...(category && { category }),
+        ...(lowStockOnly && { lowStock: 'true' }),
+      });
+
+      const res = await fetch(`/api/inventory/materials/export?${params}`);
+
+      if (!res.ok) throw new Error('Export failed');
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `materials_${new Date().toISOString().split('T')[0]}.${
+        format === 'excel' ? 'xlsx' : 'pdf'
+      }`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export materials. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Box>
       {/* Header */}
@@ -109,8 +166,9 @@ export default function MaterialsPage() {
             Manage your inventory materials and stock levels
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
+
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          {/* <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
             onClick={fetchMaterials}
@@ -123,7 +181,30 @@ export default function MaterialsPage() {
             }}
           >
             Refresh
+          </Button> */}
+
+          <Button
+            variant="outlined"
+            endIcon={
+              exporting ? <CircularProgress size={16} /> : <ArrowDownIcon />
+            }
+            onClick={handleExportClick}
+            disabled={exporting || materials.length === 0}
+            sx={{
+              textTransform: 'uppercase',
+              borderColor: '#0F172A',
+              color: '#0F172A',
+              fontWeight: 'bold',
+              fontSize: 14,
+              '&:hover': {
+                borderColor: '#0F172A',
+                bgcolor: alpha('#0F172A', 0.04),
+              },
+            }}
+          >
+            {exporting ? 'Exporting...' : 'Export'}
           </Button>
+
           <Button
             variant="contained"
             // startIcon={<AddIcon />}
@@ -131,7 +212,7 @@ export default function MaterialsPage() {
               textTransform: 'uppercase',
               bgcolor: '#0F172A',
               color: '#ffffff',
-              // fontWeight: 'bold',
+              fontWeight: 'bold',
               // fontSize: '14',
             }}
             onClick={() => router.push('/inventory/materials/new')}
@@ -140,6 +221,37 @@ export default function MaterialsPage() {
           </Button>
         </Box>
       </Box>
+
+      <Menu
+        anchorEl={exportAnchorEl}
+        open={exportMenuOpen}
+        onClose={handleExportClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            minWidth: 180,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            borderRadius: 2,
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => handleExport('excel')}
+          sx={{ py: 1.5, gap: 1.5 }}
+        >
+          <ExcelIcon fontSize="small" sx={{ color: '#107C41' }} />
+          <Typography variant="body2">Download as Excel</Typography>
+        </MenuItem>
+        <MenuItem
+          onClick={() => handleExport('pdf')}
+          sx={{ py: 1.5, gap: 1.5 }}
+        >
+          <PdfIcon fontSize="small" sx={{ color: '#DC2626' }} />
+          <Typography variant="body2">Download as PDF</Typography>
+        </MenuItem>
+      </Menu>
 
       {/* Filters */}
       <Paper
