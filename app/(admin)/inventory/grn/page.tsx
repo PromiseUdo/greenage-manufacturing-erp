@@ -945,8 +945,9 @@ export default function GRNPage() {
                           label={grn.grnNumber}
                           size="small"
                           sx={{
-                            bgcolor: '#dcfce7',
-                            color: '#16a34a',
+                            // fontSize: 11,
+                            bgcolor: '#e8f5e9',
+                            color: '#2e7d32',
                             fontWeight: 600,
                           }}
                         />
