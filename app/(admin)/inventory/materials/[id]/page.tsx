@@ -470,15 +470,50 @@ export default function MaterialDetailsPage({
     return colors[category] || 'default';
   };
 
+  // const getStockStatus = () => {
+  //   if (!material) return null;
+  //   if (material.currentStock === 0) {
+  //     return { label: 'Out of Stock', color: 'error' as const };
+  //   }
+  //   if (material.currentStock <= material.reorderLevel) {
+  //     return { label: 'Low Stock', color: 'warning' as const };
+  //   }
+  //   return { label: 'In Stock', color: 'success' as const };
+  // };
+
   const getStockStatus = () => {
     if (!material) return null;
+
     if (material.currentStock === 0) {
-      return { label: 'Out of Stock', color: 'error' as const };
+      // Out of Stock → light red background
+      return {
+        label: 'Out of Stock',
+        sx: {
+          bgcolor: '#ffebee', // very light red
+          color: '#d32f2f', // dark red text
+        },
+      };
     }
+
     if (material.currentStock <= material.reorderLevel) {
-      return { label: 'Low Stock', color: 'warning' as const };
+      // Low Stock → light orange / amber background
+      return {
+        label: 'Low Stock',
+        sx: {
+          bgcolor: '#fff3e0', // very light orange
+          color: '#ed6c02', // darker orange text
+        },
+      };
     }
-    return { label: 'In Stock', color: 'success' as const };
+
+    // In Stock → light green
+    return {
+      label: 'In Stock',
+      sx: {
+        bgcolor: '#e8f5e9', // light green
+        color: '#2e7d32', // darker green text
+      },
+    };
   };
 
   if (loading) {
@@ -539,10 +574,21 @@ export default function MaterialDetailsPage({
               <Chip
                 label={material.category.replace(/_/g, ' ')}
                 size="small"
-                color="primary"
+                sx={{
+                  bgcolor: '#e3f2fd',
+                  color: '#1976d2',
+                }}
               />
               {status && (
-                <Chip label={status.label} size="small" color={status.color} />
+                // <Chip label={status.label} size="small" color={status.color} />
+                <Chip
+                  label={status.label}
+                  size="small"
+                  sx={{
+                    fontWeight: 500,
+                    ...status.sx,
+                  }}
+                />
               )}
             </Box>
           </Box>
@@ -612,7 +658,10 @@ export default function MaterialDetailsPage({
                 label="Category"
                 value={material.category.replace(/_/g, ' ')}
                 chip
-                chipColor={getCategoryColor(material.category)}
+                chipColor="#1976d2" // text color
+                chipBgColor="#e3f2fd"
+
+                // chipColor={getCategoryColor(material.category)}
               />
               <InfoRow label="Unit" value={material.unit} />
               <InfoRow
@@ -813,13 +862,71 @@ export default function MaterialDetailsPage({
   );
 }
 
+// interface InfoRowProps {
+//   label: string;
+//   value: string;
+//   highlight?: boolean;
+//   bold?: boolean;
+//   chip?: boolean;
+//   chipColor?: any;
+//   valueColor?: string;
+// }
+
+// function InfoRow({
+//   label,
+//   value,
+//   highlight,
+//   bold,
+//   chip,
+//   chipColor,
+//   valueColor,
+// }: InfoRowProps) {
+//   return (
+//     <Box
+//       sx={{
+//         display: 'flex',
+//         justifyContent: 'space-between',
+//         alignItems: 'center',
+//         mb: 2,
+//       }}
+//     >
+//       <Typography
+//         variant="body2"
+//         color="text.secondary"
+//         sx={{ fontWeight: 500 }}
+//       >
+//         {label}:
+//       </Typography>
+//       {chip ? (
+//         <Chip
+//           label={value}
+//           color={chipColor}
+//           size="small"
+//           sx={{ fontWeight: 500 }}
+//         />
+//       ) : (
+//         <Typography
+//           variant="body2"
+//           sx={{
+//             fontWeight: bold || highlight ? 600 : 400,
+//             color: valueColor || (highlight ? 'error.main' : 'text.primary'),
+//           }}
+//         >
+//           {value}
+//         </Typography>
+//       )}
+//     </Box>
+//   );
+// }
+
 interface InfoRowProps {
   label: string;
   value: string;
   highlight?: boolean;
   bold?: boolean;
   chip?: boolean;
-  chipColor?: any;
+  chipColor?: string; // text color
+  chipBgColor?: string; // background color
   valueColor?: string;
 }
 
@@ -830,6 +937,7 @@ function InfoRow({
   bold,
   chip,
   chipColor,
+  chipBgColor,
   valueColor,
 }: InfoRowProps) {
   return (
@@ -851,9 +959,12 @@ function InfoRow({
       {chip ? (
         <Chip
           label={value}
-          color={chipColor}
           size="small"
-          sx={{ fontWeight: 500 }}
+          sx={{
+            fontWeight: 500,
+            color: chipColor || 'inherit',
+            backgroundColor: chipBgColor || 'inherit',
+          }}
         />
       ) : (
         <Typography
