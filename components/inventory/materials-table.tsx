@@ -850,8 +850,10 @@ export default function MaterialsTable({
                       color={getCategoryColor(material.category)}
                       size="small"
                       sx={{
+                        bgcolor: '#e3f2fd',
                         fontWeight: 500,
                         fontSize: 12,
+                        color: '#1976d2',
                       }}
                     />
                   </StyledTableCell>
@@ -886,6 +888,8 @@ export default function MaterialsTable({
                       sx={{
                         fontWeight: 600,
                         fontSize: 11,
+                        bgcolor: '#e8f5e9',
+                        color: '#2e7d32',
                       }}
                     />
                   </StyledTableCell>
