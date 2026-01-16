@@ -99,6 +99,8 @@ export default function MaterialsTable({
     onPageChange(newPage + 1);
   };
 
+  // const [material, setMaterial] = useState<MaterialWithRelations | null>(materials);
+
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -122,12 +124,30 @@ export default function MaterialsTable({
 
   const getStockStatus = (material: MaterialWithRelations) => {
     if (material.currentStock === 0) {
-      return { label: 'Out of Stock', color: 'error' as const };
+      return {
+        label: 'Out of Stock',
+        sx: {
+          bgcolor: '#ffebee', // very light red
+          color: '#d32f2f', // dark red text
+        },
+      };
     }
     if (material.currentStock <= material.reorderLevel) {
-      return { label: 'Low Stock', color: 'warning' as const };
+      return {
+        label: 'Low Stock',
+        sx: {
+          bgcolor: '#fff3e0', // very light orange
+          color: '#ed6c02', // darker orange text
+        },
+      };
     }
-    return { label: 'In Stock', color: 'success' as const };
+    return {
+      label: 'In Stock',
+      sx: {
+        bgcolor: '#e8f5e9', // light green
+        color: '#2e7d32', // darker green text
+      },
+    };
   };
 
   const formatCurrency = (amount: number) => {
@@ -315,13 +335,12 @@ export default function MaterialsTable({
                   <StyledTableCell>
                     <Chip
                       label={status.label}
-                      color={status.color}
+                      // color={status.color}
                       size="small"
                       sx={{
                         fontWeight: 600,
                         fontSize: 11,
-                        bgcolor: '#e8f5e9',
-                        color: '#2e7d32',
+                        ...status.sx,
                       }}
                     />
                   </StyledTableCell>
