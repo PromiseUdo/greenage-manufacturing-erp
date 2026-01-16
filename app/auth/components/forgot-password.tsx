@@ -32,10 +32,15 @@ export default function ForgotPassword({
       }}
     >
       <DialogTitle>Reset password</DialogTitle>
+
       <DialogContent
         sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}
       >
-        <DialogContentText>
+        <DialogContentText
+          sx={{
+            fontSize: '14px',
+          }}
+        >
           Enter your account&apos;s email address, and we&apos;ll send you a
           link to reset your password.
         </DialogContentText>
@@ -50,7 +55,7 @@ export default function ForgotPassword({
           placeholder="Email address"
           type="email"
           fullWidth
-          variant="outlined"
+          variant="standard"
         />
       </DialogContent>
       <DialogActions sx={{ pb: 3, px: 3 }}>

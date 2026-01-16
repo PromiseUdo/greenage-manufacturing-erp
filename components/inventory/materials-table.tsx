@@ -160,7 +160,7 @@ export default function MaterialsTable({
   //   );
   // }
 
-  if (materials.length === 0) {
+  if (materials?.length === 0) {
     return (
       <Paper
         elevation={0}
@@ -252,7 +252,7 @@ export default function MaterialsTable({
             </TableRow>
           </TableHead>
           <TableBody>
-            {materials.map((material) => {
+            {materials?.map((material) => {
               const status = getStockStatus(material);
               const showWarning =
                 material.currentStock <= material.reorderLevel;

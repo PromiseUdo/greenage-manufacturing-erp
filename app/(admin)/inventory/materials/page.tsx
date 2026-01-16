@@ -174,7 +174,7 @@ export default function MaterialsPage() {
               exporting ? <CircularProgress size={16} /> : <ArrowDownIcon />
             }
             onClick={handleExportClick}
-            disabled={exporting || materials.length === 0}
+            disabled={exporting || materials?.length === 0}
             sx={{
               textTransform: 'uppercase',
               borderColor: '#0F172A',
