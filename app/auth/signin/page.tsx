@@ -1196,9 +1196,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               )}
             </Box>
 
-            <Divider sx={{ my: 2 }}>or</Divider>
+            {/* <Divider sx={{ my: 2 }}>or</Divider> */}
 
-            <Box sx={{ textAlign: 'center' }}>
+            {/* <Box sx={{ textAlign: 'center' }}>
               <Typography sx={{ color: '#64748b', fontSize: '14px' }}>
                 Don&apos;t have an account?{' '}
                 <Link
@@ -1215,7 +1215,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                   Sign up
                 </Link>
               </Typography>
-            </Box>
+            </Box> */}
           </Card>
         </LeftPanel>
 
