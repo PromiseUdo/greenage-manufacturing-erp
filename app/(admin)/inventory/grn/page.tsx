@@ -642,6 +642,7 @@ import {
   TextField,
   InputAdornment,
   styled,
+  CircularProgress,
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
 
@@ -815,7 +816,24 @@ export default function GRNPage() {
       </Paper>
 
       {/* GRNs Table */}
-      {grns.length === 0 ? (
+
+      {loading ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 6,
+            textAlign: 'center',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+          }}
+        >
+          <CircularProgress />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Loading GRN...
+          </Typography>
+        </Paper>
+      ) : grns.length === 0 ? (
         <Paper
           elevation={0}
           sx={{

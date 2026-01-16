@@ -473,6 +473,7 @@ import {
   InputAdornment,
   Alert,
   Divider,
+  Paper,
 } from '@mui/material';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { MaterialFormData } from '@/types/inventory';
@@ -548,290 +549,283 @@ export default function MaterialForm({
   }, [initialData, reset]);
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-      <Grid
-        container
-        spacing={2.5}
-        sx={{
-          paddingBottom: '20px',
-        }}
-      >
-        {/* ── Identification ── */}
-        <Grid item xs={12}>
-          <Typography
-            variant="subtitle2"
-            fontWeight={600}
-            color="text.secondary"
-          >
-            Material Identification
-          </Typography>
-          {/* <Divider sx={{ my: 1.5 }} /> */}
-        </Grid>
+    <Paper sx={{ p: 4, borderRadius: 2, marginBottom: '20px' }}>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <Grid container spacing={2.5}>
+          {/* ── Identification ── */}
+          <Grid item xs={12}>
+            <Typography
+              variant="subtitle2"
+              fontWeight={600}
+              color="text.secondary"
+            >
+              Material Identification
+            </Typography>
+            {/* <Divider sx={{ my: 1.5 }} /> */}
+          </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Controller
-            name="name"
-            control={control}
-            rules={{ required: 'Required' }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Material Name"
-                fullWidth
-                required
-                variant="standard"
-                error={!!errors.name}
-                helperText={errors.name?.message}
-                size="small"
-                InputLabelProps={{ shrink: true }}
-              />
-            )}
-          />
-        </Grid>
+          <Grid item xs={12} md={6}>
+            <Controller
+              name="name"
+              control={control}
+              rules={{ required: 'Required' }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Material Name"
+                  fullWidth
+                  required
+                  variant="standard"
+                  error={!!errors.name}
+                  helperText={errors.name?.message}
+                  size="small"
+                />
+              )}
+            />
+          </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Controller
-            name="partNumber"
-            control={control}
-            rules={{ required: 'Required' }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Part Number / MPN"
-                fullWidth
-                required
-                variant="standard"
-                error={!!errors.partNumber}
-                helperText={
-                  errors.partNumber?.message || 'Manufacturer Part Number'
-                }
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                disabled={!!initialData}
-              />
-            )}
-          />
-        </Grid>
+          <Grid item xs={12} md={6}>
+            <Controller
+              name="partNumber"
+              control={control}
+              rules={{ required: 'Required' }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Part Number / MPN"
+                  fullWidth
+                  required
+                  variant="standard"
+                  error={!!errors.partNumber}
+                  helperText={
+                    errors.partNumber?.message || 'Manufacturer Part Number'
+                  }
+                  size="small"
+                  disabled={!!initialData}
+                />
+              )}
+            />
+          </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Controller
-            name="category"
-            control={control}
-            rules={{ required: 'Required' }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                select
-                label="Category"
-                fullWidth
-                required
-                variant="standard"
-                error={!!errors.category}
-                helperText={errors.category?.message}
-                size="small"
-                InputLabelProps={{ shrink: true }}
-              >
-                {CATEGORIES.map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    {opt.label}
+          <Grid item xs={12} md={6}>
+            <Controller
+              name="category"
+              control={control}
+              rules={{ required: 'Required' }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  select
+                  label="Category"
+                  fullWidth
+                  required
+                  variant="standard"
+                  error={!!errors.category}
+                  helperText={errors.category?.message}
+                  size="small"
+                >
+                  {CATEGORIES.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Controller
+              name="unit"
+              control={control}
+              rules={{ required: 'Required' }}
+              render={({ field }) => (
+                <Autocomplete
+                  {...field}
+                  freeSolo
+                  options={UNITS}
+                  onChange={(_, v) => field.onChange(v)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Unit"
+                      required
+                      variant="standard"
+                      error={!!errors.unit}
+                      helperText={errors.unit?.message || 'e.g. pcs, kg'}
+                      size="small"
+                    />
+                  )}
+                />
+              )}
+            />
+          </Grid>
+
+          {/* ── Stock ── */}
+          <Grid item xs={12}>
+            <Typography
+              variant="subtitle2"
+              fontWeight={600}
+              color="text.secondary"
+              sx={{ mt: 1 }}
+            >
+              Stock Management
+            </Typography>
+            {/* <Divider sx={{ my: 1.5 }} /> */}
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <Controller
+              name="currentStock"
+              control={control}
+              rules={{
+                required: 'Required',
+                min: { value: 0, message: '≥ 0' },
+              }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Current Stock"
+                  type="number"
+                  fullWidth
+                  required
+                  variant="standard"
+                  error={!!errors.currentStock}
+                  helperText={errors.currentStock?.message}
+                  size="small"
+                  inputProps={{ min: 0, step: 1 }}
+                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                />
+              )}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <Controller
+              name="reorderLevel"
+              control={control}
+              rules={{ required: 'Required', min: 0 }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Reorder Level"
+                  type="number"
+                  fullWidth
+                  required
+                  variant="standard"
+                  error={!!errors.reorderLevel}
+                  helperText={errors.reorderLevel?.message || 'Reorder trigger'}
+                  size="small"
+                  inputProps={{ min: 0, step: 1 }}
+                  onChange={(e) => field.onChange(Number(e.target.value) || 0)}
+                />
+              )}
+            />
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <Controller
+              name="maxStockLevel"
+              control={control}
+              rules={{ min: 0 }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Max Stock"
+                  type="number"
+                  fullWidth
+                  variant="standard"
+                  error={!!errors.maxStockLevel}
+                  helperText={errors.maxStockLevel?.message || 'Optional'}
+                  size="small"
+                  inputProps={{ min: 0, step: 1 }}
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value ? Number(e.target.value) : undefined
+                    )
+                  }
+                />
+              )}
+            />
+          </Grid>
+
+          {/* ── Cost & Supplier ── */}
+          <Grid item xs={12}>
+            <Typography
+              variant="subtitle2"
+              fontWeight={600}
+              color="text.secondary"
+              sx={{ mt: 1 }}
+            >
+              Cost & Supplier
+            </Typography>
+            {/* <Divider sx={{ my: 1.5 }} /> */}
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Controller
+              name="unitCost"
+              control={control}
+              rules={{ min: 0 }}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Unit Cost (₦)"
+                  type="number"
+                  fullWidth
+                  variant="standard"
+                  error={!!errors.unitCost}
+                  helperText={
+                    errors.unitCost?.message || 'Latest purchase price'
+                  }
+                  size="small"
+                  //                   InputLabelProps={{ shrink: true }}
+
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">₦</InputAdornment>
+                    ),
+                  }}
+                  inputProps={{ min: 0, step: 0.01 }}
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value ? Number(e.target.value) : undefined
+                    )
+                  }
+                />
+              )}
+            />
+          </Grid>
+
+          <Grid item xs={12} md={6}>
+            <Controller
+              name="supplierId"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  select
+                  label="Preferred Supplier"
+                  fullWidth
+                  variant="standard"
+                  size="small"
+                  helperText="Optional"
+                >
+                  <MenuItem value="">
+                    <em>None</em>
                   </MenuItem>
-                ))}
-              </TextField>
-            )}
-          />
-        </Grid>
+                  {suppliers.map((s) => (
+                    <MenuItem key={s.id} value={s.id}>
+                      {s.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
+          </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Controller
-            name="unit"
-            control={control}
-            rules={{ required: 'Required' }}
-            render={({ field }) => (
-              <Autocomplete
-                {...field}
-                freeSolo
-                options={UNITS}
-                onChange={(_, v) => field.onChange(v)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Unit"
-                    required
-                    variant="standard"
-                    error={!!errors.unit}
-                    helperText={errors.unit?.message || 'e.g. pcs, kg'}
-                    size="small"
-                    InputLabelProps={{ shrink: true }}
-                  />
-                )}
-              />
-            )}
-          />
-        </Grid>
-
-        {/* ── Stock ── */}
-        <Grid item xs={12}>
-          <Typography
-            variant="subtitle2"
-            fontWeight={600}
-            color="text.secondary"
-            sx={{ mt: 1 }}
-          >
-            Stock Management
-          </Typography>
-          {/* <Divider sx={{ my: 1.5 }} /> */}
-        </Grid>
-
-        <Grid item xs={12} sm={4}>
-          <Controller
-            name="currentStock"
-            control={control}
-            rules={{ required: 'Required', min: { value: 0, message: '≥ 0' } }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Current Stock"
-                type="number"
-                fullWidth
-                required
-                variant="standard"
-                error={!!errors.currentStock}
-                helperText={errors.currentStock?.message}
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                inputProps={{ min: 0, step: 1 }}
-                onChange={(e) => field.onChange(Number(e.target.value) || 0)}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={4}>
-          <Controller
-            name="reorderLevel"
-            control={control}
-            rules={{ required: 'Required', min: 0 }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Reorder Level"
-                type="number"
-                fullWidth
-                required
-                variant="standard"
-                error={!!errors.reorderLevel}
-                helperText={errors.reorderLevel?.message || 'Reorder trigger'}
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                inputProps={{ min: 0, step: 1 }}
-                onChange={(e) => field.onChange(Number(e.target.value) || 0)}
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={4}>
-          <Controller
-            name="maxStockLevel"
-            control={control}
-            rules={{ min: 0 }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Max Stock"
-                type="number"
-                fullWidth
-                variant="standard"
-                error={!!errors.maxStockLevel}
-                helperText={errors.maxStockLevel?.message || 'Optional'}
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                inputProps={{ min: 0, step: 1 }}
-                onChange={(e) =>
-                  field.onChange(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-              />
-            )}
-          />
-        </Grid>
-
-        {/* ── Cost & Supplier ── */}
-        <Grid item xs={12}>
-          <Typography
-            variant="subtitle2"
-            fontWeight={600}
-            color="text.secondary"
-            sx={{ mt: 1 }}
-          >
-            Cost & Supplier
-          </Typography>
-          {/* <Divider sx={{ my: 1.5 }} /> */}
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Controller
-            name="unitCost"
-            control={control}
-            rules={{ min: 0 }}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                label="Unit Cost (₦)"
-                type="number"
-                fullWidth
-                variant="standard"
-                error={!!errors.unitCost}
-                helperText={errors.unitCost?.message || 'Latest purchase price'}
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">₦</InputAdornment>
-                  ),
-                }}
-                inputProps={{ min: 0, step: 0.01 }}
-                onChange={(e) =>
-                  field.onChange(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-              />
-            )}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Controller
-            name="supplierId"
-            control={control}
-            render={({ field }) => (
-              <TextField
-                {...field}
-                select
-                label="Preferred Supplier"
-                fullWidth
-                variant="standard"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                helperText="Optional"
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                {suppliers.map((s) => (
-                  <MenuItem key={s.id} value={s.id}>
-                    {s.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            )}
-          />
-        </Grid>
-
-        {/* Alerts */}
-        {/* <Grid item xs={12}>
+          {/* Alerts */}
+          {/* <Grid item xs={12}>
           <Box sx={{ mt: 1.5 }}>
             {totalValue > 0 && (
               <Alert severity="info" sx={{ py: 1, mb: 1.5 }}>
@@ -857,49 +851,50 @@ export default function MaterialForm({
           </Box>
         </Grid> */}
 
-        {/* Warning if stock below reorder level */}
-        {currentStock <= reorderLevel && (
-          <Grid item xs={12}>
-            <Alert
-              severity="warning"
-              sx={{
-                fontSize: '14px',
-              }}
-            >
-              <strong>Warning:</strong> Current stock is at or below reorder
-              level.
-            </Alert>
-          </Grid>
-        )}
+          {/* Warning if stock below reorder level */}
+          {currentStock <= reorderLevel && (
+            <Grid item xs={12}>
+              <Alert
+                severity="warning"
+                sx={{
+                  fontSize: '14px',
+                }}
+              >
+                <strong>Warning:</strong> Current stock is at or below reorder
+                level.
+              </Alert>
+            </Grid>
+          )}
 
-        {/* Actions */}
-        <Grid item xs={12} sx={{ mt: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button
-              variant="outlined"
-              onClick={onCancel}
-              disabled={isLoading}
-              size="medium"
-              sx={{ minWidth: 100 }}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={isLoading}
-              sx={{
-                minWidth: 140,
-                bgcolor: '#0F172A',
-                fontWeight: 'bold',
-                '&:hover': { bgcolor: '#1e293b' },
-              }}
-            >
-              {isLoading ? 'Saving...' : initialData ? 'Update' : 'Create'}
-            </Button>
-          </Box>
+          {/* Actions */}
+          <Grid item xs={12} sx={{ mt: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+              <Button
+                variant="outlined"
+                onClick={onCancel}
+                disabled={isLoading}
+                size="medium"
+                sx={{ minWidth: 100 }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isLoading}
+                sx={{
+                  minWidth: 140,
+                  bgcolor: '#0F172A',
+                  fontWeight: 'bold',
+                  '&:hover': { bgcolor: '#1e293b' },
+                }}
+              >
+                {isLoading ? 'Saving...' : initialData ? 'Update' : 'Create'}
+              </Button>
+            </Box>
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Box>
+    </Paper>
   );
 }
