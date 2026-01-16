@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
+    const search = searchParams.get('search') || '';
     const materialId = searchParams.get('materialId') || '';
     const orderId = searchParams.get('orderId') || '';
 
@@ -28,6 +29,13 @@ export async function GET(request: NextRequest) {
 
     if (orderId) {
       where.orderId = orderId;
+    }
+
+    if (search) {
+      where.OR = [
+        { batchNumber: { contains: search, mode: 'insensitive' } },
+        { issuedBy: { contains: search, mode: 'insensitive' } },
+      ];
     }
 
     const [issuances, total] = await Promise.all([

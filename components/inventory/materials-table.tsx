@@ -266,7 +266,7 @@ export default function MaterialsTable({
                     <Typography variant="body2">{material.name}</Typography>
                   </StyledTableCell>
                   <StyledTableCell>
-                    <Chip
+                    {/* <Chip
                       label={material.category.replace(/_/g, ' ')}
                       color={getCategoryColor(material.category)}
                       size="small"
@@ -275,6 +275,17 @@ export default function MaterialsTable({
                         fontWeight: 500,
                         fontSize: 12,
                         color: '#1976d2',
+                      }}
+                    /> */}
+
+                    <Chip
+                      label={material.category.replace(/_/g, ' ')}
+                      size="small"
+                      variant="outlined"
+                      sx={{
+                        borderRadius: '4px',
+                        fontWeight: 500,
+                        fontSize: '11px',
                       }}
                     />
                   </StyledTableCell>

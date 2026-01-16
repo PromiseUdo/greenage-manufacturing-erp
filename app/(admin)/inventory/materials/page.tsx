@@ -372,14 +372,33 @@ export default function MaterialsPage() {
       </Paper>
 
       {/* Materials Table */}
-      <MaterialsTable
-        materials={materials}
-        total={total}
-        page={page}
-        limit={limit}
-        onPageChange={setPage}
-        onLimitChange={setLimit}
-      />
+
+      {loading ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 6,
+            textAlign: 'center',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+          }}
+        >
+          <CircularProgress />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Loading materials...
+          </Typography>
+        </Paper>
+      ) : (
+        <MaterialsTable
+          materials={materials}
+          total={total}
+          page={page}
+          limit={limit}
+          onPageChange={setPage}
+          onLimitChange={setLimit}
+        />
+      )}
     </Box>
   );
 }

@@ -20,6 +20,9 @@ import {
   InputAdornment,
   Card,
   CardContent,
+  IconButton,
+  Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -31,6 +34,7 @@ import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { IssuanceWithMaterial } from '@/types/inventory';
 import Grid from '@mui/material/GridLegacy';
+import IssuancesTable from '@/components/inventory/issuance-table';
 
 export default function IssuancesPage() {
   const router = useRouter();
@@ -49,7 +53,7 @@ export default function IssuancesPage() {
   useEffect(() => {
     fetchIssuances();
     fetchStats();
-  }, [page, limit]);
+  }, [page, limit, search]);
 
   const fetchIssuances = async () => {
     setLoading(true);
@@ -57,6 +61,7 @@ export default function IssuancesPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
+        ...(search && { search }),
       });
 
       const res = await fetch(`/api/inventory/issuances?${params}`);
@@ -68,6 +73,11 @@ export default function IssuancesPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+    setPage(1);
   };
 
   const fetchStats = async () => {
@@ -118,245 +128,89 @@ export default function IssuancesPage() {
         }}
       >
         <Box>
-          <Typography variant="h4" fontWeight={600}>
+          <Typography variant="h6" fontWeight={600}>
             Material Issuances
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{
+              fontSize: 14,
+            }}
+          >
             Track all materials issued from inventory
           </Typography>
         </Box>
         <Button
           variant="contained"
-          startIcon={<AddIcon />}
+          // startIcon={<AddIcon />}
+          sx={{
+            fontWeight: 'bold',
+            textTransform: 'uppercase',
+          }}
           onClick={() => router.push('/inventory/issuance/new')}
         >
           Issue Material
         </Button>
       </Box>
 
-      {/* Statistics Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Box
-                  sx={{
-                    backgroundColor: 'primary.light',
-                    borderRadius: 2,
-                    p: 1,
-                    display: 'flex',
-                    mr: 2,
-                  }}
-                >
-                  <TrendingDownIcon sx={{ color: 'primary.main' }} />
-                </Box>
-                <Typography variant="body2" color="text.secondary">
-                  Total Issuances
-                </Typography>
-              </Box>
-              <Typography variant="h4" fontWeight={600}>
-                {stats.totalIssuances}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2,
+          mb: 3,
+          borderRadius: 2,
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+        }}
+      >
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Search by batch number or issued by..."
+          value={search}
+          onChange={handleSearchChange}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ maxWidth: 500, fontSize: 14 }}
+        />
+      </Paper>
 
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Box
-                  sx={{
-                    backgroundColor: 'success.light',
-                    borderRadius: 2,
-                    p: 1,
-                    display: 'flex',
-                    mr: 2,
-                  }}
-                >
-                  <CalendarIcon sx={{ color: 'success.main' }} />
-                </Box>
-                <Typography variant="body2" color="text.secondary">
-                  Last 7 Days
-                </Typography>
-              </Box>
-              <Typography variant="h4" fontWeight={600}>
-                {stats.last7Days}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Box
-                  sx={{
-                    backgroundColor: 'info.light',
-                    borderRadius: 2,
-                    p: 1,
-                    display: 'flex',
-                    mr: 2,
-                  }}
-                >
-                  <CalendarIcon sx={{ color: 'info.main' }} />
-                </Box>
-                <Typography variant="body2" color="text.secondary">
-                  Last 30 Days
-                </Typography>
-              </Box>
-              <Typography variant="h4" fontWeight={600}>
-                {stats.last30Days}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Issuances Table */}
-      <Paper>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <strong>Date & Time</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Material</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Part Number</strong>
-                </TableCell>
-                <TableCell align="right">
-                  <strong>Quantity</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Batch Number</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Issued To</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Issued By</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Purpose</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Order</strong>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {issuances.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                    <Typography variant="body1" color="text.secondary">
-                      No issuances found
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 1 }}
-                    >
-                      Issue your first material to get started
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                issuances.map((issuance) => (
-                  <TableRow key={issuance.id} hover>
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body2" fontWeight={600}>
-                          {format(new Date(issuance.issuedAt), 'MMM dd, yyyy')}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {format(new Date(issuance.issuedAt), 'hh:mm a')}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={500}>
-                        {issuance.material.name}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={issuance.material.partNumber}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        color="error"
-                      >
-                        -{issuance.quantity} {issuance.material.unit}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip label={issuance.batchNumber} size="small" />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {issuance.issuedTo}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2" color="text.secondary">
-                        {issuance.issuedBy}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          maxWidth: 200,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {issuance.purpose || '-'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {issuance.orderId ? (
-                        <Chip
-                          label={issuance.orderId}
-                          size="small"
-                          color="primary"
-                          variant="outlined"
-                        />
-                      ) : (
-                        '-'
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[10, 20, 50, 100]}
-          component="div"
-          count={total}
-          rowsPerPage={limit}
-          page={page - 1}
-          onPageChange={(_, newPage) => setPage(newPage + 1)}
-          onRowsPerPageChange={(e) => {
-            setLimit(parseInt(e.target.value));
+      {loading ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 6,
+            textAlign: 'center',
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+          }}
+        >
+          <CircularProgress />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Loading issuances...
+          </Typography>
+        </Paper>
+      ) : (
+        <IssuancesTable
+          issuances={issuances}
+          total={total}
+          page={page}
+          limit={limit}
+          onPageChange={(p) => setPage(p)}
+          onLimitChange={(l) => {
+            setLimit(l);
             setPage(1);
           }}
         />
-      </Paper>
+      )}
     </Box>
   );
 }

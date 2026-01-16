@@ -150,15 +150,6 @@ export default function InventoryStats({
                 >
                   {stat.value}
                 </Typography>
-                {/* <Typography
-                  sx={{
-                    fontSize: 12,
-                  }}
-                  variant="body2"
-                  color="text.secondary"
-                >
-                  {stat.title}
-                </Typography> */}
               </CardContent>
             </Card>
           </Grid>
