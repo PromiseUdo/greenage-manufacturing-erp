@@ -183,7 +183,7 @@ export default function IssuancesTable({
                     size="small"
                     variant="outlined"
                     sx={{
-                      borderRadius: '4px',
+                      // borderRadius: '4px',
                       fontWeight: 500,
                       fontSize: '11px',
                     }}

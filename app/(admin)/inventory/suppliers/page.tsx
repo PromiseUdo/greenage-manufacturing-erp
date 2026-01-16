@@ -1045,7 +1045,7 @@ export default function SuppliersPage() {
                       fullWidth
                       placeholder="e.g. Net 30 days • 50% advance • Cash on delivery"
                       variant="standard"
-                      helperText="Common terms: Net 30, Net 60, 2/10 Net 30, etc."
+                      helperText="E.g.Net 30, Net 60, etc."
                       InputLabelProps={{ shrink: true }}
                     />
                   )}
