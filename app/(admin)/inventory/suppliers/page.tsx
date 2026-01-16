@@ -651,7 +651,7 @@ export default function SuppliersPage() {
         </Paper>
       )}
 
-      <Dialog
+      {/* <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
         maxWidth="md"
@@ -886,7 +886,204 @@ export default function SuppliersPage() {
             <Button onClick={handleCloseDialog} variant="outlined">
               Cancel
             </Button>
-            <Button type="submit" variant="contained" disableElevation>
+            <Button
+              type="submit"
+              sx={{
+                fontWeight: 'bold',
+              }}
+              variant="contained"
+              disableElevation
+            >
+              {editingSupplier ? 'Update Supplier' : 'Create Supplier'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog> */}
+
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+        fullScreen={fullScreen}
+        PaperProps={{
+          elevation: 4,
+          sx: {
+            borderRadius: 2,
+            overflow: 'hidden',
+          },
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            px: 4,
+            py: 3,
+            bgcolor: '#0F172A',
+            color: 'white',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Typography variant="h6" component="div" fontWeight={600}>
+            {editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.8, mt: 0.5 }}>
+            {editingSupplier
+              ? 'Update the supplier details below'
+              : 'Fill in the information to register a new supplier'}
+          </Typography>
+        </Box>
+
+        {/* Form Content */}
+        <form onSubmit={handleSubmit(handleSaveSupplier)}>
+          <DialogContent sx={{ px: 4, py: 4 }}>
+            <Grid container spacing={3}>
+              {/* Required fields - first row */}
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="name"
+                  control={control}
+                  rules={{ required: 'Supplier name is required' }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Supplier Name"
+                      fullWidth
+                      required
+                      variant="standard"
+                      error={!!errors.name}
+                      helperText={errors.name?.message}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="contactPerson"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Contact Person"
+                      fullWidth
+                      variant="standard"
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Phone & Email */}
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="phone"
+                  control={control}
+                  rules={{ required: 'Phone number is required' }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Phone Number"
+                      fullWidth
+                      required
+                      variant="standard"
+                      error={!!errors.phone}
+                      helperText={errors.phone?.message}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="email"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Email Address"
+                      type="email"
+                      fullWidth
+                      variant="standard"
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Address - full width */}
+              <Grid item xs={12}>
+                <Controller
+                  name="address"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Address"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      variant="standard"
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Payment Terms */}
+              <Grid item xs={12}>
+                <Controller
+                  name="paymentTerms"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Payment Terms"
+                      fullWidth
+                      placeholder="e.g. Net 30 days • 50% advance • Cash on delivery"
+                      variant="standard"
+                      helperText="Common terms: Net 30, Net 60, 2/10 Net 30, etc."
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+
+          {/* Actions */}
+          <DialogActions
+            sx={{
+              px: 4,
+              py: 3,
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'grey.50',
+            }}
+          >
+            <Button
+              onClick={handleCloseDialog}
+              variant="outlined"
+              color="inherit"
+              sx={{ minWidth: 100 }}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="submit"
+              variant="contained"
+              disableElevation
+              sx={{
+                minWidth: 140,
+                bgcolor: '#0F172A',
+                fontWeight: 'bold',
+                '&:hover': { bgcolor: '#1E293B' },
+              }}
+            >
               {editingSupplier ? 'Update Supplier' : 'Create Supplier'}
             </Button>
           </DialogActions>

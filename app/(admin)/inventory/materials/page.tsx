@@ -194,7 +194,7 @@ export default function MaterialsPage() {
               textTransform: 'uppercase',
               borderColor: '#0F172A',
               color: '#0F172A',
-              fontWeight: 'bold',
+              // fontWeight: 'bold',
               fontSize: 14,
               '&:hover': {
                 borderColor: '#0F172A',
