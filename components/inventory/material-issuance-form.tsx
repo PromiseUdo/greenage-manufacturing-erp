@@ -90,36 +90,28 @@ export default function MaterialIssuanceForm({
     selectedMaterial && quantity > selectedMaterial.currentStock;
 
   return (
-    <Paper sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Issue Material
-      </Typography>
-      <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
-        <Grid container spacing={3}>
+    <Paper sx={{ p: 4, borderRadius: 2, marginBottom: '20px' }}>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+        <Grid container spacing={4}>
+          {/* Header */}
+          <Grid item xs={12}>
+            <Typography variant="h6" fontWeight={600}>
+              Issue Material
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Record material issuance from inventory
+            </Typography>
+          </Grid>
+
           {/* Material Selection */}
           <Grid item xs={12}>
             <Autocomplete
-              // options={materials}
               options={materials ?? []}
               loading={loadingMaterials}
               getOptionLabel={(option) =>
-                `${option.partNumber} - ${option.name}`
+                `${option.partNumber} – ${option.name}`
               }
               onChange={(_, value) => handleMaterialChange(value)}
-              // renderOption={(props, option) => (
-              //   <Box component="li" key={key} {...rest}>
-              //     <Box sx={{ flexGrow: 1 }}>
-              //       <Typography variant="body2" fontWeight={600}>
-              //         {option.name}
-              //       </Typography>
-              //       <Typography variant="caption" color="text.secondary">
-              //         {option.partNumber} | Stock: {option.currentStock}{' '}
-              //         {option.unit}
-              //       </Typography>
-              //     </Box>
-              //   </Box>
-              // )}
-
               renderOption={(props, option) => {
                 const { key, ...rest } = props;
                 return (
@@ -129,7 +121,7 @@ export default function MaterialIssuanceForm({
                         {option.name}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {option.partNumber} | Stock: {option.currentStock}{' '}
+                        {option.partNumber} • Stock: {option.currentStock}{' '}
                         {option.unit}
                       </Typography>
                     </Box>
@@ -139,25 +131,45 @@ export default function MaterialIssuanceForm({
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Select Material"
+                  label="Material"
+                  variant="standard"
                   required
                   error={!!errors.materialId}
                   helperText={
                     errors.materialId?.message ||
-                    'Search by name or part number'
+                    'Search by material name or part number'
                   }
                 />
               )}
             />
           </Grid>
 
-          {/* Current Stock Info */}
+          {/* Stock Info */}
           {selectedMaterial && (
-            <Grid item xs={12}>
-              <Alert severity="info">
-                <strong>Available Stock:</strong>{' '}
-                {selectedMaterial.currentStock} {selectedMaterial.unit}
-              </Alert>
+            <Grid
+              item
+              xs={12}
+              sx={{
+                marginTop: -2,
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  px: 1,
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  Available Stock:
+                </Typography>
+                <Chip
+                  size="small"
+                  label={`${selectedMaterial.currentStock} ${selectedMaterial.unit}`}
+                  color={insufficientStock ? 'error' : 'default'}
+                />
+              </Box>
             </Grid>
           )}
 
@@ -173,10 +185,10 @@ export default function MaterialIssuanceForm({
               render={({ field }) => (
                 <TextField
                   {...field}
-                  label="Quantity to Issue"
+                  label="Quantity"
+                  variant="standard"
                   type="number"
                   fullWidth
-                  value={field.value ?? ''}
                   required
                   error={!!errors.quantity || insufficientStock || undefined}
                   helperText={
@@ -187,10 +199,11 @@ export default function MaterialIssuanceForm({
                       ? `Unit: ${selectedMaterial.unit}`
                       : '')
                   }
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    field.onChange(value === '' ? '' : parseFloat(value));
-                  }}
+                  onChange={(e) =>
+                    field.onChange(
+                      e.target.value === '' ? '' : Number(e.target.value)
+                    )
+                  }
                   disabled={!selectedMaterial}
                 />
               )}
@@ -207,13 +220,11 @@ export default function MaterialIssuanceForm({
                 <TextField
                   {...field}
                   label="Batch Number"
+                  variant="standard"
                   fullWidth
                   required
                   error={!!errors.batchNumber}
-                  helperText={
-                    errors.batchNumber?.message ||
-                    'Enter the batch number being issued'
-                  }
+                  helperText={errors.batchNumber?.message}
                   disabled={!selectedMaterial}
                 />
               )}
@@ -230,11 +241,13 @@ export default function MaterialIssuanceForm({
                 <TextField
                   {...field}
                   label="Issued To"
+                  variant="standard"
                   fullWidth
                   required
                   error={!!errors.issuedTo}
                   helperText={
-                    errors.issuedTo?.message || 'Department or operator name'
+                    errors.issuedTo?.message ||
+                    'Department, operator, or location'
                   }
                   disabled={!selectedMaterial}
                 />
@@ -242,7 +255,7 @@ export default function MaterialIssuanceForm({
             />
           </Grid>
 
-          {/* Order ID (Optional) */}
+          {/* Order ID */}
           <Grid item xs={12} md={6}>
             <Controller
               name="orderId"
@@ -250,9 +263,10 @@ export default function MaterialIssuanceForm({
               render={({ field }) => (
                 <TextField
                   {...field}
-                  label="Order Number (Optional)"
+                  label="Order Number"
+                  variant="standard"
                   fullWidth
-                  helperText="Link to production order if applicable"
+                  helperText="Optional production or job reference"
                   disabled={!selectedMaterial}
                 />
               )}
@@ -268,24 +282,26 @@ export default function MaterialIssuanceForm({
                 <TextField
                   {...field}
                   label="Purpose / Notes"
+                  variant="standard"
                   fullWidth
                   multiline
                   rows={3}
-                  helperText="Optional notes about this issuance"
                   disabled={!selectedMaterial}
                 />
               )}
             />
           </Grid>
 
-          {/* Action Buttons */}
+          {/* Actions */}
           <Grid item xs={12}>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-              <Button
-                variant="outlined"
-                onClick={onCancel}
-                disabled={isLoading}
-              >
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 2,
+              }}
+            >
+              <Button variant="text" onClick={onCancel} disabled={isLoading}>
                 Cancel
               </Button>
               <Button
@@ -293,7 +309,7 @@ export default function MaterialIssuanceForm({
                 variant="contained"
                 disabled={isLoading || insufficientStock || !selectedMaterial}
               >
-                {isLoading ? 'Issuing...' : 'Issue Material'}
+                {isLoading ? 'Issuing…' : 'Issue Material'}
               </Button>
             </Box>
           </Grid>
@@ -301,4 +317,217 @@ export default function MaterialIssuanceForm({
       </Box>
     </Paper>
   );
+
+  // return (
+  //   <Paper sx={{ p: 3 }}>
+  //     <Typography variant="h6" gutterBottom>
+  //       Issue Material
+  //     </Typography>
+  //     <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ mt: 3 }}>
+  //       <Grid container spacing={3}>
+  //         {/* Material Selection */}
+  //         <Grid item xs={12}>
+  //           <Autocomplete
+  //             // options={materials}
+  //             options={materials ?? []}
+  //             loading={loadingMaterials}
+  //             getOptionLabel={(option) =>
+  //               `${option.partNumber} - ${option.name}`
+  //             }
+  //             onChange={(_, value) => handleMaterialChange(value)}
+  //             // renderOption={(props, option) => (
+  //             //   <Box component="li" key={key} {...rest}>
+  //             //     <Box sx={{ flexGrow: 1 }}>
+  //             //       <Typography variant="body2" fontWeight={600}>
+  //             //         {option.name}
+  //             //       </Typography>
+  //             //       <Typography variant="caption" color="text.secondary">
+  //             //         {option.partNumber} | Stock: {option.currentStock}{' '}
+  //             //         {option.unit}
+  //             //       </Typography>
+  //             //     </Box>
+  //             //   </Box>
+  //             // )}
+
+  //             renderOption={(props, option) => {
+  //               const { key, ...rest } = props;
+  //               return (
+  //                 <Box component="li" key={key} {...rest}>
+  //                   <Box sx={{ flexGrow: 1 }}>
+  //                     <Typography variant="body2" fontWeight={600}>
+  //                       {option.name}
+  //                     </Typography>
+  //                     <Typography variant="caption" color="text.secondary">
+  //                       {option.partNumber} | Stock: {option.currentStock}{' '}
+  //                       {option.unit}
+  //                     </Typography>
+  //                   </Box>
+  //                 </Box>
+  //               );
+  //             }}
+  //             renderInput={(params) => (
+  //               <TextField
+  //                 {...params}
+  //                 label="Select Material"
+  //                 required
+  //                 error={!!errors.materialId}
+  //                 helperText={
+  //                   errors.materialId?.message ||
+  //                   'Search by name or part number'
+  //                 }
+  //               />
+  //             )}
+  //           />
+  //         </Grid>
+
+  //         {/* Current Stock Info */}
+  //         {selectedMaterial && (
+  //           <Grid item xs={12}>
+  //             <Alert severity="info">
+  //               <strong>Available Stock:</strong>{' '}
+  //               {selectedMaterial.currentStock} {selectedMaterial.unit}
+  //             </Alert>
+  //           </Grid>
+  //         )}
+
+  //         {/* Quantity */}
+  //         <Grid item xs={12} md={6}>
+  //           <Controller
+  //             name="quantity"
+  //             control={control}
+  //             rules={{
+  //               required: 'Quantity is required',
+  //               min: { value: 0.01, message: 'Must be greater than 0' },
+  //             }}
+  //             render={({ field }) => (
+  //               <TextField
+  //                 {...field}
+  //                 label="Quantity to Issue"
+  //                 type="number"
+  //                 fullWidth
+  //                 value={field.value ?? ''}
+  //                 required
+  //                 error={!!errors.quantity || insufficientStock || undefined}
+  //                 helperText={
+  //                   errors.quantity?.message ||
+  //                   (insufficientStock
+  //                     ? 'Insufficient stock available'
+  //                     : selectedMaterial
+  //                     ? `Unit: ${selectedMaterial.unit}`
+  //                     : '')
+  //                 }
+  //                 onChange={(e) => {
+  //                   const value = e.target.value;
+  //                   field.onChange(value === '' ? '' : parseFloat(value));
+  //                 }}
+  //                 disabled={!selectedMaterial}
+  //               />
+  //             )}
+  //           />
+  //         </Grid>
+
+  //         {/* Batch Number */}
+  //         <Grid item xs={12} md={6}>
+  //           <Controller
+  //             name="batchNumber"
+  //             control={control}
+  //             rules={{ required: 'Batch number is required' }}
+  //             render={({ field }) => (
+  //               <TextField
+  //                 {...field}
+  //                 label="Batch Number"
+  //                 fullWidth
+  //                 required
+  //                 error={!!errors.batchNumber}
+  //                 helperText={
+  //                   errors.batchNumber?.message ||
+  //                   'Enter the batch number being issued'
+  //                 }
+  //                 disabled={!selectedMaterial}
+  //               />
+  //             )}
+  //           />
+  //         </Grid>
+
+  //         {/* Issued To */}
+  //         <Grid item xs={12} md={6}>
+  //           <Controller
+  //             name="issuedTo"
+  //             control={control}
+  //             rules={{ required: 'Recipient is required' }}
+  //             render={({ field }) => (
+  //               <TextField
+  //                 {...field}
+  //                 label="Issued To"
+  //                 fullWidth
+  //                 required
+  //                 error={!!errors.issuedTo}
+  //                 helperText={
+  //                   errors.issuedTo?.message || 'Department or operator name'
+  //                 }
+  //                 disabled={!selectedMaterial}
+  //               />
+  //             )}
+  //           />
+  //         </Grid>
+
+  //         {/* Order ID (Optional) */}
+  //         <Grid item xs={12} md={6}>
+  //           <Controller
+  //             name="orderId"
+  //             control={control}
+  //             render={({ field }) => (
+  //               <TextField
+  //                 {...field}
+  //                 label="Order Number (Optional)"
+  //                 fullWidth
+  //                 helperText="Link to production order if applicable"
+  //                 disabled={!selectedMaterial}
+  //               />
+  //             )}
+  //           />
+  //         </Grid>
+
+  //         {/* Purpose */}
+  //         <Grid item xs={12}>
+  //           <Controller
+  //             name="purpose"
+  //             control={control}
+  //             render={({ field }) => (
+  //               <TextField
+  //                 {...field}
+  //                 label="Purpose / Notes"
+  //                 fullWidth
+  //                 multiline
+  //                 rows={3}
+  //                 helperText="Optional notes about this issuance"
+  //                 disabled={!selectedMaterial}
+  //               />
+  //             )}
+  //           />
+  //         </Grid>
+
+  //         {/* Action Buttons */}
+  //         <Grid item xs={12}>
+  //           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+  //             <Button
+  //               variant="outlined"
+  //               onClick={onCancel}
+  //               disabled={isLoading}
+  //             >
+  //               Cancel
+  //             </Button>
+  //             <Button
+  //               type="submit"
+  //               variant="contained"
+  //               disabled={isLoading || insufficientStock || !selectedMaterial}
+  //             >
+  //               {isLoading ? 'Issuing...' : 'Issue Material'}
+  //             </Button>
+  //           </Box>
+  //         </Grid>
+  //       </Grid>
+  //     </Box>
+  //   </Paper>
+  // );
 }

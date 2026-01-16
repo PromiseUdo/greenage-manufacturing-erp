@@ -47,10 +47,14 @@ export default function MaterialIssuancePage() {
 
   return (
     <Box>
-      <Typography variant="h4" fontWeight={600}>
+      <Typography variant="h6" fontWeight={600}>
         Issue Material
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        sx={{ mb: 3, fontSize: '14px' }}
+      >
         Issue materials from inventory to production or other departments
       </Typography>
 
