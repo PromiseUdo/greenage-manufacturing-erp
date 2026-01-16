@@ -111,7 +111,8 @@ export default function InventoryStats({
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
+                    justifyContent: 'items-start',
+                    gap: '8px',
                     mb: 2,
                   }}
                 >
