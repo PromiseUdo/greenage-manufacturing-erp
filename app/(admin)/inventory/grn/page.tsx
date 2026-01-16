@@ -1189,7 +1189,7 @@ export default function GRNPage() {
       )}
 
       {/* GRN Details Dialog */}
-      <Dialog
+      {/* <Dialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         maxWidth="md"
@@ -1306,6 +1306,219 @@ export default function GRNPage() {
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={() => setDialogOpen(false)} variant="outlined">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog> */}
+
+      {/* GRN Details Dialog */}
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          elevation: 4,
+          sx: {
+            borderRadius: 2,
+            overflow: 'hidden',
+          },
+        }}
+      >
+        {/* Header */}
+        <Box
+          sx={{
+            px: 4,
+            py: 3,
+            bgcolor: '#0F172A',
+            color: 'white',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Typography variant="h6" fontWeight={600}>
+              GRN Details
+            </Typography>
+            <Chip
+              label={selectedGRN?.grnNumber}
+              size="small"
+              sx={{
+                bgcolor: '#dcfce7',
+                color: '#16a34a',
+                fontWeight: 600,
+              }}
+            />
+          </Box>
+
+          <Typography variant="body2" sx={{ opacity: 0.8, mt: 0.5 }}>
+            View complete information for this goods received note
+          </Typography>
+        </Box>
+
+        {/* Content */}
+        <DialogContent sx={{ px: 4, py: 4 }}>
+          {selectedGRN && (
+            <Box>
+              {/* Summary Section */}
+              <Grid container spacing={3} sx={{ mb: 4 }}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Supplier
+                  </Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {selectedGRN.supplier.name}
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Date Received
+                  </Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {format(
+                      new Date(selectedGRN.receivedDate),
+                      'MMM dd, yyyy hh:mm a'
+                    )}
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Invoice Number
+                  </Typography>
+                  {selectedGRN.invoiceNumber ? (
+                    <Chip
+                      label={selectedGRN.invoiceNumber}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontWeight: 500 }}
+                    />
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      —
+                    </Typography>
+                  )}
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" color="text.secondary">
+                    Received By
+                  </Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {selectedGRN.receivedBy}
+                  </Typography>
+                </Grid>
+
+                {selectedGRN.notes && (
+                  <Grid item xs={12}>
+                    <Typography variant="body2" color="text.secondary">
+                      Notes
+                    </Typography>
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        mt: 1,
+                        p: 2,
+                        bgcolor: 'grey.50',
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {selectedGRN.notes}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                )}
+              </Grid>
+
+              {/* Items Section */}
+              <Box>
+                <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+                  Items Received
+                </Typography>
+
+                <Paper
+                  elevation={0}
+                  sx={{
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: '#F8FAFC' }}>
+                        <TableCell sx={{ fontWeight: 600 }}>Material</TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 600 }}>
+                          Quantity
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          Batch Number
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {selectedGRN.batches?.map((batch) => (
+                        <TableRow
+                          key={batch.id}
+                          sx={{
+                            '&:hover': { bgcolor: 'action.hover' },
+                          }}
+                        >
+                          <TableCell>
+                            <Typography variant="body2">
+                              {batch.material?.name}
+                            </Typography>
+                          </TableCell>
+
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight={600}>
+                              {batch.quantity} {batch.material?.unit}
+                            </Typography>
+                          </TableCell>
+
+                          <TableCell>
+                            <Chip
+                              label={batch.batchNumber}
+                              size="small"
+                              sx={{
+                                bgcolor: '#fef3c7',
+                                color: '#f59e0b',
+                                fontWeight: 500,
+                                fontSize: 11,
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Paper>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+
+        {/* Actions */}
+        <DialogActions
+          sx={{
+            px: 4,
+            py: 3,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'grey.50',
+          }}
+        >
+          <Button
+            onClick={() => setDialogOpen(false)}
+            variant="outlined"
+            color="inherit"
+            sx={{ minWidth: 100 }}
+          >
             Close
           </Button>
         </DialogActions>
