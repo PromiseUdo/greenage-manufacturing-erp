@@ -41,7 +41,7 @@ export const navigation: { section: string; items: NavItem[] }[] = [
     section: 'Main',
     items: [
       { label: 'Dashboard', path: '/dashboard', icon: DashboardIcon },
-      { label: 'Orders', path: '/orders', icon: ShoppingCartIcon },
+      // { label: 'Orders', path: '/orders', icon: ShoppingCartIcon },
     ],
   },
   {
