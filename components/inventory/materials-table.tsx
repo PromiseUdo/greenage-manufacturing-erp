@@ -102,7 +102,7 @@ export default function MaterialsTable({
   // const [material, setMaterial] = useState<MaterialWithRelations | null>(materials);
 
   const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     onLimitChange(parseInt(event.target.value, 10));
     onPageChange(1);
@@ -157,28 +157,6 @@ export default function MaterialsTable({
       minimumFractionDigits: 0,
     }).format(amount);
   };
-
-  // if (materials.length === 0) {
-  //   return (
-  //     <Paper
-  //       elevation={0}
-  //       sx={{
-  //         p: 6,
-  //         textAlign: 'center',
-  //         border: '1px solid',
-  //         borderColor: 'divider',
-  //         borderRadius: 2,
-  //       }}
-  //     >
-  //       <Typography variant="h6" color="text.secondary" gutterBottom>
-  //         No materials found
-  //       </Typography>
-  //       <Typography variant="body2" color="text.secondary">
-  //         Create your first material to get started
-  //       </Typography>
-  //     </Paper>
-  //   );
-  // }
 
   if (materials?.length === 0) {
     return (
@@ -379,7 +357,7 @@ export default function MaterialsTable({
                           size="small"
                           onClick={() =>
                             router.push(
-                              `/inventory/materials/${material.id}/edit`
+                              `/inventory/materials/${material.id}/edit`,
                             )
                           }
                           sx={{

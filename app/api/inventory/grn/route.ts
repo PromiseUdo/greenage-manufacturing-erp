@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching GRNs:', error);
     return NextResponse.json(
       { error: 'Failed to fetch GRNs' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     if (!supplierId || !items || items.length === 0) {
       return NextResponse.json(
         { error: 'Supplier and items are required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -178,7 +178,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating GRN:', error);
     return NextResponse.json(
       { error: 'Failed to create GRN' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
