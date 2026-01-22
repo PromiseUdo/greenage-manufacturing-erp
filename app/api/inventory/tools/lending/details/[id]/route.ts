@@ -1,20 +1,21 @@
-// src/app/api/inventory/lendingdetails/[id]/route.ts
+// src/app/api/inventory/tools/lending/details/[id]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
 export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } },
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
 ) {
+  const { id } = await context.params;
   try {
     const session = await auth();
     if (!session) return unauthorized();
 
     const lending = await prisma.toolLending.findFirst({
       where: {
-        toolId: params.id,
+        toolId: id,
         status: 'ISSUED', // only get active one
       },
       orderBy: { issuedAt: 'desc' }, // most recent if somehow multiple
