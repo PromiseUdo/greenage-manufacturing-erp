@@ -31,12 +31,20 @@ interface ToolLendingFormProps {
   onSubmit: (data: ToolLendingFormData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
+  preselectedToolId?: string | null;
 }
+
+// interface ToolLendingFormProps {
+//   onSubmit: (data: ToolLendingFormData) => Promise<void>;
+//   onCancel: () => void;
+//   isLoading?: boolean;
+// }
 
 export default function ToolLendingForm({
   onSubmit,
   onCancel,
   isLoading = false,
+  preselectedToolId,
 }: ToolLendingFormProps) {
   const [tools, setTools] = useState<Tool[]>([]);
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
@@ -58,6 +66,16 @@ export default function ToolLendingForm({
       expectedReturn: undefined,
     },
   });
+
+  useEffect(() => {
+    if (!preselectedToolId || tools.length === 0) return;
+
+    const tool = tools.find((t) => t.id === preselectedToolId);
+    if (tool) {
+      setSelectedTool(tool);
+      setValue('toolId', tool.id);
+    }
+  }, [preselectedToolId, tools, setValue]);
 
   useEffect(() => {
     fetchTools();
@@ -112,6 +130,7 @@ export default function ToolLendingForm({
               getOptionLabel={(option) =>
                 `${option.toolNumber} - ${option.name}`
               }
+              disabled={!!preselectedToolId}
               onChange={(_, value) => handleToolChange(value)}
               // renderOption={(props, option) => (
               //   <Box component="li" {...props}>

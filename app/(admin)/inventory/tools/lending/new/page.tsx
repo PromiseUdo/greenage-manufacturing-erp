@@ -5,10 +5,12 @@ import { Box, Typography, Alert } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { ToolLendingFormData } from '@/types/tools';
 import ToolLendingForm from '@/components/inventory/tool-lending-form';
+import { useSearchParams } from 'next/navigation';
 
 export default function CreateToolLendingPage() {
   const router = useRouter();
-
+  const searchParams = useSearchParams();
+  const preselectedToolId = searchParams.get('toolId');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -71,10 +73,17 @@ export default function CreateToolLendingPage() {
         </Alert>
       )}
 
+      {/* <ToolLendingForm
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isLoading={loading}
+      /> */}
+
       <ToolLendingForm
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isLoading={loading}
+        preselectedToolId={preselectedToolId}
       />
     </Box>
   );

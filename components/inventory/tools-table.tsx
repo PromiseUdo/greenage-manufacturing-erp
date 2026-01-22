@@ -25,6 +25,8 @@ import { ToolWithLendings } from '@/types/tools';
 import { useRouter } from 'next/navigation';
 import AddIcon from '@mui/icons-material/Add';
 import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
+import SubdirectoryArrowRightIcon from '@mui/icons-material/SubdirectoryArrowRight';
+import SubdirectoryArrowLeftIcon from '@mui/icons-material/SubdirectoryArrowLeft';
 
 // Styled components for professional table appearance
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -344,6 +346,55 @@ export default function ToolsTable({
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
+
+                      {tool.status === 'AVAILABLE' && (
+                        <Tooltip title="Issue">
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              // router.push(`/inventory/tools/lending/new`)
+                              router.push(
+                                `/inventory/tools/lending/new?toolId=${tool.id}`,
+                              )
+                            }
+                            sx={{
+                              color: '#64748B',
+                              '&:hover': {
+                                backgroundColor: '#F1F5F9',
+                                color: '#0F172A',
+                              },
+                            }}
+                          >
+                            <SubdirectoryArrowRightIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+
+                      {tool.status === 'IN_USE' && (
+                        <Tooltip title="Receive">
+                          <IconButton
+                            size="small"
+                            // onClick={() =>
+                            //   router.push(`/inventory/tools/lending/${activeLending.id}/return`)
+                            // }
+
+                            onClick={() =>
+                              router.push(
+                                `/inventory/tools/lending/return?toolId=${tool.id}`,
+                              )
+                            }
+                            sx={{
+                              color: '#64748B',
+                              '&:hover': {
+                                backgroundColor: '#F1F5F9',
+                                color: '#0F172A',
+                              },
+                            }}
+                          >
+                            <SubdirectoryArrowLeftIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </Box>
                   </StyledTableCell>
                 </StyledTableRow>
