@@ -312,41 +312,6 @@ export default function ToolsTable({
                         justifyContent: 'center',
                       }}
                     >
-                      <Tooltip title="View Details">
-                        <IconButton
-                          size="small"
-                          onClick={() =>
-                            router.push(`/inventory/tools/${tool.id}`)
-                          }
-                          sx={{
-                            color: '#64748B',
-                            '&:hover': {
-                              backgroundColor: '#F1F5F9',
-                              color: '#0F172A',
-                            },
-                          }}
-                        >
-                          <ViewIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Edit">
-                        <IconButton
-                          size="small"
-                          onClick={() =>
-                            router.push(`/inventory/tools/${tool.id}/edit`)
-                          }
-                          sx={{
-                            color: '#64748B',
-                            '&:hover': {
-                              backgroundColor: '#F1F5F9',
-                              color: '#0F172A',
-                            },
-                          }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-
                       {tool.status === 'AVAILABLE' && (
                         <Tooltip title="Issue">
                           <IconButton
@@ -395,6 +360,41 @@ export default function ToolsTable({
                           </IconButton>
                         </Tooltip>
                       )}
+
+                      <Tooltip title="View Details">
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            router.push(`/inventory/tools/${tool.id}`)
+                          }
+                          sx={{
+                            color: '#64748B',
+                            '&:hover': {
+                              backgroundColor: '#F1F5F9',
+                              color: '#0F172A',
+                            },
+                          }}
+                        >
+                          <ViewIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit">
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            router.push(`/inventory/tools/${tool.id}/edit`)
+                          }
+                          sx={{
+                            color: '#64748B',
+                            '&:hover': {
+                              backgroundColor: '#F1F5F9',
+                              color: '#0F172A',
+                            },
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </Box>
                   </StyledTableCell>
                 </StyledTableRow>
