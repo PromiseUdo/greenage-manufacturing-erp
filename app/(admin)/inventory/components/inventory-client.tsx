@@ -245,7 +245,7 @@ const quickActions = [
 
   {
     title: 'Add Tool',
-    description: 'Create new tool or work item',
+    description: 'Create new tool or equipment',
     icon: HandymanIcon,
     path: '/inventory/tools/new',
     color: '#1976d2',
