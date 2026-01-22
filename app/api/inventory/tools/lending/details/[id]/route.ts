@@ -6,7 +6,7 @@ import { auth } from '@/lib/auth';
 
 export async function GET(
   _req: Request,
-  { params }: { params: { toolId: string } },
+  { params }: { params: { id: string } },
 ) {
   try {
     const session = await auth();
@@ -14,7 +14,7 @@ export async function GET(
 
     const lending = await prisma.toolLending.findFirst({
       where: {
-        toolId: params.toolId,
+        toolId: params.id,
         status: 'ISSUED', // only get active one
       },
       orderBy: { issuedAt: 'desc' }, // most recent if somehow multiple
