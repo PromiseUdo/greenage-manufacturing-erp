@@ -13,12 +13,12 @@ export async function GET(
     const session = await auth();
     if (!session) return unauthorized();
 
-    const lending = await prisma.toolLending.findFirst({
+    const lending = await prisma.toolLending.findUnique({
       where: {
-        toolId: id,
+        id: id,
         status: 'ISSUED', // only get active one
       },
-      orderBy: { issuedAt: 'desc' }, // most recent if somehow multiple
+      // orderBy: { issuedAt: 'desc' }, // most recent if somehow multiple
       include: {
         tool: {
           select: {
