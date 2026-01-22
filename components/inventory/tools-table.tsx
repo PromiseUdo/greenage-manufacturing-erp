@@ -1,8 +1,7 @@
-// src/components/inventory/MaterialsTable.tsx
+// src/components/inventory/tools-table.tsx
 
 'use client';
 
-import { useState } from 'react';
 import { styled } from '@mui/material/styles';
 import {
   Table,
@@ -21,15 +20,11 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import {
-  Edit as EditIcon,
-  Visibility as ViewIcon,
-  Warning as WarningIcon,
-} from '@mui/icons-material';
-import { MaterialWithRelations } from '@/types/inventory';
+import { Edit as EditIcon, Visibility as ViewIcon } from '@mui/icons-material';
+import { ToolWithLendings } from '@/types/tools';
 import { useRouter } from 'next/navigation';
 import AddIcon from '@mui/icons-material/Add';
-import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
+import BuildOutlinedIcon from '@mui/icons-material/BuildOutlined';
 
 // Styled components for professional table appearance
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -37,12 +32,9 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     backgroundColor: '#0F172A',
     color: theme.palette.common.white,
     fontWeight: 600,
-
     fontSize: 13,
-    // textTransform: 'uppercase',
     letterSpacing: '0.5px',
     padding: '8px 16px',
-
     borderBottom: 'none',
   },
   [`&.${tableCellClasses.body}`]: {
@@ -65,19 +57,8 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-const WarningTableRow = styled(TableRow)(({ theme }) => ({
-  backgroundColor: theme.palette.action.hover,
-  '&:hover': {
-    backgroundColor: theme.palette.action.selected,
-    transition: 'background-color 0.2s ease',
-  },
-  '&:last-child td': {
-    borderBottom: 0,
-  },
-}));
-
-interface MaterialsTableProps {
-  materials: MaterialWithRelations[];
+interface ToolsTableProps {
+  tools: ToolWithLendings[];
   total: number;
   page: number;
   limit: number;
@@ -85,14 +66,14 @@ interface MaterialsTableProps {
   onLimitChange: (newLimit: number) => void;
 }
 
-export default function MaterialsTable({
-  materials,
+export default function ToolsTable({
+  tools,
   total,
   page,
   limit,
   onPageChange,
   onLimitChange,
-}: MaterialsTableProps) {
+}: ToolsTableProps) {
   const router = useRouter();
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -106,57 +87,57 @@ export default function MaterialsTable({
     onPageChange(1);
   };
 
-  const getCategoryColor = (category: string) => {
-    const colors: any = {
-      PCB: 'primary',
-      ELECTRONIC_COMPONENT: 'secondary',
-      CONNECTOR: 'info',
-      WIRE_CABLE: 'warning',
-      ENCLOSURE: 'success',
-      PACKAGING_MATERIAL: 'default',
-      CONSUMABLE: 'default',
-      OTHER: 'default',
-    };
-    return colors[category] || 'default';
-  };
-
-  const getStockStatus = (material: MaterialWithRelations) => {
-    if (material.currentStock === 0) {
-      return {
-        label: 'Out of Stock',
-        sx: {
-          bgcolor: '#ffebee', // very light red
-          color: '#d32f2f', // dark red text
-        },
-      };
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'AVAILABLE':
+        return {
+          bgcolor: '#e8f5e9',
+          color: '#2e7d32',
+        };
+      case 'IN_USE':
+        return {
+          bgcolor: '#fff3e0',
+          color: '#ed6c02',
+        };
+      case 'UNDER_MAINTENANCE':
+        return {
+          bgcolor: '#e3f2fd',
+          color: '#1976d2',
+        };
+      case 'RESERVED':
+        return {
+          bgcolor: '#f3e5f5',
+          color: '#9c27b0',
+        };
+      case 'DAMAGED':
+        return {
+          bgcolor: '#ffebee',
+          color: '#d32f2f',
+        };
+      default:
+        return {
+          bgcolor: '#f5f5f5',
+          color: '#757575',
+        };
     }
-    if (material.currentStock <= material.reorderLevel) {
-      return {
-        label: 'Low Stock',
-        sx: {
-          bgcolor: '#fff3e0', // very light orange
-          color: '#ed6c02', // darker orange text
-        },
-      };
+  };
+
+  const getConditionColor = (condition: string) => {
+    switch (condition) {
+      case 'EXCELLENT':
+      case 'GOOD':
+        return '#2e7d32';
+      case 'FAIR':
+        return '#ed6c02';
+      case 'POOR':
+      case 'NEEDS_REPAIR':
+        return '#d32f2f';
+      default:
+        return '#757575';
     }
-    return {
-      label: 'In Stock',
-      sx: {
-        bgcolor: '#e8f5e9', // light green
-        color: '#2e7d32', // darker green text
-      },
-    };
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  if (materials?.length === 0) {
+  if (tools?.length === 0) {
     return (
       <Paper
         elevation={0}
@@ -190,12 +171,12 @@ export default function MaterialsTable({
               mb: 1,
             }}
           >
-            <Inventory2OutlinedIcon color="action" />
+            <BuildOutlinedIcon sx={{ fontSize: 28, color: 'action.active' }} />
           </Box>
 
           {/* Title */}
           <Typography variant="h6" fontWeight={600}>
-            No materials yet
+            No tools yet
           </Typography>
 
           {/* Description */}
@@ -204,18 +185,22 @@ export default function MaterialsTable({
             color="text.secondary"
             sx={{ maxWidth: 360 }}
           >
-            You haven’t added any materials. Create your first material to start
-            tracking inventory.
+            You haven't added any tools. Create your first tool to start
+            tracking your equipment.
           </Typography>
 
           {/* CTA */}
           <Button
             variant="contained"
-            sx={{ mt: 2 }}
+            sx={{
+              mt: 2,
+              bgcolor: '#0F172A',
+              '&:hover': { bgcolor: '#1e293b' },
+            }}
             startIcon={<AddIcon />}
-            onClick={() => router.push('/inventory/materials/new')}
+            onClick={() => router.push('/inventory/tools/new')}
           >
-            Add Material
+            Add Tool
           </Button>
         </Box>
       </Paper>
@@ -237,92 +222,84 @@ export default function MaterialsTable({
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <StyledTableCell>Material Name</StyledTableCell>
+              <StyledTableCell>Tool Number</StyledTableCell>
+              <StyledTableCell>Tool Name</StyledTableCell>
               <StyledTableCell>Category</StyledTableCell>
-              <StyledTableCell align="right">Current Stock</StyledTableCell>
-              <StyledTableCell align="right">Reorder Level</StyledTableCell>
-              <StyledTableCell align="right">Unit Cost</StyledTableCell>
               <StyledTableCell>Status</StyledTableCell>
-              <StyledTableCell>Supplier</StyledTableCell>
+              <StyledTableCell>Condition</StyledTableCell>
+              <StyledTableCell>Current Holder</StyledTableCell>
+              <StyledTableCell>Location</StyledTableCell>
               <StyledTableCell align="center">Actions</StyledTableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {materials?.map((material) => {
-              const status = getStockStatus(material);
-              const showWarning =
-                material.currentStock <= material.reorderLevel;
-              const RowComponent = showWarning
-                ? WarningTableRow
-                : StyledTableRow;
+            {tools?.map((tool) => {
+              const statusStyle = getStatusColor(tool.status);
 
               return (
-                <RowComponent key={material.id}>
+                <StyledTableRow key={tool.id}>
                   <StyledTableCell>
-                    <Typography variant="body2">{material.name}</Typography>
-                  </StyledTableCell>
-                  <StyledTableCell>
-                    {/* <Chip
-                      label={material.category.replace(/_/g, ' ')}
-                      color={getCategoryColor(material.category)}
-                      size="small"
-                      sx={{
-                        bgcolor: '#e3f2fd',
-                        fontWeight: 500,
-                        fontSize: 12,
-                        color: '#1976d2',
-                      }}
-                    /> */}
-
                     <Chip
-                      label={material.category.replace(/_/g, ' ')}
+                      label={tool.toolNumber}
                       size="small"
                       variant="outlined"
                       sx={{
-                        // borderRadius: '4px',
                         fontWeight: 500,
                         fontSize: '11px',
                       }}
                     />
                   </StyledTableCell>
-                  <StyledTableCell align="right">
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: showWarning ? '#DC2626' : '#0F172A',
-                        fontWeight: showWarning ? 700 : 500,
-                      }}
-                    >
-                      {material.currentStock} {material.unit}
-                    </Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="right">
-                    <Typography variant="body2" color="text.secondary">
-                      {material.reorderLevel} {material.unit}
-                    </Typography>
-                  </StyledTableCell>
-                  <StyledTableCell align="right">
+                  <StyledTableCell>
                     <Typography variant="body2" fontWeight={500}>
-                      {material.unitCost
-                        ? formatCurrency(material.unitCost)
-                        : '-'}
+                      {tool.name}
                     </Typography>
+                    {tool.manufacturer && (
+                      <Typography variant="caption" color="text.secondary">
+                        {tool.manufacturer}
+                      </Typography>
+                    )}
                   </StyledTableCell>
                   <StyledTableCell>
                     <Chip
-                      label={status.label}
-                      // color={status.color}
+                      label={tool.category.replace(/_/g, ' ')}
                       size="small"
+                      variant="outlined"
                       sx={{
-                        fontWeight: 600,
-                        fontSize: 11,
-                        ...status.sx,
+                        fontWeight: 500,
+                        fontSize: '11px',
                       }}
                     />
                   </StyledTableCell>
                   <StyledTableCell>
+                    <Chip
+                      label={tool.status.replace(/_/g, ' ')}
+                      size="small"
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: 11,
+                        ...statusStyle,
+                      }}
+                    />
+                  </StyledTableCell>
+                  <StyledTableCell>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: getConditionColor(tool.condition),
+                        fontWeight: 500,
+                      }}
+                    >
+                      {tool.condition.replace(/_/g, ' ')}
+                    </Typography>
+                  </StyledTableCell>
+                  <StyledTableCell>
                     <Typography variant="body2" color="text.secondary">
-                      {material.supplier?.name || '-'}
+                      {tool.currentHolder || '-'}
+                    </Typography>
+                  </StyledTableCell>
+                  <StyledTableCell>
+                    <Typography variant="body2" color="text.secondary">
+                      {tool.location || '-'}
                     </Typography>
                   </StyledTableCell>
                   <StyledTableCell align="center">
@@ -337,7 +314,7 @@ export default function MaterialsTable({
                         <IconButton
                           size="small"
                           onClick={() =>
-                            router.push(`/inventory/materials/${material.id}`)
+                            router.push(`/inventory/tools/${tool.id}`)
                           }
                           sx={{
                             color: '#64748B',
@@ -354,9 +331,7 @@ export default function MaterialsTable({
                         <IconButton
                           size="small"
                           onClick={() =>
-                            router.push(
-                              `/inventory/materials/${material.id}/edit`,
-                            )
+                            router.push(`/inventory/tools/${tool.id}/edit`)
                           }
                           sx={{
                             color: '#64748B',
@@ -371,7 +346,7 @@ export default function MaterialsTable({
                       </Tooltip>
                     </Box>
                   </StyledTableCell>
-                </RowComponent>
+                </StyledTableRow>
               );
             })}
           </TableBody>

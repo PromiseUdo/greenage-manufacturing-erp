@@ -205,6 +205,8 @@ import {
   SwapHoriz as IssuanceIcon,
   LocalShipping as GRNIcon,
 } from '@mui/icons-material';
+import HandymanIcon from '@mui/icons-material/Handyman';
+
 // import Grid from '@mui/material/Unstable_Grid2'; // ← better responsive grid
 
 import { Grid } from '@mui/material'; // ← this is now the new Grid v2
@@ -240,6 +242,33 @@ const quickActions = [
     color: '#2e7d32',
     bgColor: '#e8f5e9',
   },
+
+  {
+    title: 'Add Tool',
+    description: 'Create new tool or work item',
+    icon: HandymanIcon,
+    path: '/inventory/tools/new',
+    color: '#1976d2',
+    bgColor: '#e3f2fd',
+  },
+
+  {
+    title: 'Issue Tool',
+    description: 'Record tool issuance to production',
+    icon: IssuanceIcon,
+    path: '/inventory/tools/lending/new',
+    color: '#1976d2',
+    bgColor: '#e3f2fd',
+  },
+
+  // {
+  //   title: 'Receive Tool',
+  //   description: 'Register return tools or work items',
+  //   icon: InventoryIcon,
+  //   path: '/inventory/materials/new',
+  //   color: '#1976d2',
+  //   bgColor: '#e3f2fd',
+  // },
 ];
 
 export default function InventoryDashboardClient() {

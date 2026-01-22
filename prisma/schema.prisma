@@ -567,3 +567,148 @@ model SystemSettings {
   
   @@map("system_settings")
 }
+
+
+
+
+
+model Tool {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  toolNumber      String    @unique  // Unique identifier (e.g., TOOL-001)
+  category        ToolCategory
+  description     String?
+  
+  // Physical details
+  serialNumber    String?
+  manufacturer    String?
+  purchaseDate    DateTime?
+  purchaseCost    Float?
+  
+  // Location & condition
+  location        String?    // Storage location
+  condition       ToolCondition @default(GOOD)
+  
+  // Availability
+  status          ToolStatus @default(AVAILABLE)
+  currentHolder   String?    // Who currently has it
+  
+  // Maintenance
+  lastMaintenance DateTime?
+  nextMaintenance DateTime?
+  
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  lendings        ToolLending[]
+  maintenanceHistory ToolMaintenance[]
+  
+  @@map("tools")
+}
+
+enum ToolCategory {
+  HAND_TOOL           // Screwdrivers, wrenches, pliers
+  POWER_TOOL          // Drills, grinders, saws
+  MEASURING_TOOL      // Multimeters, calipers, gauges
+  TESTING_EQUIPMENT   // Oscilloscopes, function generators
+  SAFETY_EQUIPMENT    // Safety glasses, gloves, helmets
+  WORKSTATION        // Soldering stations, work benches
+  LIFTING_EQUIPMENT   // Hoists, jacks, trolleys
+  OTHER
+}
+
+enum ToolCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  NEEDS_REPAIR
+}
+
+enum ToolStatus {
+  AVAILABLE          // Ready to be issued
+  IN_USE            // Currently issued to someone
+  UNDER_MAINTENANCE // Being repaired/serviced
+  RESERVED          // Reserved for specific person/project
+  DAMAGED           // Not usable
+  RETIRED           // No longer in service
+}
+
+model ToolLending {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  toolId          String    @db.ObjectId
+  tool            Tool      @relation(fields: [toolId], references: [id])
+  
+  // Borrower information
+  issuedTo        String    // Person or department name
+  issuedToUserId  String?   @db.ObjectId  // Optional: Link to User if applicable
+  department      String?
+  purpose         String?
+  
+  // Project/Order linkage
+  orderId         String?   // Link to production order if applicable
+  projectName     String?
+  
+  // Lending details
+  issuedBy        String    // Store keeper name
+  issuedAt        DateTime  @default(now())
+  expectedReturn  DateTime? // Expected return date
+  
+  // Return details
+  returnedAt      DateTime?
+  returnedTo      String?   // Who received it back
+  returnCondition ToolCondition?
+  returnNotes     String?   // Notes on condition when returned
+  
+  // Status
+  status          LendingStatus @default(ISSUED)
+  
+  // Late return tracking
+  isOverdue       Boolean   @default(false)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("tool_lendings")
+}
+
+enum LendingStatus {
+  ISSUED      // Currently with borrower
+  RETURNED    // Returned to inventory
+  OVERDUE     // Past expected return date
+  LOST        // Tool reported lost
+  DAMAGED     // Returned damaged
+}
+
+model ToolMaintenance {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  toolId          String    @db.ObjectId
+  tool            Tool      @relation(fields: [toolId], references: [id])
+  
+  maintenanceType ToolMaintenanceType
+  description     String
+  performedBy     String
+  
+  // Maintenance details
+  startDate       DateTime
+  completedDate   DateTime?
+  cost            Float?
+  partsReplaced   String?
+  
+  notes           String?
+  
+  createdAt       DateTime  @default(now())
+  
+  @@map("tool_maintenance")
+}
+
+enum ToolMaintenanceType {
+  ROUTINE_INSPECTION
+  CALIBRATION
+  REPAIR
+  CLEANING
+  PARTS_REPLACEMENT
+  EMERGENCY
+}

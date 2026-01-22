@@ -7,7 +7,7 @@ import { auth } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } | Promise<{ id: string }> }
+  context: { params: { id: string } | Promise<{ id: string }> },
 ) {
   const params = await context.params;
   const { id } = params;
@@ -43,7 +43,7 @@ export async function GET(
     if (!material) {
       return NextResponse.json(
         { error: 'Material not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -52,14 +52,14 @@ export async function GET(
     console.error('Error fetching material:', error);
     return NextResponse.json(
       { error: 'Failed to fetch material' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } | Promise<{ id: string }> }
+  context: { params: { id: string } | Promise<{ id: string }> },
 ) {
   const params = await context.params; // ✅ await params
   const { id } = params;
@@ -72,7 +72,7 @@ export async function PUT(
 
     if (
       !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
-        session.user.role
+        session.user.role,
       )
     ) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -98,7 +98,7 @@ export async function PUT(
     if (!existing) {
       return NextResponse.json(
         { error: 'Material not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -139,14 +139,14 @@ export async function PUT(
     console.error('Error updating material:', error);
     return NextResponse.json(
       { error: 'Failed to update material' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } | Promise<{ id: string }> }
+  context: { params: { id: string } | Promise<{ id: string }> },
 ) {
   const params = await context.params;
   const { id } = params;
@@ -186,7 +186,7 @@ export async function DELETE(
     console.error('Error deleting material:', error);
     return NextResponse.json(
       { error: 'Failed to delete material' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

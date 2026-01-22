@@ -28,7 +28,7 @@ import CategoryIcon from '@mui/icons-material/Category'; // optional – for sub
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import AssignmentReturnIcon from '@mui/icons-material/AssignmentReturn';
 import { SvgIconProps } from '@mui/material';
-
+import HandymanIcon from '@mui/icons-material/Handyman';
 export interface NavItem {
   label: string;
   path?: string; // optional – only leaf nodes have path
@@ -58,6 +58,11 @@ export const navigation: { section: string; items: NavItem[] }[] = [
             label: 'Materials',
             path: '/inventory/materials',
             icon: CategoryIcon,
+          },
+          {
+            label: 'Tools',
+            path: '/inventory/tools',
+            icon: HandymanIcon,
           },
           {
             label: 'Suppliers',

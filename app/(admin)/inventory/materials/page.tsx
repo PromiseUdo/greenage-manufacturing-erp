@@ -56,7 +56,7 @@ export default function MaterialsPage() {
   const [lowStockOnly, setLowStockOnly] = useState(false);
 
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(
-    null
+    null,
   );
   const [exporting, setExporting] = useState(false);
   const exportMenuOpen = Boolean(exportAnchorEl);
@@ -337,22 +337,6 @@ export default function MaterialsPage() {
               }}
             />
           </Grid>
-          {/* <Grid item xs={12} md={2}>
-            <Button
-              variant="contained"
-              onClick={handleSearch}
-              // startIcon={<SearchIcon />}
-              sx={{
-                textTransform: 'uppercase',
-                bgcolor: '#0F172A',
-                color: '#ffffff',
-                fontWeight: 'bold',
-                fontSize: '14',
-              }}
-            >
-              Search
-            </Button>
-          </Grid> */}
         </Grid>
       </Paper>
 
