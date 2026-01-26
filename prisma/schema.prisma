@@ -143,9 +143,7 @@ model ProductionPlan {
   @@map("production_plans")
 }
 
-// ============================================
-// INVENTORY & MATERIALS
-// ============================================
+
 
 model Material {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
@@ -571,17 +569,54 @@ model SystemSettings {
 
 
 
+// TOOLS
+
+
+model ToolGroup {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String    // e.g., "Standard Hammer", "Digital Multimeter DMM-500"
+  groupNumber     String    @unique  // e.g., "TOOLGRP-001"
+  category        ToolCategory
+  description     String?
+  
+  // Common details for all tools in this group
+  manufacturer    String?
+  model           String?
+  
+  // Total quantity tracking
+  totalQuantity   Int       @default(0)  // Total tools in this group
+  availableQuantity Int     @default(0)  // Available for issue
+  
+  // Pricing (average if different)
+  unitCost        Float?
+  
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  tools           Tool[]
+  
+  @@map("tool_groups")
+}
+
+
 
 model Tool {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
-  toolNumber      String    @unique  // Unique identifier (e.g., TOOL-001)
+  toolId          String    @unique  // Individual tracking ID (e.g., TOOL-001, TOOL-002)
+  name            String    // Will be same as group name if grouped
+  
+  // Group relationship (optional - null for standalone tools)
+  toolGroupId     String?   @db.ObjectId
+  toolGroup       ToolGroup? @relation(fields: [toolGroupId], references: [id])
+  
   category        ToolCategory
   description     String?
   
   // Physical details
-  serialNumber    String?
-  manufacturer    String?
+  serialNumber    String?   // Individual serial from manufacturer
+  manufacturer    String?   // Can override group manufacturer
   purchaseDate    DateTime?
   purchaseCost    Float?
   
@@ -607,6 +642,45 @@ model Tool {
   
   @@map("tools")
 }
+
+
+
+
+// model Tool {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   name            String
+//   toolNumber      String    @unique  // Unique identifier (e.g., TOOL-001)
+//   category        ToolCategory
+//   description     String?
+  
+//   // Physical details
+//   serialNumber    String?
+//   manufacturer    String?
+//   purchaseDate    DateTime?
+//   purchaseCost    Float?
+  
+//   // Location & condition
+//   location        String?    // Storage location
+//   condition       ToolCondition @default(GOOD)
+  
+//   // Availability
+//   status          ToolStatus @default(AVAILABLE)
+//   currentHolder   String?    // Who currently has it
+  
+//   // Maintenance
+//   lastMaintenance DateTime?
+//   nextMaintenance DateTime?
+  
+//   isActive        Boolean   @default(true)
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   // Relations
+//   lendings        ToolLending[]
+//   maintenanceHistory ToolMaintenance[]
+  
+//   @@map("tools")
+// }
 
 enum ToolCategory {
   HAND_TOOL           // Screwdrivers, wrenches, pliers
@@ -636,36 +710,78 @@ enum ToolStatus {
   RETIRED           // No longer in service
 }
 
+// model ToolLending {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   toolId          String    @db.ObjectId
+//   tool            Tool      @relation(fields: [toolId], references: [id])
+  
+//   // Borrower information
+//   issuedTo        String    // Person or department name
+//   issuedToUserId  String?   @db.ObjectId  // Optional: Link to User if applicable
+//   department      String?
+//   purpose         String?
+  
+//   // Project/Order linkage
+//   orderId         String?   // Link to production order if applicable
+//   projectName     String?
+  
+//   // Lending details
+//   issuedBy        String    // Store keeper name
+//   issuedAt        DateTime  @default(now())
+//   expectedReturn  DateTime? // Expected return date
+  
+//   // Return details
+//   returnedAt      DateTime?
+//   returnedTo      String?   // Who received it back
+//   returnCondition ToolCondition?
+//   returnNotes     String?   // Notes on condition when returned
+  
+//   // Status
+//   status          LendingStatus @default(ISSUED)
+  
+//   // Late return tracking
+//   isOverdue       Boolean   @default(false)
+  
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   @@map("tool_lendings")
+// }
+
+
+
 model ToolLending {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
   toolId          String    @db.ObjectId
   tool            Tool      @relation(fields: [toolId], references: [id])
   
+  // NEW: Quantity field for group tools
+  quantity        Int       @default(1)  // Number of tools issued (1 for individual tools)
+  
   // Borrower information
-  issuedTo        String    // Person or department name
-  issuedToUserId  String?   @db.ObjectId  // Optional: Link to User if applicable
+  issuedTo        String
+  issuedToUserId  String?   @db.ObjectId
   department      String?
   purpose         String?
   
   // Project/Order linkage
-  orderId         String?   // Link to production order if applicable
+  orderId         String?
   projectName     String?
   
   // Lending details
-  issuedBy        String    // Store keeper name
+  issuedBy        String
   issuedAt        DateTime  @default(now())
-  expectedReturn  DateTime? // Expected return date
+  expectedReturn  DateTime?
   
   // Return details
   returnedAt      DateTime?
-  returnedTo      String?   // Who received it back
+  returnedTo      String?
   returnCondition ToolCondition?
-  returnNotes     String?   // Notes on condition when returned
+  returnNotes     String?
   
   // Status
   status          LendingStatus @default(ISSUED)
   
-  // Late return tracking
   isOverdue       Boolean   @default(false)
   
   createdAt       DateTime  @default(now())
@@ -673,6 +789,8 @@ model ToolLending {
   
   @@map("tool_lendings")
 }
+
+
 
 enum LendingStatus {
   ISSUED      // Currently with borrower

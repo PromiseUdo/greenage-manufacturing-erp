@@ -361,7 +361,7 @@ export default function ToolDetailPage() {
               )}
 
               {tool.description && (
-                <Grid item xs={12}>
+                <Grid item xs={6}>
                   <Typography variant="caption" color="text.secondary">
                     Description
                   </Typography>
@@ -394,7 +394,7 @@ export default function ToolDetailPage() {
               )}
 
               {tool.location && (
-                <Grid item xs={12}>
+                <Grid item xs={6}>
                   <Typography variant="caption" color="text.secondary">
                     Storage Location
                   </Typography>
@@ -445,24 +445,49 @@ export default function ToolDetailPage() {
               </Typography>
             </Box>
 
-            <Divider sx={{ my: 2 }} />
+            {/* <Divider sx={{ my: 2 }} /> */}
 
-            <Box sx={{ mb: 1.5 }}>
+            {/* <Box sx={{ mb: 1.5 }}>
               <Typography variant="caption" color="text.secondary">
                 Created
               </Typography>
               <Typography variant="body2" sx={{ mt: 0.5 }}>
                 {format(new Date(tool?.createdAt), 'MMM dd, yyyy h:mm a')}
               </Typography>
-            </Box>
+            </Box> */}
 
-            <Box>
+            {/* <Box>
               <Typography variant="caption" color="text.secondary">
                 Last Updated
               </Typography>
               <Typography variant="body2" sx={{ mt: 0.5 }}>
                 {format(new Date(tool?.updatedAt), 'MMM dd, yyyy h:mm a')}
               </Typography>
+            </Box> */}
+
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 3,
+              }}
+            >
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Date Created
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                  {format(new Date(tool?.createdAt), 'MMM dd, yyyy h:mm a')}
+                </Typography>
+              </Box>
+
+              <Box sx={{ flex: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Last Updated
+                </Typography>
+                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                  {format(new Date(tool?.updatedAt), 'MMM dd, yyyy h:mm a')}
+                </Typography>
+              </Box>
             </Box>
           </Paper>
         </Grid>

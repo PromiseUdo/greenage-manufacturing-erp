@@ -3,13 +3,13 @@
 import { Tool, ToolLending, ToolMaintenance } from '@prisma/client';
 
 // Extended types with relations
-export type ToolWithLendings = Tool & {
-  lendings?: ToolLending[];
-  maintenanceHistory?: ToolMaintenance[];
-  _count?: {
-    lendings: number;
-  };
-};
+// export type ToolWithLendings = Tool & {
+//   lendings?: ToolLending[];
+//   maintenanceHistory?: ToolMaintenance[];
+//   _count?: {
+//     lendings: number;
+//   };
+// };
 
 export type LendingWithTool = ToolLending & {
   tool: Tool;
@@ -64,4 +64,63 @@ export interface ToolFilters {
   status?: string;
   search?: string;
   condition?: string;
+}
+
+// src/types/tools.ts - UPDATED
+
+export interface ToolFormData {
+  name: string;
+  toolNumber: string;
+  category: string;
+  description?: string;
+  serialNumber?: string;
+  manufacturer?: string;
+  purchaseDate?: Date;
+  purchaseCost?: number;
+  location?: string;
+  condition: string;
+}
+
+// Form data (with string dates from inputs)
+export interface ToolLendingFormInput {
+  toolId: string;
+  quantity: number;
+  issuedTo: string;
+  department?: string;
+  purpose?: string;
+  projectName?: string;
+  orderId?: string;
+  expectedReturn?: string; // String from date input
+}
+
+// API data (with Date objects)
+export interface ToolLendingFormData {
+  toolId: string;
+  quantity: number;
+  issuedTo: string;
+  department?: string;
+  purpose?: string;
+  projectName?: string;
+  orderId?: string;
+  expectedReturn?: Date; // Date object for API
+}
+
+export interface ToolReturnFormData {
+  returnCondition: string;
+  returnNotes?: string;
+}
+
+export interface ToolWithLendings {
+  id: string;
+  name: string;
+  toolNumber: string;
+  category: string;
+  status: string;
+  condition: string;
+  manufacturer?: string;
+  location?: string;
+  currentHolder?: string;
+  _count?: {
+    lendings: number;
+  };
 }

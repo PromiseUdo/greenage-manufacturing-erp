@@ -365,6 +365,7 @@
 // }
 
 // src/app/dashboard/inventory/tools/page.tsx
+// src/app/dashboard/inventory/tools/page.tsx
 
 'use client';
 
@@ -378,13 +379,11 @@ import {
   InputAdornment,
   Paper,
   CircularProgress,
-  alpha,
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
 import { Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import { ToolWithLendings } from '@/types/tools';
-import ToolsTable from '@/components/inventory/tools-table';
+import GroupedToolsTable from '@/components/inventory/grouped-tools-table';
 
 const TOOL_CATEGORIES = [
   { value: '', label: 'All Categories' },
@@ -407,9 +406,34 @@ const TOOL_STATUSES = [
   { value: 'DAMAGED', label: 'Damaged' },
 ];
 
+interface Tool {
+  id: string;
+  toolId: string;
+  name: string;
+  category: string;
+  status: string;
+  condition: string;
+  currentHolder?: string;
+  location?: string;
+  manufacturer?: string;
+  toolGroupId?: string;
+}
+
+interface ToolGroup {
+  id: string;
+  name: string;
+  groupNumber: string;
+  category: string;
+  totalQuantity: number;
+  availableQuantity: number;
+  manufacturer?: string;
+  tools: Tool[];
+}
+
 export default function ToolsPage() {
   const router = useRouter();
-  const [tools, setTools] = useState<ToolWithLendings[]>([]);
+  const [toolGroups, setToolGroups] = useState<ToolGroup[]>([]);
+  const [standaloneTools, setStandaloneTools] = useState<Tool[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
@@ -435,7 +459,13 @@ export default function ToolsPage() {
 
       const res = await fetch(`/api/inventory/tools?${params}`);
       const data = await res.json();
-      setTools(data?.tools || []);
+
+      console.log('====================================');
+      console.log(data);
+      console.log('====================================');
+
+      setToolGroups(data?.toolGroups || []);
+      setStandaloneTools(data?.standaloneTools || []);
       setTotal(data?.pagination?.total || 0);
     } catch (error) {
       console.error('Error fetching tools:', error);
@@ -620,8 +650,9 @@ export default function ToolsPage() {
           </Typography>
         </Paper>
       ) : (
-        <ToolsTable
-          tools={tools}
+        <GroupedToolsTable
+          toolGroups={toolGroups}
+          standaloneTools={standaloneTools}
           total={total}
           page={page}
           limit={limit}
