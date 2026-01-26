@@ -103,7 +103,7 @@ export async function PATCH(
         module: 'Inventory',
         details: {
           toolId: tool.id,
-          toolNumber: tool.toolNumber,
+          toolNumber: tool.id,
           name: tool.name,
           changes: body,
         },
@@ -173,7 +173,7 @@ export async function DELETE(
         module: 'Inventory',
         details: {
           toolId: tool.id,
-          toolNumber: tool.toolNumber,
+          toolNumber: tool.id,
           name: tool.name,
         },
       },
