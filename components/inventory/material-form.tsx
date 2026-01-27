@@ -734,6 +734,7 @@ export default function MaterialForm({
                   label="Max Stock"
                   type="number"
                   fullWidth
+                  value={field.value ?? ''}
                   variant="standard"
                   error={!!errors.maxStockLevel}
                   helperText={errors.maxStockLevel?.message || 'Optional'}
@@ -741,7 +742,7 @@ export default function MaterialForm({
                   inputProps={{ min: 0, step: 1 }}
                   onChange={(e) =>
                     field.onChange(
-                      e.target.value ? Number(e.target.value) : undefined
+                      e.target.value ? Number(e.target.value) : undefined,
                     )
                   }
                 />
@@ -789,7 +790,7 @@ export default function MaterialForm({
                   inputProps={{ min: 0, step: 0.01 }}
                   onChange={(e) =>
                     field.onChange(
-                      e.target.value ? Number(e.target.value) : undefined
+                      e.target.value ? Number(e.target.value) : undefined,
                     )
                   }
                 />

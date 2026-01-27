@@ -8,6 +8,14 @@ import {
   GRN,
 } from '@prisma/client';
 
+export interface FileAttachment {
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+  uploadedAt: string;
+}
+
 // Extended types with relations
 export type MaterialWithRelations = Material & {
   supplier?: Supplier | null;
@@ -26,6 +34,7 @@ export type BatchWithMaterial = MaterialBatch & {
 export type GRNWithSupplier = GRN & {
   supplier: Supplier;
   batches?: BatchWithMaterial[];
+  attachments?: FileAttachment[]; // NEW: Add this line
 };
 // export type GRNWithSupplier = GRN & {
 //   supplier: Supplier;
@@ -72,6 +81,7 @@ export interface GRNFormData {
   invoiceNumber?: string;
   items: GRNItemInput[];
   notes?: string;
+  attachments?: FileAttachment[]; // NEW: Add this line
 }
 
 export interface GRNItemInput {

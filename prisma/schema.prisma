@@ -211,7 +211,7 @@ model GRN {
   receivedDate    DateTime  @default(now())
   invoiceNumber   String?
   items           Json      // Array of {materialId, quantity, batchNumber}
-  
+  attachments     Json?
   receivedBy      String    // User name or ID
   notes           String?
   
@@ -242,7 +242,7 @@ model MaterialIssuance {
 
 model Supplier {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  name            String
+  name            String    @unique
   contactPerson   String?
   email           String?
   phone           String
