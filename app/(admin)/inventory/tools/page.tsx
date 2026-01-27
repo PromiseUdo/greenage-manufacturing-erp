@@ -7,32 +7,16 @@
 //   Box,
 //   Typography,
 //   Button,
-//   Paper,
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableContainer,
-//   TableHead,
-//   TableRow,
-//   TablePagination,
-//   Chip,
-//   IconButton,
-//   Tooltip,
 //   TextField,
 //   MenuItem,
 //   InputAdornment,
+//   Paper,
+//   CircularProgress,
 // } from '@mui/material';
 // import Grid from '@mui/material/GridLegacy';
-
-// import {
-//   Add as AddIcon,
-//   Edit as EditIcon,
-//   Visibility as ViewIcon,
-//   Search as SearchIcon,
-//   Refresh as RefreshIcon,
-// } from '@mui/icons-material';
+// import { Add as AddIcon, Search as SearchIcon } from '@mui/icons-material';
 // import { useRouter } from 'next/navigation';
-// import { ToolWithLendings } from '@/types/tools';
+// import GroupedToolsTable from '@/components/inventory/grouped-tools-table';
 
 // const TOOL_CATEGORIES = [
 //   { value: '', label: 'All Categories' },
@@ -55,9 +39,34 @@
 //   { value: 'DAMAGED', label: 'Damaged' },
 // ];
 
+// interface Tool {
+//   id: string;
+//   toolId: string;
+//   name: string;
+//   category: string;
+//   status: string;
+//   condition: string;
+//   currentHolder?: string;
+//   location?: string;
+//   manufacturer?: string;
+//   toolGroupId?: string;
+// }
+
+// interface ToolGroup {
+//   id: string;
+//   name: string;
+//   groupNumber: string;
+//   category: string;
+//   totalQuantity: number;
+//   availableQuantity: number;
+//   manufacturer?: string;
+//   tools: Tool[];
+// }
+
 // export default function ToolsPage() {
 //   const router = useRouter();
-//   const [tools, setTools] = useState<ToolWithLendings[]>([]);
+//   const [toolGroups, setToolGroups] = useState<ToolGroup[]>([]);
+//   const [standaloneTools, setStandaloneTools] = useState<Tool[]>([]);
 //   const [loading, setLoading] = useState(true);
 //   const [page, setPage] = useState(1);
 //   const [limit, setLimit] = useState(20);
@@ -83,8 +92,14 @@
 
 //       const res = await fetch(`/api/inventory/tools?${params}`);
 //       const data = await res.json();
-//       setTools(data?.tools);
-//       setTotal(data?.pagination?.total);
+
+//       console.log('====================================');
+//       console.log(data);
+//       console.log('====================================');
+
+//       setToolGroups(data?.toolGroups || []);
+//       setStandaloneTools(data?.standaloneTools || []);
+//       setTotal(data?.pagination?.total || 0);
 //     } catch (error) {
 //       console.error('Error fetching tools:', error);
 //     } finally {
@@ -97,37 +112,9 @@
 //     fetchTools();
 //   };
 
-//   const getStatusColor = (status: string) => {
-//     switch (status) {
-//       case 'AVAILABLE':
-//         return 'success';
-//       case 'IN_USE':
-//         return 'warning';
-//       case 'UNDER_MAINTENANCE':
-//         return 'info';
-//       case 'RESERVED':
-//         return 'secondary';
-//       case 'DAMAGED':
-//         return 'error';
-//       default:
-//         return 'default';
-//     }
-//   };
-
-//   const getConditionColor = (condition: string) => {
-//     switch (condition) {
-//       case 'EXCELLENT':
-//         return 'success';
-//       case 'GOOD':
-//         return 'success';
-//       case 'FAIR':
-//         return 'warning';
-//       case 'POOR':
-//         return 'error';
-//       case 'NEEDS_REPAIR':
-//         return 'error';
-//       default:
-//         return 'default';
+//   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+//     if (e.key === 'Enter') {
+//       handleSearch();
 //     }
 //   };
 
@@ -146,18 +133,15 @@
 //           <Typography variant="h6" fontWeight={600}>
 //             Tools & Equipment
 //           </Typography>
-//           <Typography variant="body1" color="text.secondary">
+//           <Typography
+//             variant="body1"
+//             color="text.secondary"
+//             sx={{ fontSize: 14 }}
+//           >
 //             Manage returnable tools and equipment
 //           </Typography>
 //         </Box>
-//         <Box sx={{ display: 'flex', gap: 2 }}>
-//           {/* <Button
-//             variant="outlined"
-//             startIcon={<RefreshIcon />}
-//             onClick={fetchTools}
-//           >
-//             Refresh
-//           </Button> */}
+//         <Box sx={{ display: 'flex', gap: 1.5 }}>
 //           <Button
 //             variant="contained"
 //             sx={{
@@ -165,9 +149,8 @@
 //               bgcolor: '#0F172A',
 //               color: '#ffffff',
 //               fontWeight: 'bold',
-//               // fontSize: '14',
+//               fontSize: 14,
 //             }}
-//             // startIcon={<AddIcon />}
 //             onClick={() => router.push('/inventory/tools/new')}
 //           >
 //             Add Tool
@@ -176,15 +159,34 @@
 //       </Box>
 
 //       {/* Filters */}
-//       <Box sx={{ mb: 3 }}>
+//       <Paper
+//         elevation={0}
+//         sx={{
+//           p: 2,
+//           mb: 3,
+//           borderRadius: 2,
+//           border: '1px solid',
+//           borderColor: 'divider',
+//           bgcolor: 'background.paper',
+//         }}
+//       >
 //         <Grid container spacing={2} alignItems="center">
 //           <Grid item xs={12} md={4}>
 //             <TextField
 //               fullWidth
+//               size="small"
 //               placeholder="Search by name, tool number, or serial"
 //               value={search}
 //               onChange={(e) => setSearch(e.target.value)}
-//               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+//               onKeyPress={handleSearchKeyPress}
+//               sx={{
+//                 '& .MuiOutlinedInput-root': {
+//                   '&.Mui-focused fieldset': {
+//                     borderColor: '#0F172A',
+//                     borderWidth: 1,
+//                   },
+//                 },
+//               }}
 //               InputProps={{
 //                 startAdornment: (
 //                   <InputAdornment position="start">
@@ -199,7 +201,22 @@
 //               fullWidth
 //               select
 //               label="Category"
+//               size="small"
 //               value={category}
+//               sx={{
+//                 '& .MuiInputLabel-root': {
+//                   color: '#475569',
+//                 },
+//                 '& .MuiInputLabel-root.Mui-focused': {
+//                   color: '#0F172A',
+//                 },
+//                 '& .MuiOutlinedInput-root': {
+//                   '&.Mui-focused fieldset': {
+//                     borderColor: '#0F172A',
+//                     borderWidth: 1,
+//                   },
+//                 },
+//               }}
 //               onChange={(e) => {
 //                 setCategory(e.target.value);
 //                 setPage(1);
@@ -217,7 +234,22 @@
 //               fullWidth
 //               select
 //               label="Status"
+//               size="small"
 //               value={status}
+//               sx={{
+//                 '& .MuiInputLabel-root': {
+//                   color: '#475569',
+//                 },
+//                 '& .MuiInputLabel-root.Mui-focused': {
+//                   color: '#0F172A',
+//                 },
+//                 '& .MuiOutlinedInput-root': {
+//                   '&.Mui-focused fieldset': {
+//                     borderColor: '#0F172A',
+//                     borderWidth: 1,
+//                   },
+//                 },
+//               }}
 //               onChange={(e) => {
 //                 setStatus(e.target.value);
 //                 setPage(1);
@@ -231,145 +263,45 @@
 //             </TextField>
 //           </Grid>
 //         </Grid>
-//       </Box>
+//       </Paper>
 
 //       {/* Tools Table */}
-//       <Paper>
-//         <TableContainer>
-//           <Table>
-//             <TableHead>
-//               <TableRow>
-//                 <TableCell>
-//                   <strong>Tool Number</strong>
-//                 </TableCell>
-//                 <TableCell>
-//                   <strong>Name</strong>
-//                 </TableCell>
-//                 <TableCell>
-//                   <strong>Category</strong>
-//                 </TableCell>
-//                 <TableCell>
-//                   <strong>Status</strong>
-//                 </TableCell>
-//                 <TableCell>
-//                   <strong>Condition</strong>
-//                 </TableCell>
-//                 <TableCell>
-//                   <strong>Current Holder</strong>
-//                 </TableCell>
-//                 <TableCell>
-//                   <strong>Location</strong>
-//                 </TableCell>
-//                 <TableCell align="center">
-//                   <strong>Actions</strong>
-//                 </TableCell>
-//               </TableRow>
-//             </TableHead>
-//             <TableBody>
-//               {tools.length === 0 ? (
-//                 <TableRow>
-//                   <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-//                     <Typography variant="body1" color="text.secondary">
-//                       No tools found
-//                     </Typography>
-//                     <Typography
-//                       variant="body2"
-//                       color="text.secondary"
-//                       sx={{ mt: 1 }}
-//                     >
-//                       Add your first tool to get started
-//                     </Typography>
-//                   </TableCell>
-//                 </TableRow>
-//               ) : (
-//                 tools.map((tool) => (
-//                   <TableRow key={tool.id} hover>
-//                     <TableCell>
-//                       <Chip
-//                         label={tool.toolNumber}
-//                         size="small"
-//                         variant="outlined"
-//                       />
-//                     </TableCell>
-//                     <TableCell>
-//                       <Typography variant="body2" fontWeight={500}>
-//                         {tool.name}
-//                       </Typography>
-//                       {tool.manufacturer && (
-//                         <Typography variant="caption" color="text.secondary">
-//                           {tool.manufacturer}
-//                         </Typography>
-//                       )}
-//                     </TableCell>
-//                     <TableCell>{tool.category.replace(/_/g, ' ')}</TableCell>
-//                     <TableCell>
-//                       <Chip
-//                         label={tool.status.replace(/_/g, ' ')}
-//                         color={getStatusColor(tool.status) as any}
-//                         size="small"
-//                       />
-//                     </TableCell>
-//                     <TableCell>
-//                       <Chip
-//                         label={tool.condition.replace(/_/g, ' ')}
-//                         color={getConditionColor(tool.condition) as any}
-//                         size="small"
-//                         variant="outlined"
-//                       />
-//                     </TableCell>
-//                     <TableCell>{tool.currentHolder || '-'}</TableCell>
-//                     <TableCell>{tool.location || '-'}</TableCell>
-//                     <TableCell align="center">
-//                       <Tooltip title="View Details">
-//                         <IconButton
-//                           size="small"
-//                           onClick={() =>
-//                             router.push(`/inventory/tools/${tool.id}`)
-//                           }
-//                         >
-//                           <ViewIcon fontSize="small" />
-//                         </IconButton>
-//                       </Tooltip>
-//                       <Tooltip title="Edit">
-//                         <IconButton
-//                           size="small"
-//                           onClick={() =>
-//                             router.push(`/inventory/tools/${tool.id}/edit`)
-//                           }
-//                         >
-//                           <EditIcon fontSize="small" />
-//                         </IconButton>
-//                       </Tooltip>
-//                     </TableCell>
-//                   </TableRow>
-//                 ))
-//               )}
-//             </TableBody>
-//           </Table>
-//         </TableContainer>
-//         <TablePagination
-//           rowsPerPageOptions={[10, 20, 50, 100]}
-//           component="div"
-//           count={total}
-//           rowsPerPage={limit}
-//           page={page - 1}
-//           onPageChange={(_, newPage) => setPage(newPage + 1)}
-//           onRowsPerPageChange={(e) => {
-//             setLimit(parseInt(e.target.value));
-//             setPage(1);
+//       {loading ? (
+//         <Paper
+//           elevation={0}
+//           sx={{
+//             p: 6,
+//             textAlign: 'center',
+//             border: '1px solid',
+//             borderColor: 'divider',
+//             borderRadius: 2,
 //           }}
+//         >
+//           <CircularProgress />
+//           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+//             Loading tools...
+//           </Typography>
+//         </Paper>
+//       ) : (
+//         <GroupedToolsTable
+//           toolGroups={toolGroups}
+//           standaloneTools={standaloneTools}
+//           total={total}
+//           page={page}
+//           limit={limit}
+//           onPageChange={setPage}
+//           onLimitChange={setLimit}
 //         />
-//       </Paper>
+//       )}
 //     </Box>
 //   );
 // }
 
 // src/app/dashboard/inventory/tools/page.tsx
-// src/app/dashboard/inventory/tools/page.tsx
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -441,12 +373,9 @@ export default function ToolsPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [status, setStatus] = useState('');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  useEffect(() => {
-    fetchTools();
-  }, [page, limit, category, status]);
-
-  const fetchTools = async () => {
+  const fetchTools = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -472,17 +401,25 @@ export default function ToolsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, search, category, status]);
+
+  useEffect(() => {
+    fetchTools();
+  }, [fetchTools, refreshTrigger]);
 
   const handleSearch = () => {
     setPage(1);
-    fetchTools();
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSearch();
     }
+  };
+
+  const handleRefresh = () => {
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   return (
@@ -658,6 +595,7 @@ export default function ToolsPage() {
           limit={limit}
           onPageChange={setPage}
           onLimitChange={setLimit}
+          onRefresh={handleRefresh}
         />
       )}
     </Box>
