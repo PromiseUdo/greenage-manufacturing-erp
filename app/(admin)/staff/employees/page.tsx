@@ -181,7 +181,7 @@ export default function EmployeesPage() {
         </Box>
         <Button
           variant="contained"
-          startIcon={<AddIcon />}
+          //   startIcon={<AddIcon />}
           onClick={() => router.push('/staff/employees/new')}
           sx={{
             textTransform: 'uppercase',
