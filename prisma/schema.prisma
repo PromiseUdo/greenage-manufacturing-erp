@@ -26,12 +26,77 @@ model User {
   verificationToken        String?  // New: Hashed token
   verificationTokenExpiry  DateTime? // New: Token expiration
   // Relations
+  employee        Employee?  // One-to-one
+  customer      Customer?  // One-to-one (optional)
+
   createdOrders Order[]   @relation("OrderCreator")
   productionLogs ProductionLog[]
   qcTests       QualityControl[]
   activityLogs  ActivityLog[]
   
   @@map("users")
+}
+
+
+model Employee {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  employeeNumber  String    @unique  // EMP-0001
+  
+  // Link to User (source of truth for name, email, password)
+  userId          String    @unique @db.ObjectId
+  user            User      @relation(fields: [userId], references: [id])
+  
+  // Employment-Specific Data ONLY
+  phone           String
+  address         String?
+  department      Department
+  position        String?
+  dateHired       DateTime  @default(now())
+  dateTerminated  DateTime?
+  
+  // Password Management
+  mustChangePassword Boolean @default(true)
+  lastPasswordChange DateTime?
+  
+  // Status
+  isActive        Boolean   @default(true)
+  
+  // Metadata
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  notes           String?
+  
+  @@map("employees")
+}
+
+// For customers with portal access
+model Customer {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  email         String?   // Business email (optional)
+  phone         String
+  address       String
+  contactPerson String?
+  
+  // Portal Access (optional)
+  userId        String?   @unique @db.ObjectId
+  user          User?     @relation(fields: [userId], references: [id])
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  orders        Order[]
+  
+  @@map("customers")
+}
+
+
+enum Department {
+  OPERATIONS
+  PRODUCTION
+  STORE
+  MANAGEMENT
 }
 
 enum UserRole {
@@ -51,20 +116,20 @@ enum UserRole {
 // CUSTOMER & ORDERS
 // ============================================
 
-model Customer {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  email       String?
-  phone       String
-  address     String
-  contactPerson String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+// model Customer {
+//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
+//   name        String
+//   email       String?
+//   phone       String
+//   address     String
+//   contactPerson String?
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
   
-  orders      Order[]
+//   orders      Order[]
   
-  @@map("customers")
-}
+//   @@map("customers")
+// }
 
 model Order {
   id              String      @id @default(auto()) @map("_id") @db.ObjectId
