@@ -112,24 +112,7 @@ enum UserRole {
   ACCOUNTANT
 }
 
-// ============================================
-// CUSTOMER & ORDERS
-// ============================================
 
-// model Customer {
-//   id          String   @id @default(auto()) @map("_id") @db.ObjectId
-//   name        String
-//   email       String?
-//   phone       String
-//   address     String
-//   contactPerson String?
-//   createdAt   DateTime @default(now())
-//   updatedAt   DateTime @updatedAt
-  
-//   orders      Order[]
-  
-//   @@map("customers")
-// }
 
 model Order {
   id              String      @id @default(auto()) @map("_id") @db.ObjectId
