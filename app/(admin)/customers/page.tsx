@@ -176,6 +176,7 @@ export default function CustomersPage() {
           sx={{
             fontWeight: 'bold',
             bgcolor: '#0F172A',
+            textTransform: 'uppercase',
             '&:hover': { bgcolor: '#1e293b' },
           }}
         >
