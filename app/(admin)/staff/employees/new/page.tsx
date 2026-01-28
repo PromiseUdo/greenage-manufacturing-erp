@@ -322,6 +322,7 @@ export default function NewEmployeePage() {
                   disabled={loading}
                   sx={{
                     bgcolor: '#0F172A',
+                    fontWeight: 'bold',
                     '&:hover': { bgcolor: '#1e293b' },
                   }}
                 >
