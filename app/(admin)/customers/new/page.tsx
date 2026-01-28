@@ -125,7 +125,7 @@ export default function NewCustomerPage() {
           <Grid container spacing={3}>
             {/* Customer Information */}
             <Grid size={{ xs: 12 }}>
-              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+              <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 0 }}>
                 Customer Information
               </Typography>
             </Grid>
@@ -298,6 +298,7 @@ export default function NewCustomerPage() {
                   variant="contained"
                   disabled={loading}
                   sx={{
+                    fontWeight: 'bold',
                     bgcolor: '#0F172A',
                     '&:hover': { bgcolor: '#1e293b' },
                   }}
