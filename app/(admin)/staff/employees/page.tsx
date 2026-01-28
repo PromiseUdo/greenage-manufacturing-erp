@@ -212,7 +212,7 @@ export default function EmployeesPage() {
             <TextField
               fullWidth
               size="small"
-              placeholder="Search by name, email, or employee number"
+              placeholder="Search by name, or email"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyPress={handleSearchKeyPress}
