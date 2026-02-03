@@ -9,6 +9,10 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PeopleIcon from '@mui/icons-material/People';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import DescriptionIcon from '@mui/icons-material/Description';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
 
 import { SvgIconProps } from '@mui/material';
 
@@ -24,6 +28,39 @@ export const navigation: { section: string; items: NavItem[] }[] = [
     section: 'Main',
     items: [{ label: 'Dashboard', path: '/dashboard', icon: DashboardIcon }],
   },
+
+  {
+    section: 'Sales',
+    items: [
+      {
+        label: 'Products',
+        icon: Inventory2Icon,
+        path: '/products',
+      },
+      {
+        label: 'Sales',
+        icon: ShoppingCartIcon,
+        children: [
+          {
+            label: 'Orders',
+            path: '/sales/orders',
+            icon: ShoppingCartIcon,
+          },
+          {
+            label: 'Quotes',
+            path: '/sales/quotes',
+            icon: DescriptionIcon,
+          },
+          {
+            label: 'Invoices',
+            path: '/sales/invoices',
+            icon: ReceiptIcon,
+          },
+        ],
+      },
+    ],
+  },
+
   {
     section: 'Management',
     items: [

@@ -1,4 +1,886 @@
-// prisma/schema.prisma
+// // prisma/schema.prisma
+
+// generator client {
+//   provider = "prisma-client-js"
+// }
+
+// datasource db {
+//   provider = "mongodb"
+//   url      = env("DATABASE_URL")
+// }
+
+// // ============================================
+// // USER MANAGEMENT
+// // ============================================
+
+// model User {
+//   id            String    @id @default(auto()) @map("_id") @db.ObjectId
+//   email         String    @unique
+//   name          String
+//   password      String
+//   role          UserRole
+//   isActive      Boolean   @default(true)
+//   createdAt     DateTime  @default(now())
+//   updatedAt     DateTime  @updatedAt
+//   isVerified               Boolean  @default(false) // New: Tracks verification status
+//   verificationToken        String?  // New: Hashed token
+//   verificationTokenExpiry  DateTime? // New: Token expiration
+//   // Relations
+//   employee        Employee?  // One-to-one
+//   customer      Customer?  // One-to-one (optional)
+
+//   createdOrders Order[]   @relation("OrderCreator")
+//   productionLogs ProductionLog[]
+//   qcTests       QualityControl[]
+//   activityLogs  ActivityLog[]
+  
+//   @@map("users")
+// }
+
+
+// model Employee {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   employeeNumber  String    @unique  // EMP-0001
+  
+//   // Link to User (source of truth for name, email, password)
+//   userId          String    @unique @db.ObjectId
+//   user            User      @relation(fields: [userId], references: [id])
+  
+//   // Employment-Specific Data ONLY
+//   phone           String
+//   address         String?
+//   department      Department
+//   position        String?
+//   dateHired       DateTime  @default(now())
+//   dateTerminated  DateTime?
+  
+//   // Password Management
+//   mustChangePassword Boolean @default(true)
+//   lastPasswordChange DateTime?
+  
+//   // Status
+//   isActive        Boolean   @default(true)
+  
+//   // Metadata
+//   createdBy       String
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+//   notes           String?
+  
+//   @@map("employees")
+// }
+
+// // For customers with portal access
+// model Customer {
+//   id            String    @id @default(auto()) @map("_id") @db.ObjectId
+//   name          String
+//   email         String?   // Business email (optional)
+//   phone         String
+//   address       String
+//   contactPerson String?
+  
+//   // Portal Access (optional)
+//   userId        String?   @unique @db.ObjectId
+//   user          User?     @relation(fields: [userId], references: [id])
+  
+//   createdAt     DateTime  @default(now())
+//   updatedAt     DateTime  @updatedAt
+  
+//   orders        Order[]
+  
+//   @@map("customers")
+// }
+
+
+// enum Department {
+//   OPERATIONS
+//   PRODUCTION
+//   STORE
+//   MANAGEMENT
+// }
+
+// enum UserRole {
+//   ADMIN
+//   OPERATION_MANAGER
+//   PRODUCTION_MANAGER
+//   STORE_KEEPER
+//   PRODUCTION_STAFF
+//   QC_TEAM
+//   PACKAGING_TEAM
+//   SALES_TEAM
+//   DISPATCH_OFFICER
+//   ACCOUNTANT
+// }
+
+
+
+// model Order {
+//   id              String      @id @default(auto()) @map("_id") @db.ObjectId
+//   orderNumber     String      @unique
+//   customerId      String      @db.ObjectId
+//   customer        Customer    @relation(fields: [customerId], references: [id])
+  
+//   productType     String
+//   quantity        Int
+//   specifications  Json?
+//   deliveryDate    DateTime
+//   paymentTerms    String?
+//   paymentStatus   PaymentStatus @default(PENDING)
+  
+//   status          OrderStatus @default(PENDING_PLANNING)
+//   priority        OrderPriority @default(NORMAL)
+  
+//   createdById     String      @db.ObjectId
+//   createdBy       User        @relation("OrderCreator", fields: [createdById], references: [id])
+//   createdAt       DateTime    @default(now())
+//   updatedAt       DateTime    @updatedAt
+  
+//   // Relations
+//   productionPlan  ProductionPlan?
+//   units           ProductionUnit[]
+//   dispatch        Dispatch?
+  
+//   @@map("orders")
+// }
+
+// enum OrderStatus {
+//   PENDING_PLANNING
+//   IN_PRODUCTION
+//   QC_TESTING
+//   PACKAGING
+//   READY_FOR_DISPATCH
+//   DISPATCHED
+//   DELIVERED
+//   CANCELLED
+// }
+
+// enum PaymentStatus {
+//   PENDING
+//   PARTIAL
+//   PAID
+//   OVERDUE
+// }
+
+// enum OrderPriority {
+//   LOW
+//   NORMAL
+//   HIGH
+//   URGENT
+// }
+
+// // ============================================
+// // PRODUCTION PLANNING
+// // ============================================
+
+// model ProductionPlan {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   orderId         String    @unique @db.ObjectId
+//   order           Order     @relation(fields: [orderId], references: [id])
+  
+//   scheduledStart  DateTime
+//   estimatedEnd    DateTime
+//   actualStart     DateTime?
+//   actualEnd       DateTime?
+  
+//   assignedOperators Json    // Array of {userId, stage, machineName}
+//   notes           String?
+  
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   @@map("production_plans")
+// }
+
+
+
+// model Material {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   name            String
+//   partNumber      String    @unique
+//   category        MaterialCategory
+//   unit            String    // pieces, kg, meters, etc.
+  
+//   currentStock    Float     @default(0)
+//   reorderLevel    Float
+//   maxStockLevel   Float?
+  
+//   unitCost        Float?
+//   supplierId      String?   @db.ObjectId
+//   supplier        Supplier? @relation(fields: [supplierId], references: [id])
+  
+//   isActive        Boolean   @default(true)
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   // Relations
+//   batches         MaterialBatch[]
+//   issuances       MaterialIssuance[]
+//   bomItems        BOMItem[]
+  
+//   @@map("materials")
+// }
+
+// enum MaterialCategory {
+//   PCB
+//   ELECTRONIC_COMPONENT
+//   CONNECTOR
+//   WIRE_CABLE
+//   ENCLOSURE
+//   PACKAGING_MATERIAL
+//   CONSUMABLE
+//   OTHER
+// }
+
+// model MaterialBatch {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   materialId      String    @db.ObjectId
+//   material        Material  @relation(fields: [materialId], references: [id])
+  
+//   batchNumber     String    @unique
+//   quantity        Float
+//   expiryDate      DateTime?
+//   supplierBatchNo String?
+//   receivedDate    DateTime  @default(now())
+  
+//   grnId           String?   @db.ObjectId
+//   grn             GRN?      @relation(fields: [grnId], references: [id])
+  
+//   createdAt       DateTime  @default(now())
+  
+//   @@map("material_batches")
+// }
+
+// model GRN {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   grnNumber       String    @unique
+//   supplierId      String    @db.ObjectId
+//   supplier        Supplier  @relation(fields: [supplierId], references: [id])
+  
+//   receivedDate    DateTime  @default(now())
+//   invoiceNumber   String?
+//   items           Json      // Array of {materialId, quantity, batchNumber}
+//   attachments     Json?
+//   receivedBy      String    // User name or ID
+//   notes           String?
+  
+//   createdAt       DateTime  @default(now())
+  
+//   batches         MaterialBatch[]
+  
+//   @@map("grns")
+// }
+
+// model MaterialIssuance {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   materialId      String    @db.ObjectId
+//   material        Material  @relation(fields: [materialId], references: [id])
+  
+//   orderId         String?   
+//   quantity        Float
+//   batchNumber     String
+  
+//   issuedTo        String    // Department or operator name
+//   issuedBy        String    // Store keeper name
+//   purpose         String?
+  
+//   issuedAt        DateTime  @default(now())
+  
+//   @@map("material_issuances")
+// }
+
+// model Supplier {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   name            String    @unique
+//   contactPerson   String?
+//   email           String?
+//   phone           String
+//   address         String?
+  
+//   paymentTerms    String?
+//   isActive        Boolean   @default(true)
+  
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   materials       Material[]
+//   grns            GRN[]
+  
+//   @@map("suppliers")
+// }
+
+// // Bill of Materials
+// model BOM {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   productType     String    @unique
+//   version         String    @default("1.0")
+//   description     String?
+  
+//   isActive        Boolean   @default(true)
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   items           BOMItem[]
+  
+//   @@map("boms")
+// }
+
+// model BOMItem {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   bomId           String    @db.ObjectId
+//   bom             BOM       @relation(fields: [bomId], references: [id])
+  
+//   materialId      String    @db.ObjectId
+//   material        Material  @relation(fields: [materialId], references: [id])
+  
+//   quantity        Float
+//   notes           String?
+  
+//   @@map("bom_items")
+// }
+
+// // ============================================
+// // PRODUCTION
+// // ============================================
+
+// model ProductionUnit {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   orderId         String    @db.ObjectId
+//   order           Order     @relation(fields: [orderId], references: [id])
+  
+//   unitNumber      Int       // 1, 2, 3... within an order
+//   serialNumber    String?   @unique
+//   qrCode          String?
+  
+//   currentStage    ProductionStage @default(SMD_PRODUCTION)
+//   status          UnitStatus @default(IN_PROGRESS)
+  
+//   // Stage timestamps
+//   smdStarted      DateTime?
+//   smdCompleted    DateTime?
+//   solderingStarted DateTime?
+//   solderingCompleted DateTime?
+//   assemblyStarted DateTime?
+//   assemblyCompleted DateTime?
+//   qcStarted       DateTime?
+//   qcCompleted     DateTime?
+//   packagingStarted DateTime?
+//   packagingCompleted DateTime?
+  
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   // Relations
+//   productionLogs  ProductionLog[]
+//   qcTests         QualityControl[]
+  
+//   @@map("production_units")
+// }
+
+// enum ProductionStage {
+//   SMD_PRODUCTION
+//   MANUAL_SOLDERING
+//   UNIT_ASSEMBLY
+//   QUALITY_CONTROL
+//   PACKAGING
+//   FINISHED_GOODS
+// }
+
+// enum UnitStatus {
+//   IN_PROGRESS
+//   COMPLETED
+//   FAILED_QC
+//   REWORK
+//   SCRAPPED
+// }
+
+// model ProductionLog {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   unitId          String    @db.ObjectId
+//   unit            ProductionUnit @relation(fields: [unitId], references: [id])
+  
+//   stage           ProductionStage
+//   action          String    // "Started", "Completed", "Issue Reported", etc.
+  
+//   operatorId      String    @db.ObjectId
+//   operator        User      @relation(fields: [operatorId], references: [id])
+  
+//   pcbBatchNumber  String?
+//   machineUsed     String?
+//   duration        Int?      // minutes
+//   notes           String?
+//   attachments     Json?     // Array of file URLs
+  
+//   createdAt       DateTime  @default(now())
+  
+//   @@map("production_logs")
+// }
+
+// // ============================================
+// // QUALITY CONTROL
+// // ============================================
+
+// model QualityControl {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   unitId          String    @db.ObjectId
+//   unit            ProductionUnit @relation(fields: [unitId], references: [id])
+  
+//   inspectorId     String    @db.ObjectId
+//   inspector       User      @relation(fields: [inspectorId], references: [id])
+  
+//   testType        TestType
+//   result          TestResult
+  
+//   // Test readings
+//   electricalTest  Json?     // {voltage, current, resistance, etc.}
+//   functionalTest  Json?     // {chargeTest, dischargeTest, indicators, etc.}
+//   loadTest        Json?     // {duration, maxLoad, temperature, etc.}
+  
+//   failureReason   String?
+//   attachments     Json?     // Photos, test data files
+  
+//   testedAt        DateTime  @default(now())
+  
+//   ncr             NCR?
+  
+//   @@map("quality_controls")
+// }
+
+// enum TestType {
+//   ELECTRICAL
+//   FUNCTIONAL
+//   LOAD
+//   VISUAL_INSPECTION
+//   FINAL_INSPECTION
+// }
+
+// enum TestResult {
+//   PASS
+//   FAIL
+//   PENDING
+// }
+
+// // Non-Conformance Report
+// model NCR {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   ncrNumber       String    @unique
+  
+//   qcTestId        String    @unique @db.ObjectId
+//   qcTest          QualityControl @relation(fields: [qcTestId], references: [id])
+  
+//   description     String
+//   rootCause       String?
+//   correctiveAction String?
+//   preventiveAction String?
+  
+//   status          NCRStatus @default(OPEN)
+//   resolvedAt      DateTime?
+//   resolvedBy      String?
+  
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   @@map("ncrs")
+// }
+
+// enum NCRStatus {
+//   OPEN
+//   IN_PROGRESS
+//   RESOLVED
+//   CLOSED
+// }
+
+// // ============================================
+// // PACKAGING & DISPATCH
+// // ============================================
+
+// model Dispatch {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   dispatchNumber  String    @unique
+  
+//   orderId         String    @unique @db.ObjectId
+//   order           Order     @relation(fields: [orderId], references: [id])
+  
+//   vehicleNumber   String?
+//   driverName      String?
+//   driverPhone     String?
+  
+//   dispatchDate    DateTime
+//   deliveryDate    DateTime?
+  
+//   status          DispatchStatus @default(PENDING)
+  
+//   notes           String?
+//   customerSignature String?   // URL to signature image
+//   deliveryProof   Json?       // Photos, documents
+  
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   @@map("dispatches")
+// }
+
+// enum DispatchStatus {
+//   PENDING
+//   IN_TRANSIT
+//   DELIVERED
+//   FAILED_DELIVERY
+//   RETURNED
+// }
+
+// // ============================================
+// // MAINTENANCE
+// // ============================================
+
+// model Machine {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   name            String
+//   machineNumber   String    @unique
+//   type            String    // Pick & Place, Reflow Oven, etc.
+  
+//   location        String?
+//   purchaseDate    DateTime?
+//   lastMaintenance DateTime?
+//   nextMaintenance DateTime?
+  
+//   status          MachineStatus @default(OPERATIONAL)
+  
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   maintenanceLogs MaintenanceLog[]
+  
+//   @@map("machines")
+// }
+
+// enum MachineStatus {
+//   OPERATIONAL
+//   UNDER_MAINTENANCE
+//   BROKEN
+//   RETIRED
+// }
+
+// model MaintenanceLog {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   machineId       String    @db.ObjectId
+//   machine         Machine   @relation(fields: [machineId], references: [id])
+  
+//   maintenanceType MaintenanceType
+//   description     String
+//   performedBy     String
+  
+//   downtime        Int?      // minutes
+//   cost            Float?
+//   partsReplaced   Json?     // Array of parts
+  
+//   performedAt     DateTime  @default(now())
+  
+//   @@map("maintenance_logs")
+// }
+
+// enum MaintenanceType {
+//   PREVENTIVE
+//   CORRECTIVE
+//   EMERGENCY
+//   CALIBRATION
+// }
+
+// // ============================================
+// // SYSTEM LOGS & ANALYTICS
+// // ============================================
+
+// model ActivityLog {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   userId          String    @db.ObjectId
+//   user            User      @relation(fields: [userId], references: [id])
+  
+//   action          String    // "Created Order", "Updated Inventory", etc.
+//   module          String    // "Orders", "Inventory", "QC", etc.
+//   details         Json?
+//   ipAddress       String?
+  
+//   createdAt       DateTime  @default(now())
+  
+//   @@map("activity_logs")
+// }
+
+// model SystemSettings {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   key             String    @unique
+//   value           Json
+//   description     String?
+  
+//   updatedAt       DateTime  @updatedAt
+  
+//   @@map("system_settings")
+// }
+
+
+
+
+// // TOOLS
+
+
+// model ToolGroup {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   name            String    // e.g., "Standard Hammer", "Digital Multimeter DMM-500"
+//   groupNumber     String    @unique  // e.g., "TOOLGRP-001"
+//   category        ToolCategory
+//   description     String?
+  
+//   // Common details for all tools in this group
+//   manufacturer    String?
+//   model           String?
+  
+//   // Total quantity tracking
+//   totalQuantity   Int       @default(0)  // Total tools in this group
+//   availableQuantity Int     @default(0)  // Available for issue
+  
+//   // Pricing (average if different)
+//   unitCost        Float?
+  
+//   isActive        Boolean   @default(true)
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   // Relations
+//   tools           Tool[]
+  
+//   @@map("tool_groups")
+// }
+
+
+
+// model Tool {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   toolId          String    @unique  // Individual tracking ID (e.g., TOOL-001, TOOL-002)
+//   name            String    // Will be same as group name if grouped
+  
+//   // Group relationship (optional - null for standalone tools)
+//   toolGroupId     String?   @db.ObjectId
+//   toolGroup       ToolGroup? @relation(fields: [toolGroupId], references: [id])
+  
+//   category        ToolCategory
+//   description     String?
+  
+//   // Physical details
+//   serialNumber    String?   // Individual serial from manufacturer
+//   manufacturer    String?   // Can override group manufacturer
+//   purchaseDate    DateTime?
+//   purchaseCost    Float?
+  
+//   // Location & condition
+//   location        String?    // Storage location
+//   condition       ToolCondition @default(GOOD)
+  
+//   // Availability
+//   status          ToolStatus @default(AVAILABLE)
+//   currentHolder   String?    // Who currently has it
+  
+//   // Maintenance
+//   lastMaintenance DateTime?
+//   nextMaintenance DateTime?
+  
+//   isActive        Boolean   @default(true)
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   // Relations
+//   lendings        ToolLending[]
+//   maintenanceHistory ToolMaintenance[]
+  
+//   @@map("tools")
+// }
+
+
+
+
+// // model Tool {
+// //   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+// //   name            String
+// //   toolNumber      String    @unique  // Unique identifier (e.g., TOOL-001)
+// //   category        ToolCategory
+// //   description     String?
+  
+// //   // Physical details
+// //   serialNumber    String?
+// //   manufacturer    String?
+// //   purchaseDate    DateTime?
+// //   purchaseCost    Float?
+  
+// //   // Location & condition
+// //   location        String?    // Storage location
+// //   condition       ToolCondition @default(GOOD)
+  
+// //   // Availability
+// //   status          ToolStatus @default(AVAILABLE)
+// //   currentHolder   String?    // Who currently has it
+  
+// //   // Maintenance
+// //   lastMaintenance DateTime?
+// //   nextMaintenance DateTime?
+  
+// //   isActive        Boolean   @default(true)
+// //   createdAt       DateTime  @default(now())
+// //   updatedAt       DateTime  @updatedAt
+  
+// //   // Relations
+// //   lendings        ToolLending[]
+// //   maintenanceHistory ToolMaintenance[]
+  
+// //   @@map("tools")
+// // }
+
+// enum ToolCategory {
+//   HAND_TOOL           // Screwdrivers, wrenches, pliers
+//   POWER_TOOL          // Drills, grinders, saws
+//   MEASURING_TOOL      // Multimeters, calipers, gauges
+//   TESTING_EQUIPMENT   // Oscilloscopes, function generators
+//   SAFETY_EQUIPMENT    // Safety glasses, gloves, helmets
+//   WORKSTATION        // Soldering stations, work benches
+//   LIFTING_EQUIPMENT   // Hoists, jacks, trolleys
+//   OTHER
+// }
+
+// enum ToolCondition {
+//   EXCELLENT
+//   GOOD
+//   FAIR
+//   POOR
+//   NEEDS_REPAIR
+// }
+
+// enum ToolStatus {
+//   AVAILABLE          // Ready to be issued
+//   IN_USE            // Currently issued to someone
+//   UNDER_MAINTENANCE // Being repaired/serviced
+//   RESERVED          // Reserved for specific person/project
+//   DAMAGED           // Not usable
+//   RETIRED           // No longer in service
+// }
+
+// // model ToolLending {
+// //   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+// //   toolId          String    @db.ObjectId
+// //   tool            Tool      @relation(fields: [toolId], references: [id])
+  
+// //   // Borrower information
+// //   issuedTo        String    // Person or department name
+// //   issuedToUserId  String?   @db.ObjectId  // Optional: Link to User if applicable
+// //   department      String?
+// //   purpose         String?
+  
+// //   // Project/Order linkage
+// //   orderId         String?   // Link to production order if applicable
+// //   projectName     String?
+  
+// //   // Lending details
+// //   issuedBy        String    // Store keeper name
+// //   issuedAt        DateTime  @default(now())
+// //   expectedReturn  DateTime? // Expected return date
+  
+// //   // Return details
+// //   returnedAt      DateTime?
+// //   returnedTo      String?   // Who received it back
+// //   returnCondition ToolCondition?
+// //   returnNotes     String?   // Notes on condition when returned
+  
+// //   // Status
+// //   status          LendingStatus @default(ISSUED)
+  
+// //   // Late return tracking
+// //   isOverdue       Boolean   @default(false)
+  
+// //   createdAt       DateTime  @default(now())
+// //   updatedAt       DateTime  @updatedAt
+  
+// //   @@map("tool_lendings")
+// // }
+
+
+
+// model ToolLending {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   toolId          String    @db.ObjectId
+//   tool            Tool      @relation(fields: [toolId], references: [id])
+  
+//   // NEW: Quantity field for group tools
+//   quantity        Int       @default(1)  // Number of tools issued (1 for individual tools)
+  
+//   // Borrower information
+//   issuedTo        String
+//   issuedToUserId  String?   @db.ObjectId
+//   department      String?
+//   purpose         String?
+  
+//   // Project/Order linkage
+//   orderId         String?
+//   projectName     String?
+  
+//   // Lending details
+//   issuedBy        String
+//   issuedAt        DateTime  @default(now())
+//   expectedReturn  DateTime?
+  
+//   // Return details
+//   returnedAt      DateTime?
+//   returnedTo      String?
+//   returnCondition ToolCondition?
+//   returnNotes     String?
+  
+//   // Status
+//   status          LendingStatus @default(ISSUED)
+  
+//   isOverdue       Boolean   @default(false)
+  
+//   createdAt       DateTime  @default(now())
+//   updatedAt       DateTime  @updatedAt
+  
+//   @@map("tool_lendings")
+// }
+
+
+
+// enum LendingStatus {
+//   ISSUED      // Currently with borrower
+//   RETURNED    // Returned to inventory
+//   OVERDUE     // Past expected return date
+//   LOST        // Tool reported lost
+//   DAMAGED     // Returned damaged
+// }
+
+// model ToolMaintenance {
+//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
+//   toolId          String    @db.ObjectId
+//   tool            Tool      @relation(fields: [toolId], references: [id])
+  
+//   maintenanceType ToolMaintenanceType
+//   description     String
+//   performedBy     String
+  
+//   // Maintenance details
+//   startDate       DateTime
+//   completedDate   DateTime?
+//   cost            Float?
+//   partsReplaced   String?
+  
+//   notes           String?
+  
+//   createdAt       DateTime  @default(now())
+  
+//   @@map("tool_maintenance")
+// }
+
+// enum ToolMaintenanceType {
+//   ROUTINE_INSPECTION
+//   CALIBRATION
+//   REPAIR
+//   CLEANING
+//   PARTS_REPLACEMENT
+//   EMERGENCY
+// }
+
+
+// prisma/schema.prisma - CORRECTED COMPLETE SCHEMA
 
 generator client {
   provider = "prisma-client-js"
@@ -22,31 +904,33 @@ model User {
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  isVerified               Boolean  @default(false) // New: Tracks verification status
-  verificationToken        String?  // New: Hashed token
-  verificationTokenExpiry  DateTime? // New: Token expiration
+  isVerified               Boolean  @default(false)
+  verificationToken        String?
+  verificationTokenExpiry  DateTime?
+  
   // Relations
-  employee        Employee?  // One-to-one
-  customer      Customer?  // One-to-one (optional)
+  employee        Employee?
+  customer        Customer?
 
-  createdOrders Order[]   @relation("OrderCreator")
-  productionLogs ProductionLog[]
-  qcTests       QualityControl[]
-  activityLogs  ActivityLog[]
+  createdOrders   Order[]   @relation("OrderCreator")
+  createdQuotes   Quote[]   @relation("QuoteCreator")
+  createdInvoices Invoice[] @relation("InvoiceCreator")
+  createdProducts Product[] @relation("ProductCreator")
+
+  productionLogs  ProductionLog[]
+  qcTests         QualityControl[]
+  activityLogs    ActivityLog[]
   
   @@map("users")
 }
 
-
 model Employee {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  employeeNumber  String    @unique  // EMP-0001
+  employeeNumber  String    @unique
   
-  // Link to User (source of truth for name, email, password)
   userId          String    @unique @db.ObjectId
   user            User      @relation(fields: [userId], references: [id])
   
-  // Employment-Specific Data ONLY
   phone           String
   address         String?
   department      Department
@@ -54,14 +938,11 @@ model Employee {
   dateHired       DateTime  @default(now())
   dateTerminated  DateTime?
   
-  // Password Management
   mustChangePassword Boolean @default(true)
   lastPasswordChange DateTime?
   
-  // Status
   isActive        Boolean   @default(true)
   
-  // Metadata
   createdBy       String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -70,16 +951,14 @@ model Employee {
   @@map("employees")
 }
 
-// For customers with portal access
 model Customer {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   name          String
-  email         String?   // Business email (optional)
+  email         String?
   phone         String
   address       String
   contactPerson String?
   
-  // Portal Access (optional)
   userId        String?   @unique @db.ObjectId
   user          User?     @relation(fields: [userId], references: [id])
   
@@ -87,10 +966,11 @@ model Customer {
   updatedAt     DateTime  @updatedAt
   
   orders        Order[]
+  quotes        Quote[]
+  invoices      Invoice[]
   
   @@map("customers")
 }
-
 
 enum Department {
   OPERATIONS
@@ -113,6 +993,241 @@ enum UserRole {
 }
 
 
+// ============================================
+// UPDATED PRODUCT MODEL WITH CODE PREFIX
+// ============================================
+
+model Product {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  productNumber   String    @unique
+  
+  name            String
+  description     String
+  category        ProductCategory
+  
+  // ✅ PRODUCT CODE PREFIX FOR UNIT IDs
+  // This is used to generate unique unit IDs
+  // Examples: "INV5" for 5KVA Inverter, "UPS3" for 3KVA UPS
+  productCode     String    @unique  // 3-4 characters
+  
+  // ✅ COUNTER FOR SEQUENTIAL UNIT IDs
+  // Tracks the last generated unit number for this product
+  lastUnitNumber  Int       @default(0)
+  
+  specifications  Json
+  features        Json?
+  
+  basePrice       Float
+  minPrice        Float?
+  currency        String    @default("NGN")
+  
+  model           String?
+  warranty        String?
+  leadTime        Int?
+  
+  images          Json?
+  primaryImage    String?
+  
+  isActive        Boolean   @default(true)
+  isAvailable     Boolean   @default(true)
+  
+  stockQuantity   Int?      @default(0)
+  lowStockThreshold Int?
+  
+  notes           String?
+  tags            Json?
+  
+  // Relations
+  quotes          Quote[]
+  orders          Order[]
+  invoices        Invoice[]
+  
+  createdById     String    @db.ObjectId
+  createdBy       User      @relation("ProductCreator", fields: [createdById], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("products")
+}
+
+// ============================================
+// UPDATED PRODUCTION UNIT MODEL
+// ============================================
+
+model ProductionUnit {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  orderId         String    @db.ObjectId
+  order           Order     @relation(fields: [orderId], references: [id])
+  
+  unitNumber      Int       // 1, 2, 3... within an order
+  
+  // ✅ UNIQUE 8-CHARACTER UNIT ID
+  // This is programmed into the physical device
+  // Format: [PRODUCT_CODE][SEQUENTIAL_NUMBER]
+  // Examples: "INV50001", "UPS30015", "BAT20123"
+  unitId          String    @unique  // The 8-character ID
+  
+  serialNumber    String?   @unique  // Optional: Manufacturer serial (if different)
+  qrCode          String?              // QR code data (can be same as unitId)
+  
+  currentStage    ProductionStage @default(SMD_PRODUCTION)
+  status          UnitStatus @default(IN_PROGRESS)
+  
+  // Stage timestamps
+  smdStarted      DateTime?
+  smdCompleted    DateTime?
+  solderingStarted DateTime?
+  solderingCompleted DateTime?
+  assemblyStarted DateTime?
+  assemblyCompleted DateTime?
+  qcStarted       DateTime?
+  qcCompleted     DateTime?
+  packagingStarted DateTime?
+  packagingCompleted DateTime?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  productionLogs  ProductionLog[]
+  qcTests         QualityControl[]
+  
+  @@map("production_units")
+}
+
+
+
+enum ProductCategory {
+  INVERTER
+  UPS
+  BATTERY
+  SOLAR_PANEL
+  CHARGE_CONTROLLER
+  ACCESSORY
+  PACKAGE
+  OTHER
+}
+
+
+
+// ============================================
+// SALES - QUOTES
+// ============================================
+
+model Quote {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  quoteNumber     String      @unique
+  
+  customerId      String      @db.ObjectId
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  
+  productId       String      @db.ObjectId
+  product         Product     @relation(fields: [productId], references: [id])
+  
+  quantity        Int
+  deliveryDate    DateTime
+  
+  unitPrice       Float
+  totalAmount     Float
+  taxAmount       Float       @default(0)
+  discountAmount  Float       @default(0)
+  finalAmount     Float
+  
+  paymentTerms    String?
+  
+  status          QuoteStatus @default(DRAFT)
+  isAccepted      Boolean     @default(false)
+  acceptedAt      DateTime?
+  acceptedBy      String?
+  expiryDate      DateTime?
+  
+  notes           String?
+  termsConditions String?
+  
+  orderId         String?     @unique @db.ObjectId
+  order           Order?      @relation(fields: [orderId], references: [id])
+  invoice         Invoice?
+  
+  createdById     String      @db.ObjectId
+  createdBy       User        @relation("QuoteCreator", fields: [createdById], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@map("quotes")
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CONVERTED
+}
+
+// ============================================
+// SALES - INVOICES
+// ============================================
+
+model Invoice {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  invoiceNumber   String      @unique
+  
+  quoteId         String      @unique @db.ObjectId
+  quote           Quote       @relation(fields: [quoteId], references: [id])
+  
+  customerId      String      @db.ObjectId
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  
+  orderId         String      @unique @db.ObjectId
+  order           Order       @relation(fields: [orderId], references: [id])
+  
+  productId       String      @db.ObjectId
+  product         Product     @relation(fields: [productId], references: [id])
+  
+  quantity        Int
+  
+  unitPrice       Float
+  totalAmount     Float
+  taxAmount       Float       @default(0)
+  discountAmount  Float       @default(0)
+  finalAmount     Float
+  
+  paymentTerms    String?
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   String?
+  paidAmount      Float       @default(0)
+  balanceAmount   Float
+  
+  paidAt          DateTime?
+  paymentReference String?
+  
+  issueDate       DateTime    @default(now())
+  dueDate         DateTime
+  
+  status          InvoiceStatus @default(PENDING)
+  
+  notes           String?
+  
+  createdById     String      @db.ObjectId
+  createdBy       User        @relation("InvoiceCreator", fields: [createdById], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  PENDING
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+// ============================================
+// ORDERS
+// ============================================
 
 model Order {
   id              String      @id @default(auto()) @map("_id") @db.ObjectId
@@ -120,9 +1235,11 @@ model Order {
   customerId      String      @db.ObjectId
   customer        Customer    @relation(fields: [customerId], references: [id])
   
-  productType     String
-  quantity        Int
-  specifications  Json?
+  // ✅ PRODUCT REFERENCE (instead of productType)
+  productId       String      @db.ObjectId
+  product         Product     @relation(fields: [productId], references: [id])
+  
+  quantity        Int         // Number of units to produce
   deliveryDate    DateTime
   paymentTerms    String?
   paymentStatus   PaymentStatus @default(PENDING)
@@ -130,14 +1247,20 @@ model Order {
   status          OrderStatus @default(PENDING_PLANNING)
   priority        OrderPriority @default(NORMAL)
   
+  // ✅ UNIT IDS GENERATED ON ORDER CREATION
+  // These are the unique 8-character IDs for each physical unit
+  // Generated as: [PRODUCT_CODE][SERIAL] e.g., "INV50001", "INV50002"
+  generatedUnitIds Json?      // Array of unit IDs: ["INV50001", "INV50002", ...]
+  
   createdById     String      @db.ObjectId
   createdBy       User        @relation("OrderCreator", fields: [createdById], references: [id])
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   
-  // Relations
+  quote           Quote?
+  invoice         Invoice?
   productionPlan  ProductionPlan?
-  units           ProductionUnit[]
+  units           ProductionUnit[]  // Physical production units
   dispatch        Dispatch?
   
   @@map("orders")
@@ -182,7 +1305,7 @@ model ProductionPlan {
   actualStart     DateTime?
   actualEnd       DateTime?
   
-  assignedOperators Json    // Array of {userId, stage, machineName}
+  assignedOperators Json
   notes           String?
   
   createdAt       DateTime  @default(now())
@@ -191,14 +1314,16 @@ model ProductionPlan {
   @@map("production_plans")
 }
 
-
+// ============================================
+// INVENTORY - MATERIALS
+// ============================================
 
 model Material {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
   name            String
   partNumber      String    @unique
   category        MaterialCategory
-  unit            String    // pieces, kg, meters, etc.
+  unit            String
   
   currentStock    Float     @default(0)
   reorderLevel    Float
@@ -212,7 +1337,6 @@ model Material {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   
-  // Relations
   batches         MaterialBatch[]
   issuances       MaterialIssuance[]
   bomItems        BOMItem[]
@@ -258,9 +1382,9 @@ model GRN {
   
   receivedDate    DateTime  @default(now())
   invoiceNumber   String?
-  items           Json      // Array of {materialId, quantity, batchNumber}
+  items           Json
   attachments     Json?
-  receivedBy      String    // User name or ID
+  receivedBy      String
   notes           String?
   
   createdAt       DateTime  @default(now())
@@ -275,12 +1399,12 @@ model MaterialIssuance {
   materialId      String    @db.ObjectId
   material        Material  @relation(fields: [materialId], references: [id])
   
-  orderId         String?   
+  orderId         String?
   quantity        Float
   batchNumber     String
   
-  issuedTo        String    // Department or operator name
-  issuedBy        String    // Store keeper name
+  issuedTo        String
+  issuedBy        String
   purpose         String?
   
   issuedAt        DateTime  @default(now())
@@ -308,7 +1432,6 @@ model Supplier {
   @@map("suppliers")
 }
 
-// Bill of Materials
 model BOM {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
   productType     String    @unique
@@ -338,43 +1461,6 @@ model BOMItem {
   @@map("bom_items")
 }
 
-// ============================================
-// PRODUCTION
-// ============================================
-
-model ProductionUnit {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  orderId         String    @db.ObjectId
-  order           Order     @relation(fields: [orderId], references: [id])
-  
-  unitNumber      Int       // 1, 2, 3... within an order
-  serialNumber    String?   @unique
-  qrCode          String?
-  
-  currentStage    ProductionStage @default(SMD_PRODUCTION)
-  status          UnitStatus @default(IN_PROGRESS)
-  
-  // Stage timestamps
-  smdStarted      DateTime?
-  smdCompleted    DateTime?
-  solderingStarted DateTime?
-  solderingCompleted DateTime?
-  assemblyStarted DateTime?
-  assemblyCompleted DateTime?
-  qcStarted       DateTime?
-  qcCompleted     DateTime?
-  packagingStarted DateTime?
-  packagingCompleted DateTime?
-  
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  // Relations
-  productionLogs  ProductionLog[]
-  qcTests         QualityControl[]
-  
-  @@map("production_units")
-}
 
 enum ProductionStage {
   SMD_PRODUCTION
@@ -399,16 +1485,16 @@ model ProductionLog {
   unit            ProductionUnit @relation(fields: [unitId], references: [id])
   
   stage           ProductionStage
-  action          String    // "Started", "Completed", "Issue Reported", etc.
+  action          String
   
   operatorId      String    @db.ObjectId
   operator        User      @relation(fields: [operatorId], references: [id])
   
   pcbBatchNumber  String?
   machineUsed     String?
-  duration        Int?      // minutes
+  duration        Int?
   notes           String?
-  attachments     Json?     // Array of file URLs
+  attachments     Json?
   
   createdAt       DateTime  @default(now())
   
@@ -430,13 +1516,12 @@ model QualityControl {
   testType        TestType
   result          TestResult
   
-  // Test readings
-  electricalTest  Json?     // {voltage, current, resistance, etc.}
-  functionalTest  Json?     // {chargeTest, dischargeTest, indicators, etc.}
-  loadTest        Json?     // {duration, maxLoad, temperature, etc.}
+  electricalTest  Json?
+  functionalTest  Json?
+  loadTest        Json?
   
   failureReason   String?
-  attachments     Json?     // Photos, test data files
+  attachments     Json?
   
   testedAt        DateTime  @default(now())
   
@@ -459,7 +1544,6 @@ enum TestResult {
   PENDING
 }
 
-// Non-Conformance Report
 model NCR {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
   ncrNumber       String    @unique
@@ -510,8 +1594,8 @@ model Dispatch {
   status          DispatchStatus @default(PENDING)
   
   notes           String?
-  customerSignature String?   // URL to signature image
-  deliveryProof   Json?       // Photos, documents
+  customerSignature String?
+  deliveryProof   Json?
   
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -535,7 +1619,7 @@ model Machine {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
   name            String
   machineNumber   String    @unique
-  type            String    // Pick & Place, Reflow Oven, etc.
+  type            String
   
   location        String?
   purchaseDate    DateTime?
@@ -568,9 +1652,9 @@ model MaintenanceLog {
   description     String
   performedBy     String
   
-  downtime        Int?      // minutes
+  downtime        Int?
   cost            Float?
-  partsReplaced   Json?     // Array of parts
+  partsReplaced   Json?
   
   performedAt     DateTime  @default(now())
   
@@ -585,98 +1669,55 @@ enum MaintenanceType {
 }
 
 // ============================================
-// SYSTEM LOGS & ANALYTICS
-// ============================================
-
-model ActivityLog {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String    @db.ObjectId
-  user            User      @relation(fields: [userId], references: [id])
-  
-  action          String    // "Created Order", "Updated Inventory", etc.
-  module          String    // "Orders", "Inventory", "QC", etc.
-  details         Json?
-  ipAddress       String?
-  
-  createdAt       DateTime  @default(now())
-  
-  @@map("activity_logs")
-}
-
-model SystemSettings {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  key             String    @unique
-  value           Json
-  description     String?
-  
-  updatedAt       DateTime  @updatedAt
-  
-  @@map("system_settings")
-}
-
-
-
-
 // TOOLS
-
+// ============================================
 
 model ToolGroup {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  name            String    // e.g., "Standard Hammer", "Digital Multimeter DMM-500"
-  groupNumber     String    @unique  // e.g., "TOOLGRP-001"
+  name            String
+  groupNumber     String    @unique
   category        ToolCategory
   description     String?
   
-  // Common details for all tools in this group
   manufacturer    String?
   model           String?
   
-  // Total quantity tracking
-  totalQuantity   Int       @default(0)  // Total tools in this group
-  availableQuantity Int     @default(0)  // Available for issue
+  totalQuantity   Int       @default(0)
+  availableQuantity Int     @default(0)
   
-  // Pricing (average if different)
   unitCost        Float?
   
   isActive        Boolean   @default(true)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   
-  // Relations
   tools           Tool[]
   
   @@map("tool_groups")
 }
 
-
-
 model Tool {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  toolId          String    @unique  // Individual tracking ID (e.g., TOOL-001, TOOL-002)
-  name            String    // Will be same as group name if grouped
+  toolId          String    @unique
+  name            String
   
-  // Group relationship (optional - null for standalone tools)
   toolGroupId     String?   @db.ObjectId
   toolGroup       ToolGroup? @relation(fields: [toolGroupId], references: [id])
   
   category        ToolCategory
   description     String?
   
-  // Physical details
-  serialNumber    String?   // Individual serial from manufacturer
-  manufacturer    String?   // Can override group manufacturer
+  serialNumber    String?
+  manufacturer    String?
   purchaseDate    DateTime?
   purchaseCost    Float?
   
-  // Location & condition
-  location        String?    // Storage location
+  location        String?
   condition       ToolCondition @default(GOOD)
   
-  // Availability
   status          ToolStatus @default(AVAILABLE)
-  currentHolder   String?    // Who currently has it
+  currentHolder   String?
   
-  // Maintenance
   lastMaintenance DateTime?
   nextMaintenance DateTime?
   
@@ -684,60 +1725,20 @@ model Tool {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   
-  // Relations
   lendings        ToolLending[]
   maintenanceHistory ToolMaintenance[]
   
   @@map("tools")
 }
 
-
-
-
-// model Tool {
-//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-//   name            String
-//   toolNumber      String    @unique  // Unique identifier (e.g., TOOL-001)
-//   category        ToolCategory
-//   description     String?
-  
-//   // Physical details
-//   serialNumber    String?
-//   manufacturer    String?
-//   purchaseDate    DateTime?
-//   purchaseCost    Float?
-  
-//   // Location & condition
-//   location        String?    // Storage location
-//   condition       ToolCondition @default(GOOD)
-  
-//   // Availability
-//   status          ToolStatus @default(AVAILABLE)
-//   currentHolder   String?    // Who currently has it
-  
-//   // Maintenance
-//   lastMaintenance DateTime?
-//   nextMaintenance DateTime?
-  
-//   isActive        Boolean   @default(true)
-//   createdAt       DateTime  @default(now())
-//   updatedAt       DateTime  @updatedAt
-  
-//   // Relations
-//   lendings        ToolLending[]
-//   maintenanceHistory ToolMaintenance[]
-  
-//   @@map("tools")
-// }
-
 enum ToolCategory {
-  HAND_TOOL           // Screwdrivers, wrenches, pliers
-  POWER_TOOL          // Drills, grinders, saws
-  MEASURING_TOOL      // Multimeters, calipers, gauges
-  TESTING_EQUIPMENT   // Oscilloscopes, function generators
-  SAFETY_EQUIPMENT    // Safety glasses, gloves, helmets
-  WORKSTATION        // Soldering stations, work benches
-  LIFTING_EQUIPMENT   // Hoists, jacks, trolleys
+  HAND_TOOL
+  POWER_TOOL
+  MEASURING_TOOL
+  TESTING_EQUIPMENT
+  SAFETY_EQUIPMENT
+  WORKSTATION
+  LIFTING_EQUIPMENT
   OTHER
 }
 
@@ -750,84 +1751,38 @@ enum ToolCondition {
 }
 
 enum ToolStatus {
-  AVAILABLE          // Ready to be issued
-  IN_USE            // Currently issued to someone
-  UNDER_MAINTENANCE // Being repaired/serviced
-  RESERVED          // Reserved for specific person/project
-  DAMAGED           // Not usable
-  RETIRED           // No longer in service
+  AVAILABLE
+  IN_USE
+  UNDER_MAINTENANCE
+  RESERVED
+  DAMAGED
+  RETIRED
 }
-
-// model ToolLending {
-//   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-//   toolId          String    @db.ObjectId
-//   tool            Tool      @relation(fields: [toolId], references: [id])
-  
-//   // Borrower information
-//   issuedTo        String    // Person or department name
-//   issuedToUserId  String?   @db.ObjectId  // Optional: Link to User if applicable
-//   department      String?
-//   purpose         String?
-  
-//   // Project/Order linkage
-//   orderId         String?   // Link to production order if applicable
-//   projectName     String?
-  
-//   // Lending details
-//   issuedBy        String    // Store keeper name
-//   issuedAt        DateTime  @default(now())
-//   expectedReturn  DateTime? // Expected return date
-  
-//   // Return details
-//   returnedAt      DateTime?
-//   returnedTo      String?   // Who received it back
-//   returnCondition ToolCondition?
-//   returnNotes     String?   // Notes on condition when returned
-  
-//   // Status
-//   status          LendingStatus @default(ISSUED)
-  
-//   // Late return tracking
-//   isOverdue       Boolean   @default(false)
-  
-//   createdAt       DateTime  @default(now())
-//   updatedAt       DateTime  @updatedAt
-  
-//   @@map("tool_lendings")
-// }
-
-
 
 model ToolLending {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
   toolId          String    @db.ObjectId
   tool            Tool      @relation(fields: [toolId], references: [id])
   
-  // NEW: Quantity field for group tools
-  quantity        Int       @default(1)  // Number of tools issued (1 for individual tools)
+  quantity        Int       @default(1)
   
-  // Borrower information
   issuedTo        String
   issuedToUserId  String?   @db.ObjectId
   department      String?
   purpose         String?
   
-  // Project/Order linkage
   orderId         String?
   projectName     String?
   
-  // Lending details
   issuedBy        String
   issuedAt        DateTime  @default(now())
   expectedReturn  DateTime?
   
-  // Return details
   returnedAt      DateTime?
   returnedTo      String?
   returnCondition ToolCondition?
   returnNotes     String?
   
-  // Status
   status          LendingStatus @default(ISSUED)
   
   isOverdue       Boolean   @default(false)
@@ -838,14 +1793,12 @@ model ToolLending {
   @@map("tool_lendings")
 }
 
-
-
 enum LendingStatus {
-  ISSUED      // Currently with borrower
-  RETURNED    // Returned to inventory
-  OVERDUE     // Past expected return date
-  LOST        // Tool reported lost
-  DAMAGED     // Returned damaged
+  ISSUED
+  RETURNED
+  OVERDUE
+  LOST
+  DAMAGED
 }
 
 model ToolMaintenance {
@@ -857,7 +1810,6 @@ model ToolMaintenance {
   description     String
   performedBy     String
   
-  // Maintenance details
   startDate       DateTime
   completedDate   DateTime?
   cost            Float?
@@ -877,4 +1829,34 @@ enum ToolMaintenanceType {
   CLEANING
   PARTS_REPLACEMENT
   EMERGENCY
+}
+
+// ============================================
+// SYSTEM LOGS & ANALYTICS
+// ============================================
+
+model ActivityLog {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String    @db.ObjectId
+  user            User      @relation(fields: [userId], references: [id])
+  
+  action          String
+  module          String
+  details         Json?
+  ipAddress       String?
+  
+  createdAt       DateTime  @default(now())
+  
+  @@map("activity_logs")
+}
+
+model SystemSettings {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  key             String    @unique
+  value           Json
+  description     String?
+  
+  updatedAt       DateTime  @updatedAt
+  
+  @@map("system_settings")
 }

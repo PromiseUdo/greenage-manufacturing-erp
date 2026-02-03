@@ -225,9 +225,12 @@ export default function NewCustomerPage() {
                 <Grid size={{ xs: 12 }}>
                   <Alert severity="info" sx={{ mb: 2 }}>
                     Portal credentials will be created for customer login.
+                  </Alert>
+                  {/* <Alert severity="info" sx={{ mb: 2 }}>
+                    Portal credentials will be created for customer login.
                     Unlike employees, customers are not required to change their
                     password on first login.
-                  </Alert>
+                  </Alert> */}
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 6 }}>

@@ -2,45 +2,28 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import IssuancesTable from '@/components/inventory/issuance-table';
+import { IssuanceWithMaterial } from '@/types/inventory';
 import {
-  Box,
-  Typography,
-  Button,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Chip,
-  TextField,
-  InputAdornment,
-  Card,
-  CardContent,
-  IconButton,
-  Tooltip,
-  CircularProgress,
+  KeyboardArrowDown as ArrowDownIcon,
+  TableChart as ExcelIcon,
+  PictureAsPdf as PdfIcon,
+  Search as SearchIcon,
+} from '@mui/icons-material';
+import {
   alpha,
+  Box,
+  Button,
+  CircularProgress,
+  InputAdornment,
   Menu,
   MenuItem,
+  Paper,
+  TextField,
+  Typography,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Search as SearchIcon,
-  TrendingDown as TrendingDownIcon,
-  CalendarToday as CalendarIcon,
-  KeyboardArrowDown as ArrowDownIcon,
-  PictureAsPdf as PdfIcon,
-  TableChart as ExcelIcon,
-} from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
-import { IssuanceWithMaterial } from '@/types/inventory';
-import Grid from '@mui/material/GridLegacy';
-import IssuancesTable from '@/components/inventory/issuance-table';
+import { useEffect, useState } from 'react';
 
 export default function IssuancesPage() {
   const router = useRouter();
@@ -57,7 +40,7 @@ export default function IssuancesPage() {
   });
 
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(
-    null
+    null,
   );
   const [exporting, setExporting] = useState(false);
   const exportMenuOpen = Boolean(exportAnchorEl);
@@ -103,11 +86,11 @@ export default function IssuancesPage() {
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
       const last7Days = data.issuances.filter(
-        (i: any) => new Date(i.issuedAt) >= sevenDaysAgo
+        (i: any) => new Date(i.issuedAt) >= sevenDaysAgo,
       ).length;
 
       const last30Days = data.issuances.filter(
-        (i: any) => new Date(i.issuedAt) >= thirtyDaysAgo
+        (i: any) => new Date(i.issuedAt) >= thirtyDaysAgo,
       ).length;
 
       setStats({
