@@ -28,36 +28,23 @@ export const navigation: { section: string; items: NavItem[] }[] = [
     section: 'Main',
     items: [{ label: 'Dashboard', path: '/dashboard', icon: DashboardIcon }],
   },
-
   {
-    section: 'Sales',
+    section: 'Production',
     items: [
       {
         label: 'Products',
         icon: Inventory2Icon,
         path: '/products',
       },
-      {
-        label: 'Sales',
-        icon: ShoppingCartIcon,
-        children: [
-          {
-            label: 'Orders',
-            path: '/sales/orders',
-            icon: ShoppingCartIcon,
-          },
-          {
-            label: 'Quotes',
-            path: '/sales/quotes',
-            icon: DescriptionIcon,
-          },
-          {
-            label: 'Invoices',
-            path: '/sales/invoices',
-            icon: ReceiptIcon,
-          },
-        ],
-      },
+    ],
+  },
+
+  {
+    section: 'Sales',
+    items: [
+      { label: 'Orders', path: '/sales/orders', icon: ShoppingCartIcon },
+      { label: 'Quotes', path: '/sales/quotes', icon: DescriptionIcon },
+      { label: 'Invoices', path: '/sales/invoices', icon: ReceiptIcon },
     ],
   },
 
