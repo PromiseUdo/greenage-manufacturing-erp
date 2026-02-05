@@ -796,7 +796,7 @@ export default function NewOrderPage() {
             Back to Orders
           </Button>
           <Typography variant="h5" fontWeight={700} color="#0F172A">
-            Create Production Order
+            Create Sales Order
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Initiate a new order, generate quote, and assign unit IDs.
