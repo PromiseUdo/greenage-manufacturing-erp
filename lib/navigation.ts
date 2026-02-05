@@ -45,6 +45,7 @@ export const navigation: { section: string; items: NavItem[] }[] = [
       { label: 'Orders', path: '/sales/orders', icon: ShoppingCartIcon },
       { label: 'Quotes', path: '/sales/quotes', icon: DescriptionIcon },
       { label: 'Invoices', path: '/sales/invoices', icon: ReceiptIcon },
+      { label: 'Store', path: '/sales/store', icon: StorefrontIcon },
     ],
   },
 
