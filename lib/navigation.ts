@@ -42,6 +42,7 @@ export const navigation: { section: string; items: NavItem[] }[] = [
   {
     section: 'Sales',
     items: [
+      { label: 'Overview', path: '/sales/orders', icon: DashboardIcon },
       { label: 'Orders', path: '/sales/orders', icon: ShoppingCartIcon },
       { label: 'Quotes', path: '/sales/quotes', icon: DescriptionIcon },
       { label: 'Invoices', path: '/sales/invoices', icon: ReceiptIcon },
