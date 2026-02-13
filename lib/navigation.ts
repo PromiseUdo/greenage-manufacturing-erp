@@ -56,6 +56,11 @@ export const navigation: { section: string; items: NavItem[] }[] = [
         label: 'Store',
         icon: StorefrontIcon,
         children: [
+          {
+            label: 'Overview',
+            path: '/sales/store/overview',
+            icon: DashboardIcon,
+          },
           { label: 'Stock', path: '/sales/store', icon: Inventory2Icon },
           { label: 'Receipts', path: '/sales/store/receipts', icon: ReceiptIcon },
           {

@@ -1,5 +1,3 @@
-// src/components/inventory/InventoryStats.tsx
-
 "use client";
 
 import {
@@ -11,34 +9,39 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/GridLegacy";
 import {
-  Inventory as InventoryIcon,
+  Inventory as ItemIcon,
   AttachMoney as MoneyIcon,
   Warning as WarningIcon,
   ErrorOutline as ErrorIcon,
-  LocalShipping as SupplierIcon,
-  SwapHoriz as IssuanceIcon,
+  LocalShipping as DispatchIcon,
+  Receipt as ReceiptIcon,
 } from "@mui/icons-material";
-import { InventoryStats as Stats } from "@/types/inventory";
 
-interface InventoryStatsProps {
-  stats: Stats;
+export interface StoreStatsData {
+  totalItems: number;
+  totalValue: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  recentReceipts: any[];
+  recentDispatches: any[];
+}
+
+interface StoreStatsProps {
+  stats: StoreStatsData;
   loading?: boolean;
 }
 
-export default function InventoryStats({
-  stats,
-  loading,
-}: InventoryStatsProps) {
+export default function StoreStats({ stats, loading }: StoreStatsProps) {
   const statCards = [
     {
-      title: "Total Materials",
-      value: stats.totalMaterials,
-      icon: InventoryIcon,
+      title: "Total Items",
+      value: stats.totalItems,
+      icon: ItemIcon,
       color: "#1976d2",
       bgColor: "#e3f2fd",
     },
     {
-      title: "Total Inventory",
+      title: "Total Value",
       value: new Intl.NumberFormat("en-NG", {
         style: "currency",
         currency: "NGN",
@@ -50,31 +53,31 @@ export default function InventoryStats({
     },
     {
       title: "Low Stock",
-      value: stats.lowStockItems,
+      value: stats.lowStockCount,
       icon: WarningIcon,
       color: "#ed6c02",
       bgColor: "#fff3e0",
-      alert: stats.lowStockItems > 0,
+      alert: stats.lowStockCount > 0,
     },
     {
       title: "Out of Stock",
-      value: stats.outOfStockItems,
+      value: stats.outOfStockCount,
       icon: ErrorIcon,
       color: "#d32f2f",
       bgColor: "#ffebee",
-      alert: stats.outOfStockItems > 0,
+      alert: stats.outOfStockCount > 0,
     },
     {
-      title: "Active Suppliers",
-      value: stats.totalSuppliers,
-      icon: SupplierIcon,
+      title: "Recent Receipts",
+      value: stats.recentReceipts.length,
+      icon: ReceiptIcon,
       color: "#9c27b0",
       bgColor: "#f3e5f5",
     },
     {
-      title: "Issuances",
-      value: stats.recentIssuances,
-      icon: IssuanceIcon,
+      title: "Recent Dispatches",
+      value: stats.recentDispatches.length,
+      icon: DispatchIcon,
       color: "#0288d1",
       bgColor: "#e1f5fe",
     },
@@ -93,26 +96,29 @@ export default function InventoryStats({
       {statCards.map((stat) => {
         const Icon = stat.icon;
         return (
-          <Grid item xs={12} sm={6} md={4} lg={2} key={stat.title}>
+          <Grid item xs={12} sm={6} md={4} lg={4} key={stat.title}>
             <Card
+              elevation={0}
               sx={{
                 borderRadius: 2,
-                height: "85%",
-                boxShadow: ` 0 0 0 1px ${stat.color}33`,
+                height: "100%",
+                border: "1px solid",
+                borderColor: stat.alert ? stat.color : "divider",
                 position: "relative",
-                overflow: "visible",
-                ...(stat.alert && {
-                  boxShadow: `0 0 0 1px ${stat.color}`,
-                }),
+                overflow: "hidden",
+                transition: "all 0.2s",
+                "&:hover": {
+                  borderColor: stat.color,
+                  boxShadow: `0 4px 12px ${stat.color}15`,
+                },
               }}
             >
-              <CardContent>
+              <CardContent sx={{ p: 2.5 }}>
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "items-start",
-                    gap: "8px",
+                    gap: 1.5,
                     mb: 2,
                   }}
                 >
@@ -126,27 +132,20 @@ export default function InventoryStats({
                       justifyContent: "center",
                     }}
                   >
-                    <Icon sx={{ color: stat.color, fontSize: 16 }} />
+                    <Icon sx={{ color: stat.color, fontSize: 20 }} />
                   </Box>
                   <Typography
-                    sx={{
-                      fontSize: 12,
-                      fontWeight: "600",
-                    }}
                     variant="body2"
                     color="text.secondary"
+                    fontWeight={600}
                   >
                     {stat.title}
                   </Typography>
                 </Box>
                 <Typography
-                  variant="h4"
+                  variant="h5"
                   fontWeight={700}
-                  sx={{
-                    fontSize: 18,
-                  }}
                   color={stat.alert ? stat.color : "text.primary"}
-                  gutterBottom
                 >
                   {stat.value}
                 </Typography>
