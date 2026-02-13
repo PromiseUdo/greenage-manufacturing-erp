@@ -57,6 +57,7 @@ export default function StoreForm({
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
   } = useForm<StoreItemFormData>({
     defaultValues: {
       itemNumber: initialData?.itemNumber || "",
@@ -68,6 +69,7 @@ export default function StoreForm({
       location: initialData?.location || "",
       condition: initialData?.condition || "NEW",
       unitPrice: initialData?.unitPrice ?? undefined,
+      unitCostPrice: initialData?.unitCostPrice ?? undefined,
       batchNumber: initialData?.batchNumber || "",
       productionDate: initialData?.productionDate || "",
       warrantyExpiry: initialData?.warrantyExpiry || "",
@@ -153,7 +155,7 @@ export default function StoreForm({
                   }
                   size="small"
                 >
-                  <MenuItem value="">
+                  <MenuItem value="External">
                     <em>External</em>
                   </MenuItem>
                   {products.map((p) => (
@@ -343,6 +345,7 @@ export default function StoreForm({
                   type="number"
                   fullWidth
                   variant="standard"
+                  value={field.value ?? ""}
                   error={!!errors.unitPrice}
                   helperText={errors.unitPrice?.message || "Optional"}
                   size="small"
@@ -361,6 +364,43 @@ export default function StoreForm({
               )}
             />
           </Grid>
+
+          {/* Conditionally show Unit Cost Price for External items */}
+          {watch("productId") === "External" && (
+            <Grid item xs={12} md={4}>
+              <Controller
+                name="unitCostPrice"
+                control={control}
+                rules={{ min: 0 }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Unit Cost Price (₦)"
+                    type="number"
+                    fullWidth
+                    variant="standard"
+                    value={field.value ?? ""}
+                    error={!!errors.unitCostPrice}
+                    helperText={
+                      errors.unitCostPrice?.message || "Cost per unit"
+                    }
+                    size="small"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">₦</InputAdornment>
+                      ),
+                    }}
+                    inputProps={{ min: 0, step: 0.01 }}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? Number(e.target.value) : undefined,
+                      )
+                    }
+                  />
+                )}
+              />
+            </Grid>
+          )}
 
           <Grid item xs={12} md={4}>
             <Controller

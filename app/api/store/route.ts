@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
       location,
       condition,
       unitPrice,
+      unitCostPrice,
       batchNumber,
       productionDate,
       warrantyExpiry,
@@ -126,15 +127,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify product exists (if provided)
-    if (productId) {
+    // Handle "External" productId
+    let finalProductId = productId;
+    if (productId === "External") {
+      finalProductId = null;
+    }
+
+    // Verify product exists (if provided and not External)
+    if (finalProductId) {
       const product = await prisma.product.findUnique({
-        where: { id: productId },
+        where: { id: finalProductId },
       });
 
       if (!product) {
         return NextResponse.json(
-          { error: 'Product not found' },
+          { error: "Product not found" },
           { status: 400 },
         );
       }
@@ -145,13 +152,14 @@ export async function POST(request: NextRequest) {
       data: {
         itemNumber,
         name,
-        productId: productId || null,
+        productId: finalProductId,
         category: category as ProductCategory,
         quantity: quantity || 0,
         unit: unit || 'pcs',
         location: location || null,
         condition: condition || 'NEW',
         unitPrice: unitPrice || null,
+        unitCostPrice: unitCostPrice || null,
         batchNumber: batchNumber || null,
         productionDate: productionDate ? new Date(productionDate) : null,
         warrantyExpiry: warrantyExpiry ? new Date(warrantyExpiry) : null,

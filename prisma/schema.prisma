@@ -767,6 +767,7 @@ model StoreItem {
   condition       StoreItemCondition @default(NEW)
   
   unitPrice       Float?
+  unitCostPrice   Float?
   batchNumber     String?
   productionDate  DateTime?
   warrantyExpiry  DateTime?

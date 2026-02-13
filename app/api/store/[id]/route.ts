@@ -75,6 +75,7 @@ export async function PUT(
       location,
       condition,
       unitPrice,
+      unitCostPrice,
       batchNumber,
       productionDate,
       warrantyExpiry,
@@ -93,18 +94,25 @@ export async function PUT(
       );
     }
 
+    // Handle "External" productId
+    let finalProductId = productId;
+    if (productId === "External") {
+      finalProductId = null;
+    }
+
     // Update store item
     const storeItem = await prisma.storeItem.update({
       where: { id },
       data: {
         name,
-        productId: productId || null,
+        productId: finalProductId,
         category: category as ProductCategory,
         quantity,
         unit,
         location: location || null,
         condition: condition || 'NEW',
         unitPrice: unitPrice || null,
+        unitCostPrice: unitCostPrice || null,
         batchNumber: batchNumber || null,
         productionDate: productionDate ? new Date(productionDate) : null,
         warrantyExpiry: warrantyExpiry ? new Date(warrantyExpiry) : null,

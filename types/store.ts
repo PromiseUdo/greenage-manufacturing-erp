@@ -18,6 +18,7 @@ export interface StoreItemFormData {
   location?: string;
   condition: string;
   unitPrice?: number;
+  unitCostPrice?: number;
   batchNumber?: string;
   productionDate?: string;
   warrantyExpiry?: string;
