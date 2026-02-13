@@ -154,7 +154,7 @@ export default function StoreForm({
                   size="small"
                 >
                   <MenuItem value="">
-                    <em>None</em>
+                    <em>External</em>
                   </MenuItem>
                   {products.map((p) => (
                     <MenuItem key={p.id} value={p.id}>
