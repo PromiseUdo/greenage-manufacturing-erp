@@ -267,7 +267,7 @@ export default function ProductsPage() {
                 <StyledTableCell>Name & Description</StyledTableCell>
                 <StyledTableCell>Category</StyledTableCell>
                 <StyledTableCell>Model</StyledTableCell>
-                <StyledTableCell>Base Price</StyledTableCell>
+                <StyledTableCell>Cost Price</StyledTableCell>
                 <StyledTableCell>Stock</StyledTableCell>
                 <StyledTableCell>Usage</StyledTableCell>
                 <StyledTableCell>Status</StyledTableCell>
