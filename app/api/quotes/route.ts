@@ -348,19 +348,21 @@ export async function GET(request: NextRequest) {
               category: true,
             },
           },
+          storeItem: {
+            select: {
+              id: true,
+              name: true,
+              itemNumber:true,
+              category: true,
+            },
+          },
           createdBy: {
             select: {
               id: true,
               name: true,
             },
           },
-          order: {
-            select: {
-              id: true,
-              orderNumber: true,
-              status: true,
-            },
-          },
+          // order removed
           invoice: {
             select: {
               id: true,
@@ -406,6 +408,7 @@ export async function POST(request: NextRequest) {
     const {
       customerId,
       productId,
+      storeItemId,
       quantity,
       deliveryDate,
       unitPrice,
@@ -418,41 +421,63 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validation
-    if (!customerId || !productId || !quantity || !deliveryDate) {
+    if (!customerId || (!productId && !storeItemId) || !quantity || !deliveryDate) {
       return NextResponse.json(
         {
-          error: 'Customer, product, quantity, and delivery date are required',
+          error: 'Customer, product/store item, quantity, and delivery date are required',
         },
         { status: 400 },
       );
     }
 
-    // Get product details
-    const product = await prisma.product.findUnique({
-      where: { id: productId },
-      select: {
-        id: true,
-        name: true,
-        productCode: true,
-        costPrice: true,
-        isActive: true,
-        isAvailable: true,
-      },
-    });
+    let product = null;
+    let storeItem = null;
+    let basePrice = 0;
 
-    if (!product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+    // Get product details if productId is provided
+    if (productId) {
+      product = await prisma.product.findUnique({
+        where: { id: productId },
+        select: {
+          id: true,
+          name: true,
+          productCode: true,
+          costPrice: true,
+          isActive: true,
+          isAvailable: true,
+        },
+      });
+
+      if (!product) {
+        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      }
+
+      if (!product.isActive || !product.isAvailable) {
+        return NextResponse.json(
+          { error: 'Product is not available' },
+          { status: 400 },
+        );
+      }
+      basePrice = product.costPrice;
     }
 
-    if (!product.isActive || !product.isAvailable) {
-      return NextResponse.json(
-        { error: 'Product is not available' },
-        { status: 400 },
-      );
+    // Get store item details if storeItemId is provided
+    if (storeItemId) {
+        storeItem = await prisma.storeItem.findUnique({
+            where: { id: storeItemId },
+            select: { id: true, unitPrice: true, name: true, productId: true }
+        });
+
+        if (!storeItem) {
+            return NextResponse.json({ error: 'Store Item not found' }, { status: 404 });
+        }
+        
+        // If no product linked or no basePrice yet, use store item unit price
+        if (!basePrice) basePrice = storeItem.unitPrice || 0;
     }
 
-    // Calculate provided unit price or default to product cost price
-    const finalUnitPrice = unitPrice || product.costPrice;
+    // Calculate provided unit price or default
+    const finalUnitPrice = unitPrice || basePrice;
     const totalAmount = finalUnitPrice * quantity;
     const finalTax = taxAmount || 0;
     const finalDiscount = discountAmount || 0;
@@ -475,58 +500,18 @@ export async function POST(request: NextRequest) {
       quoteNumber = `QTE-${year}-001`;
     }
 
-    // Generate order number
-    const lastOrder = await prisma.order.findFirst({
-      where: {
-        orderNumber: { contains: `ORD-${year}` },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    let orderNumber;
-    if (lastOrder) {
-      const lastNumber = parseInt(lastOrder.orderNumber.split('-')[2]);
-      orderNumber = `ORD-${year}-${String(lastNumber + 1).padStart(3, '0')}`;
-    } else {
-      orderNumber = `ORD-${year}-001`;
-    }
-
-    // ✅ Generate unit IDs for the order
-    console.log(
-      `Generating ${quantity} unit IDs for product ${product.productCode}...`,
-    );
-    const unitIds = await generateUnitIds(productId, quantity);
-    console.log('Generated unit IDs:', unitIds);
-
-    // ✅ FIX: Convert date strings to proper DateTime objects
     const deliveryDateTime = new Date(deliveryDate);
     const expiryDateTime = expiryDate ? new Date(expiryDate) : null;
 
-    // Create quote and order in transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create order first
-      const order = await tx.order.create({
-        data: {
-          orderNumber,
-          customerId,
-          productId,
-          quantity,
-          deliveryDate: deliveryDateTime, // ✅ Use DateTime object
-          paymentTerms,
-          status: 'PENDING_PLANNING',
-          generatedUnitIds: unitIds,
-          createdById: session.user.id,
-        },
-      });
-
-      // Create quote linked to order
       const quote = await tx.quote.create({
         data: {
           quoteNumber,
           customerId,
-          productId,
+          productId: productId || undefined,
+          storeItemId: storeItemId || undefined,
           quantity,
-          deliveryDate: deliveryDateTime, // ✅ Use DateTime object
+          deliveryDate: deliveryDateTime,
           unitPrice: finalUnitPrice,
           totalAmount,
           taxAmount: finalTax,
@@ -534,23 +519,21 @@ export async function POST(request: NextRequest) {
           finalAmount,
           paymentTerms,
           status: 'DRAFT',
-          expiryDate: expiryDateTime, // ✅ Use DateTime object or null
+          expiryDate: expiryDateTime,
           notes,
           termsConditions,
-          orderId: order.id,
           createdById: session.user.id,
         },
         include: {
           customer: true,
           product: true,
-          order: true,
+          storeItem: true,
         },
       });
 
-      return { quote, order, unitIds };
+      return { quote };
     });
 
-    // Log activity
     await prisma.activityLog.create({
       data: {
         userId: session.user.id,
@@ -559,12 +542,10 @@ export async function POST(request: NextRequest) {
         details: {
           quoteId: result.quote.id,
           quoteNumber: result.quote.quoteNumber,
-          orderId: result.order.id,
-          orderNumber: result.order.orderNumber,
           customerId,
           productId,
+          storeItemId,
           quantity,
-          unitIdsGenerated: unitIds.length,
         },
       },
     });

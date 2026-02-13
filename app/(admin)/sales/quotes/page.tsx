@@ -413,11 +413,11 @@
 //   );
 // }
 
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { styled } from '@mui/material/styles';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { styled } from "@mui/material/styles";
 import {
   Box,
   Typography,
@@ -441,7 +441,7 @@ import {
   ListItemIcon,
   ListItemText,
   Tooltip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Search,
   Add,
@@ -450,37 +450,38 @@ import {
   CheckCircle,
   Description,
   Receipt,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 // --- Replicated Styled Components from Products Table ---
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
-    backgroundColor: '#0F172A',
+    backgroundColor: "#0F172A",
     color: theme.palette.common.white,
     fontWeight: 600,
     fontSize: 13,
-    letterSpacing: '0.5px',
-    padding: '8px 16px',
-    borderBottom: 'none',
+    letterSpacing: "0.5px",
+    padding: "8px 16px",
+    borderBottom: "none",
   },
   [`&.${tableCellClasses.body}`]: {
     fontSize: 14,
-    padding: '14px 16px',
+    padding: "14px 16px",
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': {
+  "&:nth-of-type(odd)": {
     backgroundColor: theme.palette.action.hover,
   },
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.action.selected,
-    transition: 'background-color 0.2s ease',
+    transition: "background-color 0.2s ease",
   },
-  '&:last-child td': {
+  "&:last-child td": {
     borderBottom: 0,
   },
+  cursor: "pointer",
 }));
 
 interface Quote {
@@ -497,6 +498,12 @@ interface Quote {
     productNumber: string;
     category: string;
   };
+  storeItem: {
+    id: string;
+    name: string;
+    category: string;
+    itemNumber: string;
+  };
   quantity: number;
   finalAmount: number;
   status: string;
@@ -507,12 +514,12 @@ interface Quote {
 }
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-  DRAFT: { bg: '#f3f4f6', text: '#6b7280' },
-  SENT: { bg: '#dbeafe', text: '#1e40af' },
-  ACCEPTED: { bg: '#dcfce7', text: '#166534' },
-  REJECTED: { bg: '#fee2e2', text: '#991b1b' },
-  EXPIRED: { bg: '#fef3c7', text: '#92400e' },
-  CONVERTED: { bg: '#e0e7ff', text: '#4338ca' },
+  DRAFT: { bg: "#f3f4f6", text: "#6b7280" },
+  SENT: { bg: "#dbeafe", text: "#1e40af" },
+  ACCEPTED: { bg: "#dcfce7", text: "#166534" },
+  REJECTED: { bg: "#fee2e2", text: "#991b1b" },
+  EXPIRED: { bg: "#fef3c7", text: "#92400e" },
+  CONVERTED: { bg: "#e0e7ff", text: "#4338ca" },
 };
 
 export default function QuotesPage() {
@@ -522,8 +529,8 @@ export default function QuotesPage() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
 
@@ -548,16 +555,16 @@ export default function QuotesPage() {
         setTotal(data.pagination.total);
       }
     } catch (error) {
-      console.error('Error fetching quotes:', error);
+      console.error("Error fetching quotes:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -576,9 +583,9 @@ export default function QuotesPage() {
       {/* Header */}
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 3,
         }}
       >
@@ -596,8 +603,8 @@ export default function QuotesPage() {
         </Box>
         <Button
           variant="contained"
-          onClick={() => router.push('/sales/quotes/new')}
-          sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}
+          onClick={() => router.push("/sales/quotes/new")}
+          sx={{ fontWeight: "bold", textTransform: "uppercase" }}
         >
           Create Quote
         </Button>
@@ -610,11 +617,11 @@ export default function QuotesPage() {
           p: 2,
           mb: 3,
           borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'divider',
+          border: "1px solid",
+          borderColor: "divider",
         }}
       >
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           <TextField
             placeholder="Search quotes, customers..."
             value={search}
@@ -657,10 +664,10 @@ export default function QuotesPage() {
       <Paper
         elevation={0}
         sx={{
-          width: '100%',
-          overflow: 'hidden',
-          border: '1px solid',
-          borderColor: 'divider',
+          width: "100%",
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "divider",
           borderRadius: 2,
         }}
       >
@@ -703,7 +710,7 @@ export default function QuotesPage() {
                       <Typography
                         variant="body2"
                         fontWeight={600}
-                        sx={{ color: '#0F172A' }}
+                        sx={{ color: "#0F172A" }}
                       >
                         {quote.quoteNumber}
                       </Typography>
@@ -726,10 +733,10 @@ export default function QuotesPage() {
                     <StyledTableCell>
                       <Box>
                         <Typography variant="body2" fontWeight={500}>
-                          {quote.product.name}
+                          {quote.storeItem.name}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {quote.product.productNumber}
+                          {quote.storeItem.itemNumber}
                         </Typography>
                       </Box>
                     </StyledTableCell>
@@ -751,8 +758,8 @@ export default function QuotesPage() {
                         label={quote.status}
                         size="small"
                         sx={{
-                          bgcolor: statusColors[quote.status]?.bg || '#f3f4f6',
-                          color: statusColors[quote.status]?.text || '#6b7280',
+                          bgcolor: statusColors[quote.status]?.bg || "#f3f4f6",
+                          color: statusColors[quote.status]?.text || "#6b7280",
                           fontWeight: 600,
                           fontSize: 11,
                         }}
@@ -760,12 +767,12 @@ export default function QuotesPage() {
                     </StyledTableCell>
 
                     <StyledTableCell>
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <Box sx={{ display: "flex", gap: 0.5 }}>
                         {quote.order && (
                           <Tooltip title={`Order: ${quote.order.orderNumber}`}>
                             <IconButton
                               size="small"
-                              sx={{ bgcolor: '#f1f5f9' }}
+                              sx={{ bgcolor: "#f1f5f9" }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 router.push(`/sales/orders/${quote.order?.id}`);
@@ -781,7 +788,7 @@ export default function QuotesPage() {
                           >
                             <IconButton
                               size="small"
-                              sx={{ bgcolor: '#f1f5f9' }}
+                              sx={{ bgcolor: "#f1f5f9" }}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 router.push(
@@ -825,9 +832,9 @@ export default function QuotesPage() {
             setPage(0);
           }}
           sx={{
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            backgroundColor: '#F8FAFC',
+            borderTop: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "#F8FAFC",
           }}
         />
       </Paper>
@@ -841,7 +848,7 @@ export default function QuotesPage() {
             mt: 1,
             minWidth: 160,
             borderRadius: 2,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           },
         }}
       >
@@ -856,7 +863,7 @@ export default function QuotesPage() {
           </ListItemIcon>
           <ListItemText
             primary="View Quote"
-            primaryTypographyProps={{ variant: 'body2' }}
+            primaryTypographyProps={{ variant: "body2" }}
           />
         </MenuItem>
       </Menu>

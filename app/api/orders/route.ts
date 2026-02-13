@@ -301,18 +301,21 @@ export async function GET(request: NextRequest) {
               productCode: true,
             },
           },
-          quote: {
-            select: {
-              id: true,
-              quoteNumber: true,
-            },
+          storeItem:{
+            select:{
+              id:true,
+              name:true,
+              itemNumber:true,
+              category:true,
+            }
           },
-          invoice: {
+          invoices: { // Changed from invoice to invoices
             select: {
               id: true,
               invoiceNumber: true,
               status: true,
             },
+            take: 1, // Get the latest/first one
           },
           _count: {
             select: {
@@ -327,8 +330,15 @@ export async function GET(request: NextRequest) {
       prisma.order.count({ where }),
     ]);
 
+    // Map invoices array to single invoice object for frontend compatibility
+    const formattedOrders = orders.map((order) => ({
+      ...order,
+      invoice: order.invoices?.[0] || null,
+      invoices: undefined,
+    }));
+
     return NextResponse.json({
-      orders,
+      orders: formattedOrders,
       pagination: {
         total,
         page,
@@ -383,7 +393,7 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         productCode: true,
-        costPrice: true,
+        costPrice : true,
         isActive: true,
         isAvailable: true,
       },
@@ -418,19 +428,10 @@ export async function POST(request: NextRequest) {
       ? `ORD-${year}-${String(parseInt(lastOrder.orderNumber.split('-')[2]) + 1).padStart(3, '0')}`
       : `ORD-${year}-001`;
 
-    const lastQuote = await prisma.quote.findFirst({
-      where: { quoteNumber: { contains: `QTE-${year}` } },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const quoteNumber = lastQuote
-      ? `QTE-${year}-${String(parseInt(lastQuote.quoteNumber.split('-')[2]) + 1).padStart(3, '0')}`
-      : `QTE-${year}-001`;
-
     // ✅ FIX: Convert deliveryDate string to proper DateTime object
     const deliveryDateTime = new Date(deliveryDate);
 
-    // Create order and quote in transaction
+    // Create order only
     const result = await prisma.$transaction(async (tx) => {
       const order = await tx.order.create({
         data: {
@@ -447,26 +448,7 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      const quote = await tx.quote.create({
-        data: {
-          quoteNumber,
-          customerId,
-          productId,
-          quantity,
-          deliveryDate: deliveryDateTime, // ✅ Use DateTime object
-          unitPrice: finalUnitPrice,
-          totalAmount,
-          taxAmount: finalTax,
-          discountAmount: finalDiscount,
-          finalAmount,
-          paymentTerms,
-          status: 'DRAFT',
-          orderId: order.id,
-          createdById: session.user.id,
-        },
-      });
-
-      return { order, quote, unitIds };
+      return { order, unitIds };
     });
 
     // Log activity
@@ -478,8 +460,6 @@ export async function POST(request: NextRequest) {
         details: {
           orderId: result.order.id,
           orderNumber: result.order.orderNumber,
-          quoteId: result.quote.id,
-          quoteNumber: result.quote.quoteNumber,
           unitIdsGenerated: unitIds.length,
         },
       },

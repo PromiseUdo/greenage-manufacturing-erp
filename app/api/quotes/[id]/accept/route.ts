@@ -26,7 +26,8 @@ export async function POST(
       include: {
         customer: true,
         product: true,
-        order: true,
+        storeItem: true,
+        // order removed
       },
     });
 
@@ -41,12 +42,14 @@ export async function POST(
       );
     }
 
+    /* // Order is no longer required for accepting a quote
     if (!quote.order) {
       return NextResponse.json(
         { error: 'No order linked to this quote' },
         { status: 400 },
       );
     }
+    */
 
     // ✅ ACCEPT QUOTE AND CREATE INVOICE
     const result = await prisma.$transaction(async (tx) => {
@@ -82,14 +85,16 @@ export async function POST(
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + dueInDays);
 
-      // ✅ Create invoice
+      // ✅ Create invoice (Order will be linked later upon payment)
       const invoice = await tx.invoice.create({
         data: {
           invoiceNumber,
           quoteId,
           customerId: quote.customerId,
-          orderId: quote.orderId!,
+          // orderId: quote.orderId!, // Order might not exist yet
+          // orderId removed
           productId: quote.productId,
+          storeItemId: quote.storeItemId, // ✅ Propagate storeItemId
           quantity: quote.quantity,
           unitPrice: quote.unitPrice,
           totalAmount: quote.totalAmount,

@@ -30,7 +30,7 @@ model User {
   
   // Relations
   employee        Employee?
-  customer        Customer?
+  customer        Customer[]
 
   createdOrders   Order[]   @relation("OrderCreator")
   createdQuotes   Quote[]   @relation("QuoteCreator")
@@ -79,7 +79,7 @@ model Customer {
   address       String
   contactPerson String?
   
-  userId        String?   @unique @db.ObjectId
+  userId        String?   @db.ObjectId
   user          User?     @relation(fields: [userId], references: [id])
   
   createdAt     DateTime  @default(now())
@@ -254,8 +254,11 @@ model Quote {
   customerId      String      @db.ObjectId
   customer        Customer    @relation(fields: [customerId], references: [id])
   
-  productId       String      @db.ObjectId
-  product         Product     @relation(fields: [productId], references: [id])
+  productId       String?      @db.ObjectId
+  product         Product?     @relation(fields: [productId], references: [id])
+  
+  storeItemId     String?      @db.ObjectId
+  storeItem       StoreItem?   @relation(fields: [storeItemId], references: [id])
   
   quantity        Int
   deliveryDate    DateTime
@@ -277,8 +280,8 @@ model Quote {
   notes           String?
   termsConditions String?
   
-  orderId         String?     @unique @db.ObjectId
-  order           Order?      @relation(fields: [orderId], references: [id])
+  // orderId removed
+  // order removed
   invoice         Invoice?
   
   createdById     String      @db.ObjectId
@@ -312,11 +315,14 @@ model Invoice {
   customerId      String      @db.ObjectId
   customer        Customer    @relation(fields: [customerId], references: [id])
   
-  orderId         String      @unique @db.ObjectId
-  order           Order       @relation(fields: [orderId], references: [id])
+  orderId         String?      @db.ObjectId
+  order           Order?       @relation(fields: [orderId], references: [id])
   
-  productId       String      @db.ObjectId
-  product         Product     @relation(fields: [productId], references: [id])
+  productId       String?      @db.ObjectId
+  product         Product?     @relation(fields: [productId], references: [id])
+
+  storeItemId     String?      @db.ObjectId
+  storeItem       StoreItem?   @relation(fields: [storeItemId], references: [id])
   
   quantity        Int
   
@@ -370,8 +376,11 @@ model Order {
   customer        Customer    @relation(fields: [customerId], references: [id])
   
   // ✅ PRODUCT REFERENCE (instead of productType)
-  productId       String      @db.ObjectId
-  product         Product     @relation(fields: [productId], references: [id])
+  productId       String?      @db.ObjectId
+  product         Product?     @relation(fields: [productId], references: [id])
+
+  storeItemId     String?      @db.ObjectId
+  storeItem       StoreItem?   @relation(fields: [storeItemId], references: [id])
   
   quantity        Int         // Number of units to produce
   deliveryDate    DateTime
@@ -391,8 +400,8 @@ model Order {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   
-  quote           Quote?
-  invoice         Invoice?
+  // quote removed
+  invoices        Invoice[]
   productionPlan  ProductionPlan?
   units           ProductionUnit[]  // Physical production units
   dispatch        Dispatch?
@@ -777,6 +786,10 @@ model StoreItem {
   
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  
+  quotes          Quote[]
+  invoices        Invoice[]
+  orders          Order[]
   
   @@map("store_items")
 }

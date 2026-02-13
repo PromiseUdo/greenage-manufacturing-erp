@@ -55,6 +55,9 @@ export async function GET(request: NextRequest) {
       prisma.storeItem.count({ where }),
     ]);
 
+
+    console.log(storeItems, 'storeItems');
+    
     return NextResponse.json({
       storeItems,
       pagination: {

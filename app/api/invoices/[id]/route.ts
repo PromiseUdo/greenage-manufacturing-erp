@@ -32,6 +32,14 @@ export async function GET(
             specifications: true,
           },
         },
+        storeItem: {
+          select: {
+            id: true,
+            name: true,
+            itemNumber: true,
+            category: true,
+          },
+        },
         quote: {
           select: {
             id: true,

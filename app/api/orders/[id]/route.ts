@@ -32,15 +32,16 @@ export async function GET(
             specifications: true,
           },
         },
-        quote: {
+        storeItem: {
           select: {
             id: true,
-            quoteNumber: true,
-            status: true,
-            finalAmount: true,
+            name: true,
+            itemNumber: true,
+            category: true,
           },
         },
-        invoice: {
+          // quote removed
+        invoices: { // Changed from invoice to invoices
           select: {
             id: true,
             invoiceNumber: true,
@@ -49,6 +50,7 @@ export async function GET(
             paidAmount: true,
             balanceAmount: true,
           },
+          take: 1, // Get the latest/first one
         },
         units: {
           orderBy: { unitNumber: 'asc' },
@@ -59,6 +61,7 @@ export async function GET(
             serialNumber: true,
             currentStage: true,
             status: true,
+            // ...
           },
         },
         createdBy: {
@@ -74,7 +77,14 @@ export async function GET(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    return NextResponse.json(order);
+    // Map invoices array to single invoice object for frontend compatibility
+    const formattedOrder = {
+      ...order,
+      invoice: order.invoices?.[0] || null,
+      invoices: undefined,
+    };
+
+    return NextResponse.json(formattedOrder);
   } catch (error) {
     console.error('Error fetching order:', error);
     return NextResponse.json(

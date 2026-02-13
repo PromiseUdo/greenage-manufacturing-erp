@@ -33,14 +33,7 @@ export async function GET(
             specifications: true,
           },
         },
-        order: {
-          select: {
-            id: true,
-            orderNumber: true,
-            status: true,
-            generatedUnitIds: true,
-          },
-        },
+        storeItem: true,
         invoice: {
           select: {
             id: true,

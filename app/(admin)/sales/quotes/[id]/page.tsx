@@ -1149,12 +1149,12 @@
 
 // src/app/dashboard/sales/quotes/[id]/page.tsx
 
-'use client';
+"use client";
 
-import '@/lib/pdf/fonts'; // 👈 MUST be before styles or <Document />
+import "@/lib/pdf/fonts"; // 👈 MUST be before styles or <Document />
 
-import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -1169,8 +1169,8 @@ import {
   DialogActions,
   TextField,
   Divider,
-} from '@mui/material';
-import Grid from '@mui/material/GridLegacy';
+} from "@mui/material";
+import Grid from "@mui/material/GridLegacy";
 
 import {
   ArrowBack,
@@ -1179,8 +1179,8 @@ import {
   ShoppingCart,
   Receipt,
   Download,
-} from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
+} from "@mui/icons-material";
+import { styled } from "@mui/material/styles";
 
 // --- PDF Imports ---
 import {
@@ -1192,13 +1192,13 @@ import {
   StyleSheet,
   Image as PdfImage,
   Font,
-} from '@react-pdf/renderer';
-import { formatPrice } from '@/lib/utils';
+} from "@react-pdf/renderer";
+import { formatPrice } from "@/lib/utils";
 
 // --- Configuration ---
 // REPLACE THIS with your specific Cloudinary URL or public folder path (e.g., '/logo.png')
 // For PDFs, absolute URLs (Cloudinary) are often more reliable than relative public paths.
-const COMPANY_LOGO_URL = '/greenage_logo_black.png';
+const COMPANY_LOGO_URL = "/greenage_logo_black.png";
 
 // // --- PDF Styles ---
 // Font.register({
@@ -1214,132 +1214,132 @@ const pdfStyles = StyleSheet.create({
     padding: 40,
     // fontFamily: 'Helvetica',
     fontSize: 10,
-    fontFamily: 'Roboto',
+    fontFamily: "Roboto",
     // fontSize: 10,
-    color: '#334155',
+    color: "#334155",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 30,
   },
-  logoSection: { flexDirection: 'column' },
-  logo: { width: 120, height: 'auto', marginBottom: 10 },
+  logoSection: { flexDirection: "column" },
+  logo: { width: 120, height: "auto", marginBottom: 10 },
   companyName: {
     fontSize: 18,
     fontWeight: 700,
-    color: '#0F172A',
-    textTransform: 'uppercase',
+    color: "#0F172A",
+    textTransform: "uppercase",
   },
-  companyDetails: { fontSize: 9, color: '#64748B', lineHeight: 1.4 },
+  companyDetails: { fontSize: 9, color: "#64748B", lineHeight: 1.4 },
 
-  quoteTitleBox: { alignItems: 'flex-end' },
+  quoteTitleBox: { alignItems: "flex-end" },
   quoteTitle: {
     fontSize: 24,
     fontWeight: 700,
-    color: '#0F172A',
-    textTransform: 'uppercase',
+    color: "#0F172A",
+    textTransform: "uppercase",
   },
-  quoteMeta: { marginTop: 10, textAlign: 'right' },
-  metaRow: { flexDirection: 'row', marginBottom: 4 },
+  quoteMeta: { marginTop: 10, textAlign: "right" },
+  metaRow: { flexDirection: "row", marginBottom: 4 },
   metaLabel: {
     width: 80,
-    color: '#64748B',
-    textAlign: 'right',
+    color: "#64748B",
+    textAlign: "right",
     marginRight: 10,
   },
-  metaValue: { fontWeight: 700, color: '#0F172A', textAlign: 'right' },
+  metaValue: { fontWeight: 700, color: "#0F172A", textAlign: "right" },
 
   divider: {
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: "#E2E8F0",
     marginVertical: 20,
   },
 
-  customerSection: { flexDirection: 'row', marginBottom: 30 },
-  customerCol: { width: '50%' },
+  customerSection: { flexDirection: "row", marginBottom: 30 },
+  customerCol: { width: "50%" },
   sectionTitle: {
     fontSize: 9,
     fontWeight: 700,
-    color: '#94A3B8',
-    textTransform: 'uppercase',
+    color: "#94A3B8",
+    textTransform: "uppercase",
     marginBottom: 5,
   },
   customerName: {
     fontSize: 12,
     fontWeight: 700,
-    color: '#0F172A',
+    color: "#0F172A",
     marginBottom: 4,
   },
-  customerText: { fontSize: 10, color: '#475569', marginBottom: 2 },
+  customerText: { fontSize: 10, color: "#475569", marginBottom: 2 },
 
   table: { marginTop: 10 },
   tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#0F172A',
+    flexDirection: "row",
+    backgroundColor: "#0F172A",
     padding: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  tableHeaderCell: { color: '#FFFFFF', fontWeight: 700, fontSize: 9 },
+  tableHeaderCell: { color: "#FFFFFF", fontWeight: 700, fontSize: 9 },
 
   tableRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: "#E2E8F0",
     padding: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
-  col1: { width: '50%' }, // Product
-  col2: { width: '15%', textAlign: 'center' }, // Qty
-  col3: { width: '15%', textAlign: 'right' }, // Unit Price
-  col4: { width: '20%', textAlign: 'right' }, // Total
+  col1: { width: "50%" }, // Product
+  col2: { width: "15%", textAlign: "center" }, // Qty
+  col3: { width: "15%", textAlign: "right" }, // Unit Price
+  col4: { width: "20%", textAlign: "right" }, // Total
 
   totalsSection: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     marginTop: 20,
   },
-  totalsBox: { width: '40%' },
+  totalsBox: { width: "40%" },
   totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 8,
     paddingBottom: 4,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: "#F1F5F9",
   },
-  totalLabel: { color: '#64748B' },
-  totalValue: { color: '#0F172A', fontWeight: 700 },
+  totalLabel: { color: "#64748B" },
+  totalValue: { color: "#0F172A", fontWeight: 700 },
   grandTotalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 8,
     padding: 8,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: "#F8FAFC",
     borderRadius: 4,
   },
-  grandTotalLabel: { fontSize: 12, fontWeight: 700, color: '#0F172A' },
-  grandTotalValue: { fontSize: 12, fontWeight: 700, color: '#10B981' },
+  grandTotalLabel: { fontSize: 12, fontWeight: 700, color: "#0F172A" },
+  grandTotalValue: { fontSize: 12, fontWeight: 700, color: "#10B981" },
 
   footer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 40,
     left: 40,
     right: 40,
-    textAlign: 'center',
+    textAlign: "center",
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: "#E2E8F0",
     paddingTop: 20,
   },
-  footerText: { fontSize: 8, color: '#94A3B8', marginBottom: 4 },
+  footerText: { fontSize: 8, color: "#94A3B8", marginBottom: 4 },
 });
 
 // --- PDF Component ---
 const QuoteDocument = ({ quote }: { quote: any }) => {
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
+    new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
     }).format(amount);
 
   return (
@@ -1391,10 +1391,10 @@ const QuoteDocument = ({ quote }: { quote: any }) => {
             <Text style={pdfStyles.customerName}>{quote.customer.name}</Text>
             <Text style={pdfStyles.customerText}>{quote.customer.phone}</Text>
             <Text style={pdfStyles.customerText}>
-              {quote.customer.email || ''}
+              {quote.customer.email || ""}
             </Text>
             <Text style={pdfStyles.customerText}>
-              {quote.customer.address || ''}
+              {quote.customer.address || ""}
             </Text>
           </View>
         </View>
@@ -1417,11 +1417,11 @@ const QuoteDocument = ({ quote }: { quote: any }) => {
           {/* Row (Single Product logic based on your data structure) */}
           <View style={pdfStyles.tableRow}>
             <View style={pdfStyles.col1}>
-              <Text style={{ fontWeight: 700, fontSize: 10, color: '#0F172A' }}>
-                {quote.product.name}
+              <Text style={{ fontWeight: 700, fontSize: 10, color: "#0F172A" }}>
+                {quote.storeItem.name}
               </Text>
-              <Text style={{ fontSize: 9, color: '#64748B', marginTop: 2 }}>
-                Code: {quote.product.productCode} • {quote.product.category}
+              <Text style={{ fontSize: 9, color: "#64748B", marginTop: 2 }}>
+                Code: {quote.storeItem.itemNumber} • {quote.storeItem.category}
               </Text>
             </View>
             <Text style={[pdfStyles.col2, { fontSize: 10 }]}>
@@ -1450,10 +1450,10 @@ const QuoteDocument = ({ quote }: { quote: any }) => {
             {/* Discount Row */}
             {quote.discountAmount > 0 && (
               <View style={pdfStyles.totalRow}>
-                <Text style={[pdfStyles.totalLabel, { color: '#B91C1C' }]}>
+                <Text style={[pdfStyles.totalLabel, { color: "#B91C1C" }]}>
                   Discount
                 </Text>
-                <Text style={[pdfStyles.totalValue, { color: '#B91C1C' }]}>
+                <Text style={[pdfStyles.totalValue, { color: "#B91C1C" }]}>
                   -{formatCurrency(quote.discountAmount)}
                 </Text>
               </View>
@@ -1487,7 +1487,7 @@ const QuoteDocument = ({ quote }: { quote: any }) => {
             1. This quote is valid for 30 days. 2. Payment terms: 50% upfront,
             50% on delivery. 3. Goods sold are in good condition.
           </Text>
-          <Text style={{ marginTop: 10, fontSize: 8, color: '#CBD5E1' }}>
+          <Text style={{ marginTop: 10, fontSize: 8, color: "#CBD5E1" }}>
             Generated by Greenage Technologies
           </Text>
         </View>
@@ -1500,24 +1500,24 @@ const QuoteDocument = ({ quote }: { quote: any }) => {
 
 // ... (Re-use your existing styles)
 const statusColors: Record<string, { bg: string; text: string }> = {
-  DRAFT: { bg: '#f3f4f6', text: '#6b7280' },
-  SENT: { bg: '#dbeafe', text: '#1e40af' },
-  ACCEPTED: { bg: '#dcfce7', text: '#166534' },
-  REJECTED: { bg: '#fee2e2', text: '#991b1b' },
-  EXPIRED: { bg: '#fef3c7', text: '#92400e' },
-  CONVERTED: { bg: '#e0e7ff', text: '#4338ca' },
+  DRAFT: { bg: "#f3f4f6", text: "#6b7280" },
+  SENT: { bg: "#dbeafe", text: "#1e40af" },
+  ACCEPTED: { bg: "#dcfce7", text: "#166534" },
+  REJECTED: { bg: "#fee2e2", text: "#991b1b" },
+  EXPIRED: { bg: "#fef3c7", text: "#92400e" },
+  CONVERTED: { bg: "#e0e7ff", text: "#4338ca" },
 };
 
 const SectionHeader = styled(Typography)(({ theme }) => ({
   fontSize: 14,
   fontWeight: 700,
-  color: '#0F172A',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
+  color: "#0F172A",
+  textTransform: "uppercase",
+  letterSpacing: "0.5px",
   marginBottom: theme.spacing(2),
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
 }));
 
 export default function QuoteDetailPage({
@@ -1529,8 +1529,8 @@ export default function QuoteDetailPage({
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [quote, setQuote] = useState<any>(null);
 
   // PDF Download State
@@ -1548,7 +1548,7 @@ export default function QuoteDetailPage({
     try {
       const res = await fetch(`/api/quotes/${resolvedParams.id}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to fetch quote');
+      if (!res.ok) throw new Error(data.error || "Failed to fetch quote");
       setQuote(data);
     } catch (err: any) {
       setError(err.message);
@@ -1566,15 +1566,15 @@ export default function QuoteDetailPage({
 
       // Create Link and Click
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = `Quote_${quote.quoteNumber}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (e) {
-      console.error('PDF Generation Error', e);
-      setError('Failed to generate PDF');
+      console.error("PDF Generation Error", e);
+      setError("Failed to generate PDF");
     } finally {
       setIsDownloading(false);
     }
@@ -1584,12 +1584,12 @@ export default function QuoteDetailPage({
     try {
       setAccepting(true);
       const res = await fetch(`/api/quotes/${resolvedParams.id}/accept`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dueInDays }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to accept');
+      if (!res.ok) throw new Error(data.error || "Failed to accept");
       setSuccess(
         `Quote accepted! Invoice ${data.invoice.invoiceNumber} created.`,
       );
@@ -1603,49 +1603,49 @@ export default function QuoteDetailPage({
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   if (loading)
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 20 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", py: 20 }}>
         <CircularProgress size={40} />
       </Box>
     );
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+    <Box sx={{ maxWidth: 1200, mx: "auto" }}>
       {/* Breadcrumbs & Actions Header */}
       <Box
         sx={{
           mb: 4,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
         }}
       >
         <Box>
           <Button
             startIcon={<ArrowBack />}
             onClick={() => router.back()}
-            sx={{ mb: 1, textTransform: 'none', color: 'text.secondary' }}
+            sx={{ mb: 1, textTransform: "none", color: "text.secondary" }}
           >
             Back to Quotes
           </Button>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Typography variant="h5" fontWeight={700} sx={{ color: '#0F172A' }}>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+            <Typography variant="h5" fontWeight={700} sx={{ color: "#0F172A" }}>
               {quote?.quoteNumber}
             </Typography>
             <Chip
@@ -1664,7 +1664,7 @@ export default function QuoteDetailPage({
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 1.5 }}>
+        <Box sx={{ display: "flex", gap: 1.5 }}>
           <Button
             variant="contained"
             onClick={handleDownloadPdf}
@@ -1677,14 +1677,14 @@ export default function QuoteDetailPage({
               )
             }
             sx={{
-              bgcolor: '#0F172A',
-              '&:hover': { bgcolor: '#1E293B' },
+              bgcolor: "#0F172A",
+              "&:hover": { bgcolor: "#1E293B" },
               fontWeight: 600,
-              textTransform: 'none',
+              textTransform: "none",
             }}
             // sx={{ borderColor: '#CBD5E1', color: '#0F172A', fontWeight: 600 }}
           >
-            {isDownloading ? 'Generating...' : 'Download PDF'}
+            {isDownloading ? "Generating..." : "Download PDF"}
           </Button>
           {!quote?.isAccepted && (
             <Button
@@ -1692,8 +1692,8 @@ export default function QuoteDetailPage({
               startIcon={<CheckCircle />}
               onClick={() => setAcceptDialogOpen(true)}
               sx={{
-                bgcolor: '#10b981',
-                '&:hover': { bgcolor: '#059669' },
+                bgcolor: "#10b981",
+                "&:hover": { bgcolor: "#059669" },
                 fontWeight: 600,
               }}
             >
@@ -1723,34 +1723,34 @@ export default function QuoteDetailPage({
             sx={{
               p: 3,
               borderRadius: 3,
-              border: '1px solid',
-              borderColor: 'divider',
+              border: "1px solid",
+              borderColor: "divider",
               mb: 3,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
               <SectionHeader>Line Items</SectionHeader>
             </Box>
 
             <Box
               sx={{
                 p: 2,
-                bgcolor: '#F8FAFC',
+                bgcolor: "#F8FAFC",
                 borderRadius: 2,
                 mb: 4,
-                display: 'flex',
-                justifyContent: 'space-between',
+                display: "flex",
+                justifyContent: "space-between",
               }}
             >
               <Box>
                 <Typography variant="body2" fontWeight={600}>
-                  {quote?.product.name}
+                  {quote?.storeItem.name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  {quote?.product.productNumber}
+                  {quote?.storeItem.itemNumber}
                 </Typography>
               </Box>
-              <Box sx={{ textAlign: 'right' }}>
+              <Box sx={{ textAlign: "right" }}>
                 <Typography variant="body2" fontWeight={600}>
                   {quote?.quantity} Units
                 </Typography>
@@ -1760,7 +1760,7 @@ export default function QuoteDetailPage({
               </Box>
             </Box>
 
-            <Divider sx={{ my: 2, borderStyle: 'dashed' }} />
+            <Divider sx={{ my: 2, borderStyle: "dashed" }} />
 
             {/* <Box sx={{ ml: 'auto', maxWidth: 300 }}>
               <Box
@@ -1802,10 +1802,10 @@ export default function QuoteDetailPage({
             </Box> */}
 
             {/* Main Content Area -> Line Items Paper */}
-            <Box sx={{ ml: 'auto', maxWidth: 300 }}>
+            <Box sx={{ ml: "auto", maxWidth: 300 }}>
               {/* Subtotal */}
               <Box
-                sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}
+                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
               >
                 <Typography variant="body2" color="text.secondary">
                   Subtotal
@@ -1819,8 +1819,8 @@ export default function QuoteDetailPage({
               {quote?.discountAmount > 0 && (
                 <Box
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
+                    display: "flex",
+                    justifyContent: "space-between",
                     mb: 1,
                   }}
                 >
@@ -1837,8 +1837,8 @@ export default function QuoteDetailPage({
               {quote?.taxAmount > 0 && (
                 <Box
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
+                    display: "flex",
+                    justifyContent: "space-between",
                     mb: 1,
                   }}
                 >
@@ -1852,7 +1852,7 @@ export default function QuoteDetailPage({
               )}
 
               <Box
-                sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}
+                sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}
               >
                 <Typography variant="h6" fontWeight={700}>
                   Grand Total
@@ -1865,14 +1865,14 @@ export default function QuoteDetailPage({
           </Paper>
 
           {/* Section: Specifications */}
-          {quote?.product.specifications?.length > 0 && (
+          {quote?.product?.specifications?.length > 0 && (
             <Paper
               elevation={0}
               sx={{
                 p: 3,
                 borderRadius: 3,
-                border: '1px solid',
-                borderColor: 'divider',
+                border: "1px solid",
+                borderColor: "divider",
               }}
             >
               <SectionHeader>Technical Specifications</SectionHeader>
@@ -1903,12 +1903,12 @@ export default function QuoteDetailPage({
             sx={{
               p: 3,
               borderRadius: 3,
-              border: '1px solid',
-              borderColor: 'divider',
+              border: "1px solid",
+              borderColor: "divider",
               mb: 3,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
               <SectionHeader> Customer</SectionHeader>
             </Box>
             <Typography variant="body1" fontWeight={600}>
@@ -1928,16 +1928,16 @@ export default function QuoteDetailPage({
             sx={{
               p: 3,
               borderRadius: 3,
-              border: '1px solid',
-              borderColor: 'divider',
+              border: "1px solid",
+              borderColor: "divider",
               mb: 3,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
               <SectionHeader>Logistics</SectionHeader>
             </Box>
             <Box
-              sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}
+              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
             >
               <Typography variant="caption" color="text.secondary">
                 Est. Delivery
@@ -1955,21 +1955,21 @@ export default function QuoteDetailPage({
               sx={{
                 p: 3,
                 borderRadius: 3,
-                bgcolor: '#F1F5F9',
-                border: '1px solid',
-                borderColor: 'divider',
+                bgcolor: "#F1F5F9",
+                border: "1px solid",
+                borderColor: "divider",
               }}
             >
               <SectionHeader> Related Links</SectionHeader>
               <Box
-                sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}
+                sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 1 }}
               >
                 {quote?.order && (
                   <Button
                     size="small"
                     variant="text"
                     startIcon={<ShoppingCart />}
-                    sx={{ justifyContent: 'flex-start', color: '#0F172A' }}
+                    sx={{ justifyContent: "flex-start", color: "#0F172A" }}
                     onClick={() =>
                       router.push(`/sales/orders/${quote.order.id}`)
                     }
@@ -1982,7 +1982,7 @@ export default function QuoteDetailPage({
                     size="small"
                     variant="text"
                     startIcon={<Receipt />}
-                    sx={{ justifyContent: 'flex-start', color: '#0F172A' }}
+                    sx={{ justifyContent: "flex-start", color: "#0F172A" }}
                     onClick={() =>
                       router.push(`/sales/invoices/${quote.invoice.id}`)
                     }
@@ -2023,7 +2023,7 @@ export default function QuoteDetailPage({
         <DialogActions sx={{ p: 3 }}>
           <Button
             onClick={() => setAcceptDialogOpen(false)}
-            sx={{ color: 'text.secondary' }}
+            sx={{ color: "text.secondary" }}
           >
             Cancel
           </Button>
@@ -2031,9 +2031,9 @@ export default function QuoteDetailPage({
             onClick={handleAcceptQuote}
             variant="contained"
             disabled={accepting}
-            sx={{ bgcolor: '#0F172A' }}
+            sx={{ bgcolor: "#0F172A" }}
           >
-            {accepting ? 'Processing...' : 'Confirm & Generate Invoice'}
+            {accepting ? "Processing..." : "Confirm & Generate Invoice"}
           </Button>
         </DialogActions>
       </Dialog>
