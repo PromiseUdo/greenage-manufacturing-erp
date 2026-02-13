@@ -18,7 +18,8 @@ import {
 import Grid from "@mui/material/GridLegacy";
 import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
-import { StoreReceiptFormData } from "@/types/store";
+import { StoreReceiptFormData, FileAttachment } from "@/types/store";
+import FileUpload from "../inventory/file-upload";
 
 interface StoreItemOption {
   id: string;
@@ -38,7 +39,7 @@ const SOURCES = [
   "Transfer",
   "Return",
   // "Quality Cleared",
-  "Other",
+  "External",
 ];
 
 export default function StoreReceiptForm({
@@ -47,6 +48,7 @@ export default function StoreReceiptForm({
   isLoading = false,
 }: StoreReceiptFormProps) {
   const [storeItems, setStoreItems] = useState<StoreItemOption[]>([]);
+  const [attachments, setAttachments] = useState<FileAttachment[]>([]);
 
   const {
     control,
@@ -103,9 +105,18 @@ export default function StoreReceiptForm({
     });
   };
 
+  const handleFormSubmit = async (data: StoreReceiptFormData) => {
+    // Include attachments in the form data
+    const dataWithAttachments = {
+      ...data,
+      attachments,
+    };
+    await onSubmit(dataWithAttachments);
+  };
+
   return (
     <Paper sx={{ p: 4, borderRadius: 2 }}>
-      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+      <Box component="form" onSubmit={handleSubmit(handleFormSubmit)}>
         <Grid container spacing={4}>
           {/* Source */}
           <Grid item xs={12} md={6}>
@@ -154,6 +165,22 @@ export default function StoreReceiptForm({
                   size="small"
                 />
               )}
+            />
+          </Grid>
+
+          {/* File Upload Section */}
+          <Grid item xs={12}>
+            {/* <Divider sx={{ my: 2 }} /> */}
+            <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+              Supporting Documents
+            </Typography>
+            <FileUpload
+              files={attachments}
+              onChange={setAttachments}
+              maxFiles={5}
+              maxSizeMB={10}
+              accept=".pdf,.jpg,.jpeg,.png"
+              disabled={isLoading}
             />
           </Grid>
 

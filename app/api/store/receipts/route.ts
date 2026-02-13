@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { source, referenceNumber, items, notes } = body;
+    const { source, referenceNumber, items, notes, attachments } = body;
 
     if (!source || !items || items.length === 0) {
       return NextResponse.json(
@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
           items: itemSnapshots,
           receivedBy: session.user.name as string,
           notes: notes || null,
+          attachments: attachments || [],
         },
       });
 

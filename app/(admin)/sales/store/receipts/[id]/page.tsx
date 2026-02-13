@@ -20,7 +20,11 @@ import {
   Alert,
 } from "@mui/material";
 import Grid from "@mui/material/GridLegacy";
-import { ArrowBack as BackIcon } from "@mui/icons-material";
+import {
+  ArrowBack as BackIcon,
+  AttachFile as AttachFileIcon,
+  Description as FileIcon,
+} from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 
@@ -41,6 +45,13 @@ interface StoreReceiptDetail {
   source: string;
   referenceNumber?: string;
   items: ReceiptItem[];
+  attachments?: Array<{
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+    uploadedAt: string;
+  }>;
   receivedBy: string;
   notes?: string;
   createdAt: string;
@@ -178,6 +189,7 @@ export default function StoreReceiptDetailPage({
             }}
           >
             <Box
+              // elevation={0}
               sx={{
                 p: 3,
                 borderBottom: "1px solid",
@@ -278,6 +290,96 @@ export default function StoreReceiptDetailPage({
               </Table>
             </TableContainer>
           </Paper>
+
+          {/* Attachments */}
+          {receipt.attachments && receipt.attachments.length > 0 && (
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                mb: 3,
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  p: 3,
+                  borderBottom: "1px solid",
+                  borderColor: "divider",
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: "#0F172A",
+                    fontSize: 18,
+                  }}
+                >
+                  Supporting Documents
+                </Typography>
+              </Box>
+              <Box sx={{ p: 2 }}>
+                <Grid container spacing={2}>
+                  {receipt.attachments.map((file, index) => (
+                    <Grid item xs={12} sm={6} key={index}>
+                      <Paper
+                        variant="outlined"
+                        sx={{
+                          p: 2,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          "&:hover": { bgcolor: "#f8fafc" },
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 1,
+                            bgcolor: "#eff6ff",
+                            color: "#3b82f6",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <FileIcon />
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight={500}
+                            noWrap
+                            title={file.name}
+                          >
+                            {file.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {(file.size / 1024).toFixed(1)} KB •{" "}
+                            {format(new Date(file.uploadedAt), "MMM d, yyyy")}
+                          </Typography>
+                        </Box>
+                        <Button
+                          size="small"
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          startIcon={<AttachFileIcon />}
+                          sx={{ minWidth: "auto" }}
+                        >
+                          View
+                        </Button>
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            </Paper>
+          )}
 
           {/* Notes */}
           {receipt.notes && (

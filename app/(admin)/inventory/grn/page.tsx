@@ -1,8 +1,8 @@
 // src/app/dashboard/inventory/grn/page.tsx
 
-'use client';
+"use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -23,7 +23,7 @@ import {
   InputAdornment,
   styled,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Add as AddIcon,
   ExpandMore as ExpandIcon,
@@ -32,9 +32,9 @@ import {
   Search as SearchIcon,
   Receipt as ReceiptIcon,
   AttachFile as AttachIcon,
-} from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+} from "@mui/icons-material";
+import { useRouter } from "next/navigation";
+import { format } from "date-fns";
 
 interface FileAttachment {
   name: string;
@@ -74,30 +74,30 @@ interface GRNWithSupplier {
 // Styled components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
-    backgroundColor: '#0F172A',
+    backgroundColor: "#0F172A",
     color: theme.palette.common.white,
     fontWeight: 600,
     fontSize: 13,
-    letterSpacing: '0.5px',
-    padding: '8px 16px',
-    borderBottom: 'none',
+    letterSpacing: "0.5px",
+    padding: "8px 16px",
+    borderBottom: "none",
   },
   [`&.${tableCellClasses.body}`]: {
     fontSize: 14,
-    padding: '14px 16px',
+    padding: "14px 16px",
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': {
+  "&:nth-of-type(odd)": {
     backgroundColor: theme.palette.action.hover,
   },
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.action.selected,
-    transition: 'background-color 0.2s ease',
+    transition: "background-color 0.2s ease",
   },
-  '&:last-child td': {
+  "&:last-child td": {
     borderBottom: 0,
   },
 }));
@@ -110,7 +110,7 @@ export default function GRNPage() {
   const [limit, setLimit] = useState(20);
   const [total, setTotal] = useState(0);
   const [expandedGRN, setExpandedGRN] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const fetchGRNs = useCallback(async () => {
@@ -127,7 +127,7 @@ export default function GRNPage() {
       setGrns(data?.grns || []);
       setTotal(data?.pagination?.total || 0);
     } catch (error) {
-      console.error('Error fetching GRNs:', error);
+      console.error("Error fetching GRNs:", error);
     } finally {
       setLoading(false);
     }
@@ -146,7 +146,7 @@ export default function GRNPage() {
   };
 
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       setPage(1);
       setRefreshTrigger((prev) => prev + 1);
     }
@@ -168,9 +168,9 @@ export default function GRNPage() {
       {/* Header */}
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 3,
         }}
       >
@@ -189,12 +189,12 @@ export default function GRNPage() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => router.push('/inventory/grn/new')}
+          onClick={() => router.push("/inventory/grn/new")}
           sx={{
-            textTransform: 'uppercase',
-            bgcolor: '#0F172A',
-            color: '#ffffff',
-            fontWeight: 'bold',
+            textTransform: "uppercase",
+            bgcolor: "#0F172A",
+            color: "#ffffff",
+            fontWeight: "bold",
             fontSize: 14,
           }}
         >
@@ -209,9 +209,9 @@ export default function GRNPage() {
           p: 2,
           mb: 3,
           borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
+          border: "1px solid",
+          borderColor: "divider",
+          bgcolor: "background.paper",
         }}
       >
         <TextField
@@ -231,9 +231,9 @@ export default function GRNPage() {
           sx={{
             maxWidth: 500,
             fontSize: 14,
-            '& .MuiOutlinedInput-root': {
-              '&.Mui-focused fieldset': {
-                borderColor: '#0F172A',
+            "& .MuiOutlinedInput-root": {
+              "&.Mui-focused fieldset": {
+                borderColor: "#0F172A",
                 borderWidth: 1,
               },
             },
@@ -247,9 +247,9 @@ export default function GRNPage() {
           elevation={0}
           sx={{
             p: 6,
-            textAlign: 'center',
-            border: '1px solid',
-            borderColor: 'divider',
+            textAlign: "center",
+            border: "1px solid",
+            borderColor: "divider",
             borderRadius: 2,
           }}
         >
@@ -263,18 +263,18 @@ export default function GRNPage() {
           elevation={0}
           sx={{
             p: 6,
-            border: '1px dashed',
-            borderColor: 'divider',
+            border: "1px dashed",
+            borderColor: "divider",
             borderRadius: 3,
-            textAlign: 'center',
-            backgroundColor: 'background.paper',
+            textAlign: "center",
+            backgroundColor: "background.paper",
           }}
         >
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
               gap: 1.5,
             }}
           >
@@ -282,15 +282,15 @@ export default function GRNPage() {
               sx={{
                 width: 56,
                 height: 56,
-                borderRadius: '50%',
-                backgroundColor: 'grey.100',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                borderRadius: "50%",
+                backgroundColor: "grey.100",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 mb: 1,
               }}
             >
-              <ReceiptIcon sx={{ fontSize: 28, color: 'action.active' }} />
+              <ReceiptIcon sx={{ fontSize: 28, color: "action.active" }} />
             </Box>
 
             <Typography variant="h6" fontWeight={600}>
@@ -310,11 +310,11 @@ export default function GRNPage() {
               variant="contained"
               sx={{
                 mt: 2,
-                bgcolor: '#0F172A',
-                '&:hover': { bgcolor: '#1e293b' },
+                bgcolor: "#0F172A",
+                "&:hover": { bgcolor: "#1e293b" },
               }}
               startIcon={<AddIcon />}
-              onClick={() => router.push('/inventory/grn/new')}
+              onClick={() => router.push("/inventory/grn/new")}
             >
               Create GRN
             </Button>
@@ -324,10 +324,10 @@ export default function GRNPage() {
         <Paper
           elevation={0}
           sx={{
-            width: '100%',
-            overflow: 'hidden',
-            border: '1px solid',
-            borderColor: 'divider',
+            width: "100%",
+            overflow: "hidden",
+            border: "1px solid",
+            borderColor: "divider",
             borderRadius: 2,
           }}
         >
@@ -356,10 +356,10 @@ export default function GRNPage() {
                           size="small"
                           onClick={() => handleToggleExpand(grn.id)}
                           sx={{
-                            color: '#64748B',
-                            '&:hover': {
-                              backgroundColor: '#F1F5F9',
-                              color: '#0F172A',
+                            color: "#64748B",
+                            "&:hover": {
+                              backgroundColor: "#F1F5F9",
+                              color: "#0F172A",
                             },
                           }}
                         >
@@ -375,10 +375,10 @@ export default function GRNPage() {
                           label={grn.grnNumber}
                           size="small"
                           sx={{
-                            bgcolor: '#e8f5e9',
-                            color: '#2e7d32',
+                            bgcolor: "#e8f5e9",
+                            color: "#2e7d32",
                             fontWeight: 600,
-                            cursor: 'pointer',
+                            cursor: "pointer",
                           }}
                           onClick={() => handleViewDetails(grn.id)}
                         />
@@ -386,10 +386,10 @@ export default function GRNPage() {
                       <StyledTableCell>
                         <Box>
                           <Typography variant="body2" fontWeight={600}>
-                            {format(new Date(grn.receivedDate), 'MMM dd, yyyy')}
+                            {format(new Date(grn.receivedDate), "MMM dd, yyyy")}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {format(new Date(grn.receivedDate), 'hh:mm a')}
+                            {format(new Date(grn.receivedDate), "hh:mm a")}
                           </Typography>
                         </Box>
                       </StyledTableCell>
@@ -406,7 +406,7 @@ export default function GRNPage() {
                             variant="outlined"
                             sx={{
                               fontWeight: 500,
-                              fontSize: '11px',
+                              fontSize: "11px",
                             }}
                           />
                         ) : (
@@ -421,8 +421,8 @@ export default function GRNPage() {
                           size="small"
                           sx={{
                             minWidth: 40,
-                            bgcolor: '#e3f2fd',
-                            color: '#1976d2',
+                            bgcolor: "#e3f2fd",
+                            color: "#1976d2",
                             fontWeight: 600,
                           }}
                         />
@@ -431,7 +431,7 @@ export default function GRNPage() {
                         <Typography
                           variant="body2"
                           fontWeight={600}
-                          sx={{ color: '#16a34a' }}
+                          sx={{ color: "#16a34a" }}
                         >
                           +{getTotalQuantity(grn.batches || [])}
                         </Typography>
@@ -443,8 +443,8 @@ export default function GRNPage() {
                             label={grn.attachments.length}
                             size="small"
                             sx={{
-                              bgcolor: '#f3e5f5',
-                              color: '#9c27b0',
+                              bgcolor: "#f3e5f5",
+                              color: "#9c27b0",
                               fontWeight: 600,
                             }}
                           />
@@ -464,10 +464,10 @@ export default function GRNPage() {
                           size="small"
                           onClick={() => handleViewDetails(grn.id)}
                           sx={{
-                            color: '#64748B',
-                            '&:hover': {
-                              backgroundColor: '#F1F5F9',
-                              color: '#0F172A',
+                            color: "#64748B",
+                            "&:hover": {
+                              backgroundColor: "#F1F5F9",
+                              color: "#0F172A",
                             },
                           }}
                         >
@@ -483,7 +483,7 @@ export default function GRNPage() {
                           colSpan={10}
                           sx={{
                             py: 0,
-                            backgroundColor: 'transparent',
+                            backgroundColor: "transparent",
                           }}
                         >
                           <Collapse
@@ -494,7 +494,7 @@ export default function GRNPage() {
                             <Box
                               sx={{
                                 p: 3,
-                                backgroundColor: '#f8fafc',
+                                backgroundColor: "#f8fafc",
                                 marginTop: 1,
                                 borderRadius: 2,
                                 marginBottom: 1,
@@ -539,7 +539,7 @@ export default function GRNPage() {
                                     <TableRow
                                       key={batch.id}
                                       sx={{
-                                        '&:hover': { bgcolor: 'action.hover' },
+                                        "&:hover": { bgcolor: "action.hover" },
                                       }}
                                     >
                                       <TableCell>
@@ -560,7 +560,7 @@ export default function GRNPage() {
                                           variant="body2"
                                           fontWeight={600}
                                         >
-                                          {batch.quantity}{' '}
+                                          {batch.quantity}{" "}
                                           {batch.material?.unit}
                                         </Typography>
                                       </TableCell>
@@ -569,8 +569,8 @@ export default function GRNPage() {
                                           label={batch.batchNumber}
                                           size="small"
                                           sx={{
-                                            bgcolor: '#fef3c7',
-                                            color: '#f59e0b',
+                                            bgcolor: "#fef3c7",
+                                            color: "#f59e0b",
                                             fontWeight: 500,
                                             fontSize: 11,
                                           }}
@@ -581,7 +581,7 @@ export default function GRNPage() {
                                           variant="body2"
                                           color="text.secondary"
                                         >
-                                          {batch.supplierBatchNo || '—'}
+                                          {batch.supplierBatchNo || "—"}
                                         </Typography>
                                       </TableCell>
                                       <TableCell>
@@ -592,9 +592,9 @@ export default function GRNPage() {
                                           {batch.expiryDate
                                             ? format(
                                                 new Date(batch.expiryDate),
-                                                'MMM dd, yyyy',
+                                                "MMM dd, yyyy",
                                               )
-                                            : '—'}
+                                            : "—"}
                                         </Typography>
                                       </TableCell>
                                     </TableRow>
@@ -606,7 +606,7 @@ export default function GRNPage() {
                                   sx={{
                                     mt: 2,
                                     p: 2,
-                                    bgcolor: 'background.paper',
+                                    bgcolor: "background.paper",
                                     borderRadius: 1,
                                   }}
                                 >
@@ -641,9 +641,9 @@ export default function GRNPage() {
               setPage(1);
             }}
             sx={{
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              backgroundColor: '#F8FAFC',
+              borderTop: "1px solid",
+              borderColor: "divider",
+              backgroundColor: "#F8FAFC",
             }}
           />
         </Paper>

@@ -38,6 +38,15 @@ export interface StoreReceiptFormData {
   referenceNumber?: string;
   items: StoreReceiptItemInput[];
   notes?: string;
+  attachments?: FileAttachment[];
+}
+
+export interface FileAttachment {
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+  uploadedAt: string;
 }
 
 // Store Dispatch types

@@ -1,8 +1,8 @@
 // src/components/inventory/GRNForm.tsx
 
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Box,
   TextField,
@@ -13,12 +13,12 @@ import {
   Autocomplete,
   Divider,
   Tooltip,
-} from '@mui/material';
-import Grid from '@mui/material/GridLegacy';
-import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
-import { GRNFormData, GRNItemInput } from '@/types/inventory';
-import FileUpload from './file-upload';
+} from "@mui/material";
+import Grid from "@mui/material/GridLegacy";
+import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
+import { GRNFormData, GRNItemInput } from "@/types/inventory";
+import FileUpload from "./file-upload";
 
 interface Supplier {
   id: string;
@@ -61,24 +61,24 @@ export default function GRNForm({
     formState: { errors },
   } = useForm<GRNFormData>({
     defaultValues: {
-      supplierId: '',
-      invoiceNumber: '',
+      supplierId: "",
+      invoiceNumber: "",
       items: [
         {
-          materialId: '',
+          materialId: "",
           quantity: 0,
-          batchNumber: '',
+          batchNumber: "",
           expiryDate: undefined,
-          supplierBatchNo: '',
+          supplierBatchNo: "",
         },
       ],
-      notes: '',
+      notes: "",
     },
   });
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: 'items',
+    name: "items",
   });
 
   useEffect(() => {
@@ -86,8 +86,8 @@ export default function GRNForm({
     const fetchData = async () => {
       try {
         const [suppliersRes, materialsRes] = await Promise.all([
-          fetch('/api/inventory/suppliers?limit=1000'),
-          fetch('/api/inventory/materials?limit=1000'),
+          fetch("/api/inventory/suppliers?limit=1000"),
+          fetch("/api/inventory/materials?limit=1000"),
         ]);
 
         const [suppliersData, materialsData] = await Promise.all([
@@ -98,7 +98,7 @@ export default function GRNForm({
         setSuppliers(suppliersData.suppliers);
         setMaterials(materialsData.materials);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     };
 
@@ -107,11 +107,11 @@ export default function GRNForm({
 
   const addItem = () => {
     append({
-      materialId: '',
+      materialId: "",
       quantity: 0,
-      batchNumber: '',
+      batchNumber: "",
       expiryDate: undefined,
-      supplierBatchNo: '',
+      supplierBatchNo: "",
     });
   };
 
@@ -133,7 +133,7 @@ export default function GRNForm({
             <Controller
               name="supplierId"
               control={control}
-              rules={{ required: 'Supplier is required' }}
+              rules={{ required: "Supplier is required" }}
               render={({ field }) => {
                 const selectedSupplier =
                   suppliers?.find((s) => s.id === field.value) || null;
@@ -143,7 +143,7 @@ export default function GRNForm({
                     options={suppliers}
                     value={selectedSupplier}
                     getOptionLabel={(option) => option.name}
-                    onChange={(_, value) => field.onChange(value?.id || '')}
+                    onChange={(_, value) => field.onChange(value?.id || "")}
                     disabled={isLoading}
                     renderInput={(params) => (
                       <TextField
@@ -199,9 +199,9 @@ export default function GRNForm({
             <Divider sx={{ my: 2 }} />
             <Box
               sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
               <Typography variant="subtitle1" fontWeight={600}>
@@ -211,7 +211,7 @@ export default function GRNForm({
               <Tooltip title="Add Item">
                 <IconButton
                   sx={{
-                    backgroundColor: '#f0f0f0',
+                    backgroundColor: "#f0f0f0",
                   }}
                   aria-label="add item"
                   onClick={addItem}
@@ -230,9 +230,9 @@ export default function GRNForm({
               <Box sx={{ mb: 2 }}>
                 <Box
                   sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
                     mb: 1,
                   }}
                 >
@@ -257,7 +257,7 @@ export default function GRNForm({
                     <Controller
                       name={`items.${index}.materialId`}
                       control={control}
-                      rules={{ required: 'Material is required' }}
+                      rules={{ required: "Material is required" }}
                       render={({ field }) => {
                         const selectedMaterial =
                           materials.find((m) => m.id === field.value) || null;
@@ -270,7 +270,7 @@ export default function GRNForm({
                               `${o.partNumber} – ${o.name}`
                             }
                             onChange={(_, value) =>
-                              field.onChange(value?.id || '')
+                              field.onChange(value?.id || "")
                             }
                             disabled={isLoading}
                             renderInput={(params) => (
@@ -297,8 +297,8 @@ export default function GRNForm({
                       name={`items.${index}.quantity`}
                       control={control}
                       rules={{
-                        required: 'Required',
-                        min: { value: 0.01, message: 'Must be > 0' },
+                        required: "Required",
+                        min: { value: 0.01, message: "Must be > 0" },
                       }}
                       render={({ field }) => (
                         <TextField
@@ -323,7 +323,7 @@ export default function GRNForm({
                     <Controller
                       name={`items.${index}.batchNumber`}
                       control={control}
-                      rules={{ required: 'Required' }}
+                      rules={{ required: "Required" }}
                       render={({ field }) => (
                         <TextField
                           {...field}
@@ -368,7 +368,7 @@ export default function GRNForm({
                           label="Expiry Date"
                           type="date"
                           variant="standard"
-                          value={field.value ?? ''}
+                          value={field.value ?? ""}
                           fullWidth
                           disabled={isLoading}
                           InputLabelProps={{ shrink: true }}
@@ -402,7 +402,7 @@ export default function GRNForm({
 
           {/* Actions */}
           <Grid item xs={12}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
               <Button
                 variant="outlined"
                 onClick={onCancel}
@@ -415,13 +415,13 @@ export default function GRNForm({
 
               <Button
                 sx={{
-                  fontWeight: 'bold',
+                  fontWeight: "bold",
                 }}
                 type="submit"
                 variant="contained"
                 disabled={isLoading}
               >
-                {isLoading ? 'Creating…' : 'Create GRN'}
+                {isLoading ? "Creating…" : "Create GRN"}
               </Button>
             </Box>
           </Grid>

@@ -31,6 +31,7 @@ import {
   Search as SearchIcon,
   ExpandMore as ExpandIcon,
   ExpandLess as CollapseIcon,
+  AttachFile as AttachIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -55,6 +56,13 @@ interface StoreReceipt {
   receivedBy: string;
   notes?: string;
   createdAt: string;
+  attachments?: Array<{
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+    uploadedAt: string;
+  }>;
 }
 
 // Styled components
@@ -272,6 +280,7 @@ export default function StoreReceiptsPage() {
                   <StyledTableCell>Reference</StyledTableCell>
                   <StyledTableCell align="center">Items</StyledTableCell>
                   <StyledTableCell align="center">Total Qty</StyledTableCell>
+                  <StyledTableCell align="center">Attachments</StyledTableCell>
                   <StyledTableCell>Received By</StyledTableCell>
                   <StyledTableCell align="center">Actions</StyledTableCell>
                 </TableRow>
@@ -339,6 +348,25 @@ export default function StoreReceiptsPage() {
                         >
                           +{getTotalQuantity(receipt.items || [])}
                         </Typography>
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
+                        {receipt.attachments &&
+                        receipt.attachments.length > 0 ? (
+                          <Chip
+                            icon={<AttachIcon fontSize="small" />}
+                            label={receipt.attachments.length}
+                            size="small"
+                            sx={{
+                              bgcolor: "#f3e5f5",
+                              color: "#9c27b0",
+                              fontWeight: 600,
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            —
+                          </Typography>
+                        )}
                       </StyledTableCell>
                       <StyledTableCell>
                         <Typography variant="body2">
