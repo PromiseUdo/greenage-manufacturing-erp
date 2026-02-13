@@ -324,8 +324,106 @@ export default function ProductDetailPage({
 
   return (
     <Box sx={{ pb: 5 }}>
-      {/* Header */}
-      <Box sx={{ mb: 3 }}>
+      {/* Print Header */}
+      <Box
+        sx={{ display: "none", "@media print": { display: "block", mb: 4 } }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            mb: 2,
+            borderBottom: "2px solid #0F172A",
+            pb: 2,
+          }}
+        >
+          <Box>
+            {/* <Typography variant="h4" fontWeight={700} color="#0F172A">
+              GREENAGE
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              POWER SOLUTIONS
+            </Typography> */}
+            <img
+              src="/greenage_logo_black.png"
+              alt="Greenage Technologies"
+              style={{
+                height: "60px",
+                maxWidth: "200px",
+                objectFit: "contain",
+              }}
+            />
+          </Box>
+          <Box sx={{ textAlign: "right" }}>
+            <Typography variant="h5" fontWeight={600} color="#0F172A">
+              Technical Specification
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {new Date().toLocaleDateString()}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h3" fontWeight={700} gutterBottom>
+            {product.name}
+          </Typography>
+          <Box sx={{ display: "flex", gap: 4 }}>
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
+                Product Code
+              </Typography>
+              <Typography variant="subtitle1" fontWeight={600}>
+                {product.productCode}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
+                Model
+              </Typography>
+              <Typography variant="subtitle1" fontWeight={600}>
+                {product.model || "N/A"}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
+                Category
+              </Typography>
+              <Typography variant="subtitle1" fontWeight={600}>
+                {product.category?.replace(/_/g, " ") || "-"}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                display="block"
+              >
+                Warranty
+              </Typography>
+              <Typography variant="subtitle1" fontWeight={600}>
+                {product.warranty || "N/A"}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Default Header */}
+      <Box sx={{ mb: 3, "@media print": { display: "none" } }}>
         <Button
           startIcon={<BackIcon />}
           onClick={() => router.push("/products")}
@@ -395,7 +493,10 @@ export default function ProductDetailPage({
 
       <Grid container spacing={3}>
         {/* LEFT COLUMN */}
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid
+          size={{ xs: 12, md: 8 }}
+          sx={{ "@media print": { flexBasis: "100%", maxWidth: "100%" } }}
+        >
           {/* Technical Specifications */}
           <Paper
             elevation={0}
@@ -443,6 +544,7 @@ export default function ProductDetailPage({
               borderColor: "divider",
               mb: 3,
               overflow: "hidden",
+              "@media print": { breakBefore: "page" },
             }}
           >
             <Box
@@ -646,7 +748,10 @@ export default function ProductDetailPage({
         </Grid>
 
         {/* RIGHT COLUMN */}
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid
+          size={{ xs: 12, md: 4 }}
+          sx={{ "@media print": { display: "none" } }}
+        >
           {/* Basic Info & Metadata */}
           <Paper
             elevation={0}
