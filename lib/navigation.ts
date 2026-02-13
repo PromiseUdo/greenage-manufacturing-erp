@@ -40,13 +40,31 @@ export const navigation: { section: string; items: NavItem[] }[] = [
   },
 
   {
-    section: 'Sales',
+    section: 'Sales & Distribution',
     items: [
-      { label: 'Overview', path: '/sales/overview', icon: DashboardIcon },
-      { label: 'Orders', path: '/sales/orders', icon: ShoppingCartIcon },
-      { label: 'Quotes', path: '/sales/quotes', icon: DescriptionIcon },
-      { label: 'Invoices', path: '/sales/invoices', icon: ReceiptIcon },
-      { label: 'Store', path: '/sales/store', icon: StorefrontIcon },
+      {
+        label: 'Sales',
+        icon: ShoppingCartIcon,
+        children: [
+          { label: 'Overview', path: '/sales/overview', icon: DashboardIcon },
+          { label: 'Orders', path: '/sales/orders', icon: DescriptionIcon },
+          { label: 'Quotes', path: '/sales/quotes', icon: DescriptionIcon },
+          { label: 'Invoices', path: '/sales/invoices', icon: ReceiptIcon },
+        ],
+      },
+      {
+        label: 'Store',
+        icon: StorefrontIcon,
+        children: [
+          { label: 'Stock', path: '/sales/store', icon: Inventory2Icon },
+          { label: 'Receipts', path: '/sales/store/receipts', icon: ReceiptIcon },
+          {
+            label: 'Dispatches',
+            path: '/sales/store/dispatches',
+            icon: LocalShippingIcon,
+          },
+        ],
+      },
     ],
   },
 

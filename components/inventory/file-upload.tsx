@@ -1,8 +1,8 @@
 // src/components/inventory/file-upload.tsx
 
-'use client';
+"use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   Box,
   Button,
@@ -12,14 +12,14 @@ import {
   Paper,
   Alert,
   LinearProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   CloudUpload as UploadIcon,
   AttachFile as FileIcon,
   Delete as DeleteIcon,
   PictureAsPdf as PdfIcon,
   Image as ImageIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 interface FileAttachment {
   name: string;
@@ -36,6 +36,7 @@ interface FileUploadProps {
   maxSizeMB?: number;
   accept?: string;
   disabled?: boolean;
+  label?: string;
 }
 
 export default function FileUpload({
@@ -43,8 +44,9 @@ export default function FileUpload({
   onChange,
   maxFiles = 5,
   maxSizeMB = 10,
-  accept = '.pdf,.jpg,.jpeg,.png',
+  accept = ".pdf,.jpg,.jpeg,.png",
   disabled = false,
+  label = "Upload Files",
 }: FileUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -99,12 +101,12 @@ export default function FileUpload({
 
       onChange([...files, ...newFiles]);
     } catch (err) {
-      console.error('Error uploading files:', err);
-      setError('Failed to upload files');
+      console.error("Error uploading files:", err);
+      setError("Failed to upload files");
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -115,11 +117,11 @@ export default function FileUpload({
   };
 
   const getFileIcon = (type: string) => {
-    if (type === 'application/pdf') {
-      return <PdfIcon sx={{ color: '#d32f2f' }} />;
+    if (type === "application/pdf") {
+      return <PdfIcon sx={{ color: "#d32f2f" }} />;
     }
-    if (type.startsWith('image/')) {
-      return <ImageIcon sx={{ color: '#1976d2' }} />;
+    if (type.startsWith("image/")) {
+      return <ImageIcon sx={{ color: "#1976d2" }} />;
     }
     return <FileIcon />;
   };
@@ -138,7 +140,7 @@ export default function FileUpload({
         multiple
         accept={accept}
         onChange={handleFileSelect}
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
         disabled={disabled || uploading || files.length >= maxFiles}
       />
 
@@ -150,21 +152,21 @@ export default function FileUpload({
         disabled={disabled || uploading || files.length >= maxFiles}
         sx={{
           mb: 2,
-          borderStyle: 'dashed',
+          borderStyle: "dashed",
           borderWidth: 2,
           py: 1.5,
-          '&:hover': {
+          "&:hover": {
             borderWidth: 2,
-            borderStyle: 'dashed',
+            borderStyle: "dashed",
           },
         }}
         fullWidth
       >
         {uploading
-          ? 'Uploading...'
+          ? "Uploading..."
           : files.length >= maxFiles
-            ? 'Maximum files reached'
-            : 'Upload Evidence (Invoice, Receipt, etc.)'}
+            ? "Maximum files reached"
+            : label}
       </Button>
 
       <Typography variant="caption" color="text.secondary" sx={{ mb: 2 }}>
@@ -186,18 +188,18 @@ export default function FileUpload({
           <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
             Attached Files ({files.length}/{maxFiles})
           </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {files.map((file, index) => (
               <Paper
                 key={index}
                 elevation={0}
                 sx={{
                   p: 1.5,
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: "flex",
+                  alignItems: "center",
                   gap: 1.5,
-                  border: '1px solid',
-                  borderColor: 'divider',
+                  border: "1px solid",
+                  borderColor: "divider",
                   borderRadius: 1,
                 }}
               >
@@ -207,20 +209,20 @@ export default function FileUpload({
                     variant="body2"
                     fontWeight={500}
                     sx={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     {file.name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {formatFileSize(file.size)} •{' '}
+                    {formatFileSize(file.size)} •{" "}
                     {new Date(file.uploadedAt).toLocaleDateString()}
                   </Typography>
                 </Box>
                 <Chip
-                  label={file.type.split('/')[1].toUpperCase()}
+                  label={file.type.split("/")[1].toUpperCase()}
                   size="small"
                   sx={{ fontSize: 10, height: 20 }}
                 />
@@ -229,8 +231,8 @@ export default function FileUpload({
                   onClick={() => handleRemoveFile(index)}
                   disabled={disabled}
                   sx={{
-                    color: 'error.main',
-                    '&:hover': { bgcolor: 'error.light', color: 'white' },
+                    color: "error.main",
+                    "&:hover": { bgcolor: "error.light", color: "white" },
                   }}
                 >
                   <DeleteIcon fontSize="small" />

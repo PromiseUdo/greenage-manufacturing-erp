@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { styled } from '@mui/material/styles';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { styled } from "@mui/material/styles";
 import {
   Box,
   Typography,
@@ -26,7 +26,7 @@ import {
   ListItemIcon,
   ListItemText,
   Tooltip,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Search,
   Add,
@@ -35,35 +35,35 @@ import {
   Visibility,
   CheckCircle,
   Cancel,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 // --- Replicated Styled Components ---
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
-    backgroundColor: '#0F172A',
+    backgroundColor: "#0F172A",
     color: theme.palette.common.white,
     fontWeight: 600,
     fontSize: 13,
-    letterSpacing: '0.5px',
-    padding: '8px 16px',
-    borderBottom: 'none',
+    letterSpacing: "0.5px",
+    padding: "8px 16px",
+    borderBottom: "none",
   },
   [`&.${tableCellClasses.body}`]: {
     fontSize: 14,
-    padding: '14px 16px',
+    padding: "14px 16px",
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': {
+  "&:nth-of-type(odd)": {
     backgroundColor: theme.palette.action.hover,
   },
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.action.selected,
-    transition: 'background-color 0.2s ease',
+    transition: "background-color 0.2s ease",
   },
-  '&:last-child td': {
+  "&:last-child td": {
     borderBottom: 0,
   },
 }));
@@ -74,7 +74,7 @@ interface Product {
   name: string;
   description: string;
   category: string;
-  basePrice: number;
+  costPrice: number;
   model: string | null;
   isActive: boolean;
   isAvailable: boolean;
@@ -87,14 +87,14 @@ interface Product {
 }
 
 const categoryColors: Record<string, { bg: string; text: string }> = {
-  INVERTER: { bg: '#dbeafe', text: '#1e40af' },
-  UPS: { bg: '#fce7f3', text: '#9f1239' },
-  BATTERY: { bg: '#fef3c7', text: '#92400e' },
-  SOLAR_PANEL: { bg: '#d1fae5', text: '#065f46' },
-  CHARGE_CONTROLLER: { bg: '#e0e7ff', text: '#4338ca' },
-  ACCESSORY: { bg: '#f3f4f6', text: '#374151' },
-  PACKAGE: { bg: '#fae8ff', text: '#86198f' },
-  OTHER: { bg: '#f3f4f6', text: '#6b7280' },
+  INVERTER: { bg: "#dbeafe", text: "#1e40af" },
+  UPS: { bg: "#fce7f3", text: "#9f1239" },
+  BATTERY: { bg: "#fef3c7", text: "#92400e" },
+  SOLAR_PANEL: { bg: "#d1fae5", text: "#065f46" },
+  CHARGE_CONTROLLER: { bg: "#e0e7ff", text: "#4338ca" },
+  ACCESSORY: { bg: "#f3f4f6", text: "#374151" },
+  PACKAGE: { bg: "#fae8ff", text: "#86198f" },
+  OTHER: { bg: "#f3f4f6", text: "#6b7280" },
 };
 
 export default function ProductsPage() {
@@ -104,9 +104,9 @@ export default function ProductsPage() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
@@ -133,7 +133,7 @@ export default function ProductsPage() {
         setTotal(data.pagination.total);
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error("Error fetching products:", error);
     } finally {
       setLoading(false);
     }
@@ -145,9 +145,9 @@ export default function ProductsPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
       minimumFractionDigits: 0,
     }).format(amount);
   };
@@ -171,9 +171,9 @@ export default function ProductsPage() {
       {/* Header */}
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 3,
         }}
       >
@@ -192,8 +192,8 @@ export default function ProductsPage() {
         <Button
           variant="contained"
           // startIcon={<Add />}
-          onClick={() => router.push('/products/new')}
-          sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}
+          onClick={() => router.push("/products/new")}
+          sx={{ fontWeight: "bold", textTransform: "uppercase" }}
         >
           Create Product
         </Button>
@@ -206,12 +206,12 @@ export default function ProductsPage() {
           p: 2,
           mb: 3,
           borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
+          border: "1px solid",
+          borderColor: "divider",
+          bgcolor: "background.paper",
         }}
       >
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           <TextField
             placeholder="Search products..."
             value={search}
@@ -240,7 +240,7 @@ export default function ProductsPage() {
             <MenuItem value="">All Categories</MenuItem>
             {Object.keys(categoryColors).map((cat) => (
               <MenuItem key={cat} value={cat}>
-                {cat.replace(/_/g, ' ')}
+                {cat.replace(/_/g, " ")}
               </MenuItem>
             ))}
           </TextField>
@@ -251,10 +251,10 @@ export default function ProductsPage() {
       <Paper
         elevation={0}
         sx={{
-          width: '100%',
-          overflow: 'hidden',
-          border: '1px solid',
-          borderColor: 'divider',
+          width: "100%",
+          overflow: "hidden",
+          border: "1px solid",
+          borderColor: "divider",
           borderRadius: 2,
         }}
       >
@@ -298,7 +298,7 @@ export default function ProductsPage() {
                       <Typography
                         variant="body2"
                         fontWeight={600}
-                        sx={{ color: '#0F172A' }}
+                        sx={{ color: "#0F172A" }}
                       >
                         {product.productNumber}
                       </Typography>
@@ -312,11 +312,11 @@ export default function ProductsPage() {
                           variant="caption"
                           color="text.secondary"
                           sx={{
-                            display: 'block',
+                            display: "block",
                             maxWidth: 200,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                           }}
                         >
                           {product.description}
@@ -325,22 +325,22 @@ export default function ProductsPage() {
                     </StyledTableCell>
                     <StyledTableCell>
                       <Chip
-                        label={product.category.replace(/_/g, ' ')}
+                        label={product.category.replace(/_/g, " ")}
                         size="small"
                         sx={{
                           bgcolor:
-                            categoryColors[product.category]?.bg || '#f3f4f6',
+                            categoryColors[product.category]?.bg || "#f3f4f6",
                           color:
-                            categoryColors[product.category]?.text || '#6b7280',
+                            categoryColors[product.category]?.text || "#6b7280",
                           fontWeight: 600,
                           fontSize: 11,
                         }}
                       />
                     </StyledTableCell>
-                    <StyledTableCell>{product.model || '—'}</StyledTableCell>
+                    <StyledTableCell>{product.model || "—"}</StyledTableCell>
                     <StyledTableCell>
                       <Typography variant="body2" fontWeight={700}>
-                        {formatCurrency(product.basePrice)}
+                        {formatCurrency(product.costPrice)}
                       </Typography>
                     </StyledTableCell>
                     <StyledTableCell>
@@ -349,11 +349,11 @@ export default function ProductsPage() {
                           {product.stockQuantity}
                         </Typography>
                       ) : (
-                        '—'
+                        "—"
                       )}
                     </StyledTableCell>
                     <StyledTableCell>
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <Box sx={{ display: "flex", gap: 0.5 }}>
                         <Tooltip title="Quotes">
                           <Chip
                             label={product._count.quotes}
@@ -377,19 +377,19 @@ export default function ProductsPage() {
                         icon={
                           product.isActive ? (
                             <CheckCircle
-                              style={{ fontSize: 14, color: 'inherit' }}
+                              style={{ fontSize: 14, color: "inherit" }}
                             />
                           ) : (
                             <Cancel
-                              style={{ fontSize: 14, color: 'inherit' }}
+                              style={{ fontSize: 14, color: "inherit" }}
                             />
                           )
                         }
-                        label={product.isActive ? 'Active' : 'Inactive'}
+                        label={product.isActive ? "Active" : "Inactive"}
                         size="small"
                         sx={{
-                          bgcolor: product.isActive ? '#dcfce7' : '#fee2e2',
-                          color: product.isActive ? '#166534' : '#991b1b',
+                          bgcolor: product.isActive ? "#dcfce7" : "#fee2e2",
+                          color: product.isActive ? "#166534" : "#991b1b",
                           fontWeight: 600,
                           fontSize: 11,
                         }}
@@ -424,9 +424,9 @@ export default function ProductsPage() {
             setPage(0);
           }}
           sx={{
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            backgroundColor: '#F8FAFC',
+            borderTop: "1px solid",
+            borderColor: "divider",
+            backgroundColor: "#F8FAFC",
           }}
         />
       </Paper>
@@ -441,7 +441,7 @@ export default function ProductsPage() {
             mt: 1,
             minWidth: 160,
             borderRadius: 2,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           },
         }}
       >
@@ -456,7 +456,7 @@ export default function ProductsPage() {
           </ListItemIcon>
           <ListItemText
             primary="View Details"
-            primaryTypographyProps={{ variant: 'body2' }}
+            primaryTypographyProps={{ variant: "body2" }}
           />
         </MenuItem>
         <MenuItem
@@ -470,7 +470,7 @@ export default function ProductsPage() {
           </ListItemIcon>
           <ListItemText
             primary="Edit Product"
-            primaryTypographyProps={{ variant: 'body2' }}
+            primaryTypographyProps={{ variant: "body2" }}
           />
         </MenuItem>
       </Menu>

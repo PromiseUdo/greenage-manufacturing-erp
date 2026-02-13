@@ -30,7 +30,6 @@ export async function GET(
             productCode: true,
             category: true,
             specifications: true,
-            features: true,
           },
         },
         quote: {

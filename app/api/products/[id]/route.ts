@@ -28,6 +28,11 @@ export async function GET(
             email: true,
           },
         },
+        materials: {
+          include: {
+            material: true,
+          },
+        },
         _count: {
           select: {
             quotes: true,
@@ -72,20 +77,15 @@ export async function PATCH(
       description,
       category,
       specifications,
-      features,
-      basePrice,
-      minPrice,
+      costPrice,
       model,
       warranty,
       leadTime,
-      images,
-      primaryImage,
       isActive,
       isAvailable,
-      stockQuantity,
-      lowStockThreshold,
       notes,
-      tags,
+      designFiles,
+      materials,
     } = body;
 
     const product = await prisma.product.findUnique({ where: { id } });
@@ -101,26 +101,34 @@ export async function PATCH(
         ...(description && { description }),
         ...(category && { category }),
         ...(specifications !== undefined && { specifications }),
-        ...(features !== undefined && { features }),
-        ...(basePrice !== undefined && { basePrice }),
-        ...(minPrice !== undefined && { minPrice }),
+        ...(costPrice !== undefined && { costPrice }),
         ...(model !== undefined && { model }),
         ...(warranty !== undefined && { warranty }),
         ...(leadTime !== undefined && { leadTime }),
-        ...(images !== undefined && { images }),
-        ...(primaryImage !== undefined && { primaryImage }),
         ...(isActive !== undefined && { isActive }),
         ...(isAvailable !== undefined && { isAvailable }),
-        ...(stockQuantity !== undefined && { stockQuantity }),
-        ...(lowStockThreshold !== undefined && { lowStockThreshold }),
         ...(notes !== undefined && { notes }),
-        ...(tags !== undefined && { tags }),
+        ...(designFiles !== undefined && { designFiles }),
+        ...(materials && {
+          materials: {
+            deleteMany: {},
+            create: materials.map((m: any) => ({
+              materialId: m.materialId,
+              quantity: Number(m.quantity),
+            })),
+          },
+        }),
       },
       include: {
         createdBy: {
           select: {
             id: true,
             name: true,
+          },
+        },
+        materials: {
+          include: {
+            material: true,
           },
         },
       },
@@ -135,7 +143,7 @@ export async function PATCH(
         details: {
           productId: id,
           productNumber: product.productNumber,
-          changes: body,
+          changes: 'Updated product details',
         },
       },
     });

@@ -31,7 +31,6 @@ export async function GET(
             category: true,
             model: true,
             specifications: true,
-            features: true,
           },
         },
         order: {

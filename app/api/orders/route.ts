@@ -383,7 +383,7 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         productCode: true,
-        basePrice: true,
+        costPrice: true,
         isActive: true,
         isAvailable: true,
       },
@@ -400,7 +400,7 @@ export async function POST(request: NextRequest) {
     const unitIds = await generateUnitIds(productId, quantity);
 
     // Calculate amounts
-    const finalUnitPrice = unitPrice || product.basePrice;
+    const finalUnitPrice = unitPrice || product.costPrice;
     const totalAmount = finalUnitPrice * quantity;
     const finalTax = taxAmount || 0;
     const finalDiscount = discountAmount || 0;

@@ -96,27 +96,25 @@ export async function POST(request: NextRequest) {
       description,
       category,
       specifications,
-      features,
-      basePrice,
-      minPrice,
+      costPrice, // Renamed from basePrice
       model,
       warranty,
       leadTime,
       images,
       productCode,
       primaryImage,
-      stockQuantity,
-      lowStockThreshold,
       notes,
       tags,
+      designFiles, // New
+      materials,   // New: [{ materialId, quantity }]
     } = body;
 
     // Validation
-    if (!name || !description || !category || !basePrice || !productCode) {
+    if (!name || !description || !category || !costPrice || !productCode) {
       return NextResponse.json(
         {
           error:
-            'Name, description, category, product code and base price are required',
+            'Name, description, category, product code and cost price are required',
         },
         { status: 400 },
       );
@@ -170,38 +168,44 @@ export async function POST(request: NextRequest) {
       productNumber = `PRD-${year}-001`;
     }
 
-    // Create product
-    const product = await prisma.product.create({
-      data: {
-        productNumber,
-        name,
-        description,
-        category,
-        productCode, // ✅ NEW
-        lastUnitNumber: 0,
-        specifications,
-        features: features || [],
-        basePrice,
-        minPrice,
-        model,
-        warranty,
-        leadTime,
-        images: images || [],
-        primaryImage,
-        stockQuantity: stockQuantity || 0,
-        lowStockThreshold,
-        notes,
-        tags: tags || [],
-        createdById: session.user.id,
-      },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-          },
+    // Create product and materials in transaction
+    const product = await prisma.$transaction(async (tx) => {
+      const newProduct = await tx.product.create({
+        data: {
+          productNumber,
+          name,
+          description,
+          category,
+          productCode,
+          lastUnitNumber: 0,
+          specifications,
+          costPrice,
+          model,
+          warranty,
+          leadTime,
+          images: images || [],
+          primaryImage,
+          notes,
+          tags: tags || [],
+          designFiles: designFiles || [],
+          createdById: session.user.id,
         },
-      },
+      });
+
+      // Create product materials if provided
+      if (materials && materials.length > 0) {
+        for (const mat of materials) {
+          await tx.productMaterial.create({
+            data: {
+              productId: newProduct.id,
+              materialId: mat.materialId,
+              quantity: mat.quantity,
+            },
+          });
+        }
+      }
+
+      return newProduct;
     });
 
     // Log activity

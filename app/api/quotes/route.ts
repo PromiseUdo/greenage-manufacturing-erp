@@ -148,7 +148,7 @@
 //         id: true,
 //         name: true,
 //         productCode: true,
-//         basePrice: true,
+//         costPrice: true,
 //         isActive: true,
 //         isAvailable: true,
 //       },
@@ -166,7 +166,7 @@
 //     }
 
 //     // Calculate pricing
-//     const finalUnitPrice = unitPrice || product.basePrice;
+//     const finalUnitPrice = unitPrice || product.costPrice;
 //     const totalAmount = finalUnitPrice * quantity;
 //     const finalTax = taxAmount || 0;
 //     const finalDiscount = discountAmount || 0;
@@ -434,7 +434,7 @@ export async function POST(request: NextRequest) {
         id: true,
         name: true,
         productCode: true,
-        basePrice: true,
+        costPrice: true,
         isActive: true,
         isAvailable: true,
       },
@@ -451,8 +451,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate amounts
-    const finalUnitPrice = unitPrice || product.basePrice;
+    // Calculate provided unit price or default to product cost price
+    const finalUnitPrice = unitPrice || product.costPrice;
     const totalAmount = finalUnitPrice * quantity;
     const finalTax = taxAmount || 0;
     const finalDiscount = discountAmount || 0;
