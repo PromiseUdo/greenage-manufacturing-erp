@@ -538,59 +538,102 @@ export default function ProductDetailPage({
             </SectionHeader>
 
             {product.designFiles && product.designFiles.length > 0 ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {product.designFiles.map((file, index) => (
-                  <Paper
-                    key={index}
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      border: "1px solid",
-                      borderColor: "divider",
-                      borderRadius: 1,
-                      "&:hover": {
-                        bgcolor: "action.hover",
-                        cursor: "pointer",
-                      },
-                    }}
-                  >
-                    <Box
+              <>
+                {/* Screen View */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.5,
+                    "@media print": { display: "none" },
+                  }}
+                >
+                  {product.designFiles.map((file, index) => (
+                    <Paper
+                      key={index}
+                      elevation={0}
                       sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 1.5,
+                        p: 2,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        borderRadius: 1,
+                        "&:hover": {
+                          bgcolor: "action.hover",
+                          cursor: "pointer",
+                        },
                       }}
                     >
-                      {getFileIcon(file.type)}
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="body2" fontWeight={500} noWrap>
-                          {file.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {formatFileSize(file.size)} •{" "}
-                          {new Date(file.uploadedAt).toLocaleDateString()}
-                        </Typography>
-                        <Box sx={{ mt: 1, display: "flex", gap: 0.5 }}>
-                          <IconButton
-                            size="small"
-                            onClick={() => setPreviewFile(file)}
-                            sx={{ bgcolor: "action.hover" }}
-                          >
-                            <ZoomIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleDownload(file)}
-                            sx={{ bgcolor: "action.hover" }}
-                          >
-                            <DownloadIcon fontSize="small" />
-                          </IconButton>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 1.5,
+                        }}
+                      >
+                        {getFileIcon(file.type)}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="body2" fontWeight={500} noWrap>
+                            {file.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatFileSize(file.size)} •{" "}
+                            {new Date(file.uploadedAt).toLocaleDateString()}
+                          </Typography>
+                          <Box sx={{ mt: 1, display: "flex", gap: 0.5 }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => setPreviewFile(file)}
+                              sx={{ bgcolor: "action.hover" }}
+                            >
+                              <ZoomIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleDownload(file)}
+                              sx={{ bgcolor: "action.hover" }}
+                            >
+                              <DownloadIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
                         </Box>
                       </Box>
-                    </Box>
-                  </Paper>
-                ))}
-              </Box>
+                    </Paper>
+                  ))}
+                </Box>
+
+                {/* Print View - Full Images */}
+                <Box
+                  sx={{
+                    display: "none",
+                    "@media print": { display: "block" },
+                  }}
+                >
+                  {product.designFiles
+                    .filter((file) => file.type.startsWith("image/"))
+                    .map((file, index) => (
+                      <Box key={index} sx={{ mb: 4, breakInside: "avoid" }}>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight={600}
+                          gutterBottom
+                        >
+                          {file.name}
+                        </Typography>
+                        <Box
+                          component="img"
+                          src={file.url}
+                          alt={file.name}
+                          sx={{
+                            width: "100%",
+                            maxHeight: "800px",
+                            objectFit: "contain",
+                            border: "1px solid #ddd",
+                          }}
+                        />
+                      </Box>
+                    ))}
+                </Box>
+              </>
             ) : (
               <Box sx={{ textAlign: "center", py: 4, color: "text.secondary" }}>
                 <AttachIcon sx={{ fontSize: 40, opacity: 0.3, mb: 1 }} />
@@ -648,6 +691,7 @@ export default function ProductDetailPage({
                 theme.palette.mode === "dark"
                   ? "rgba(255,255,255,0.05)"
                   : "#F8FAFC",
+              "@media print": { display: "none" },
             }}
           >
             <SectionHeader>Financials</SectionHeader>
@@ -677,6 +721,7 @@ export default function ProductDetailPage({
               border: "1px solid",
               borderColor: "divider",
               mb: 3,
+              "@media print": { display: "none" },
             }}
           >
             <SectionHeader>Settings</SectionHeader>
@@ -708,6 +753,7 @@ export default function ProductDetailPage({
                 borderRadius: 2,
                 border: "1px solid",
                 borderColor: "divider",
+                "@media print": { display: "none" },
               }}
             >
               <SectionHeader>Tags</SectionHeader>
