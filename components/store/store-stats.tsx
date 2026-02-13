@@ -98,18 +98,33 @@ export default function StoreStats({ stats, loading }: StoreStatsProps) {
         return (
           <Grid item xs={12} sm={6} md={4} lg={4} key={stat.title}>
             <Card
-              elevation={0}
+              // elevation={0}
+              // sx={{
+              //   borderRadius: 2,
+              //   height: "100%",
+              //   border: "1px solid",
+              //   borderColor: stat.alert ? stat.color : "divider",
+              //   position: "relative",
+              //   overflow: "hidden",
+              //   transition: "all 0.2s",
+              //   "&:hover": {
+              //     borderColor: stat.color,
+              //     boxShadow: `0 4px 12px ${stat.color}15`,
+              //   },
+              // }}'
               sx={{
                 borderRadius: 2,
-                height: "100%",
-                border: "1px solid",
-                borderColor: stat.alert ? stat.color : "divider",
+                height: "85%",
+                boxShadow: ` 0 0 0 1px ${stat.color}33`,
                 position: "relative",
-                overflow: "hidden",
-                transition: "all 0.2s",
+
+                overflow: "visible",
+                ...(stat.alert && {
+                  boxShadow: `0 0 0 1px ${stat.color}`,
+                }),
                 "&:hover": {
                   borderColor: stat.color,
-                  boxShadow: `0 4px 12px ${stat.color}15`,
+                  // boxShadow: `0 4px 12px ${stat.color}15`,
                 },
               }}
             >
