@@ -6,6 +6,8 @@ import {
   Supplier,
   MaterialIssuance,
   GRN,
+  PurchaseOrder,
+  PurchaseOrderStatus,
 } from '@prisma/client';
 
 export interface FileAttachment {
@@ -136,3 +138,34 @@ export interface StockAlert {
   alertType: 'LOW_STOCK' | 'OUT_OF_STOCK' | 'NEAR_EXPIRY';
   severity: 'warning' | 'error' | 'info';
 }
+
+// ============================================
+// PURCHASE ORDER TYPES
+// ============================================
+
+export interface PurchaseOrderItem {
+  materialId: string;
+  materialName: string;
+  partNumber: string;
+  unit: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+}
+
+export interface PurchaseOrderFormData {
+  supplierId: string;
+  items: PurchaseOrderItem[];
+  currency?: string;
+  tax?: number;
+  discount?: number;
+  notes?: string;
+}
+
+export type PurchaseOrderWithRelations = PurchaseOrder & {
+  supplier: Supplier;
+  grn?: GRN | null;
+};
+
+export { PurchaseOrderStatus };
+

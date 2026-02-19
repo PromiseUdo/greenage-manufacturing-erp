@@ -98,6 +98,11 @@ export const navigation: { section: string; items: NavItem[] }[] = [
             icon: PeopleIcon,
           },
           {
+            label: 'Purchase Orders',
+            path: '/inventory/purchase-orders',
+            icon: DescriptionIcon,
+          },
+          {
             label: 'Issuance',
             path: '/inventory/issuance',
             icon: AssignmentReturnIcon,

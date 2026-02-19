@@ -186,7 +186,7 @@ export default function GRNPage() {
             Track all materials received from suppliers
           </Typography>
         </Box>
-        <Button
+        {/* <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => router.push("/inventory/grn/new")}
@@ -199,7 +199,7 @@ export default function GRNPage() {
           }}
         >
           Create GRN
-        </Button>
+        </Button> */}
       </Box>
 
       {/* Search */}
@@ -306,7 +306,7 @@ export default function GRNPage() {
               from suppliers
             </Typography>
 
-            <Button
+            {/* <Button
               variant="contained"
               sx={{
                 mt: 2,
@@ -317,7 +317,7 @@ export default function GRNPage() {
               onClick={() => router.push("/inventory/grn/new")}
             >
               Create GRN
-            </Button>
+            </Button> */}
           </Box>
         </Paper>
       ) : (

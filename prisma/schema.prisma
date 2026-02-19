@@ -534,6 +534,7 @@ model GRN {
   createdAt       DateTime  @default(now())
   
   batches         MaterialBatch[]
+  purchaseOrders  PurchaseOrder[]
   
   @@map("grns")
 }
@@ -572,8 +573,105 @@ model Supplier {
   
   materials       Material[]
   grns            GRN[]
+  purchaseOrders  PurchaseOrder[]
   
   @@map("suppliers")
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  PLANNED
+  INVOICED
+  PAYMENT_TRACKING
+  SHIPMENT_TRACKING
+  RECEIVING
+  COMPLETED
+  CANCELLED
+}
+
+model PurchaseOrder {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  poNumber            String    @unique
+
+  supplierId          String    @db.ObjectId
+  supplier            Supplier  @relation(fields: [supplierId], references: [id])
+
+  // Status
+  status              PurchaseOrderStatus @default(DRAFT)
+
+  // Step 1: Invoice
+  items               Json      // Array of { materialId, materialName, partNumber, unit, quantity, unitCost, totalCost }
+  subtotal            Float     @default(0)
+  tax                 Float     @default(0)
+  discount            Float     @default(0)
+  totalAmount         Float     @default(0)
+  currency            String    @default("NGN")
+  invoiceDate         DateTime?
+  invoiceStartDate    DateTime?
+  invoiceEndDate      DateTime?
+  invoiceNotes        String?
+
+  // Planning: Planned dates/details (entered upfront)
+  plannedInvoiceStartDate   DateTime?
+  plannedInvoiceEndDate     DateTime?
+  plannedPaymentStartDate   DateTime?
+  plannedPaymentEndDate     DateTime?
+  plannedShipmentMethod     String?
+  plannedShipmentStartDate  DateTime?
+  plannedShipmentEndDate    DateTime?
+  plannedEstimatedArrival   DateTime?
+  plannedReceivingStartDate DateTime?
+  plannedReceivingEndDate   DateTime?
+
+  // Step 2: Payment Tracking
+  paymentStartDate    DateTime?
+  paymentEndDate      DateTime?
+  paymentNotes        String?
+  paymentStatus       String?   // e.g. "Pending", "Partial", "Paid"
+  paidAmount          Float     @default(0)
+  payments            Payment[]
+
+  // Step 3: Shipment Tracking
+  shipmentMethod      String?
+  trackingNumber      String?
+  estimatedArrival    DateTime?
+  shipmentStartDate   DateTime?
+  shipmentEndDate     DateTime?
+  shipmentNotes       String?
+
+  // Step 4: Receiving (linked to GRN)
+  receivingStartDate  DateTime?
+  receivingEndDate    DateTime?
+  receivingNotes      String?
+  receivedItems       Json?     // Array of { materialId, materialName, receivedQty } tracking cumulative receipts
+  grnId               String?   @db.ObjectId
+  grn                 GRN?      @relation(fields: [grnId], references: [id])
+
+  // Metadata
+  notes               String?
+  createdBy           String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("purchase_orders")
+}
+
+model Payment {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  
+  purchaseOrderId     String    @db.ObjectId
+  purchaseOrder       PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  
+  amount              Float
+  paymentMethod       String    // e.g. "Bank Transfer", "Cash", "Cheque"
+  reference           String?   // Transaction ID, receipt number, etc.
+  paymentDate         DateTime  @default(now())
+  notes               String?
+  recordedBy          String
+  
+  createdAt           DateTime  @default(now())
+  
+  @@map("payments")
 }
 
 model BOM {

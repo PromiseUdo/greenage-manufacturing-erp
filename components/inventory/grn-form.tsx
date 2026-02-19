@@ -44,12 +44,16 @@ interface GRNFormProps {
   onSubmit: (data: GRNFormData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
+  defaultSupplierId?: string;
+  defaultItems?: GRNItemInput[];
 }
 
 export default function GRNForm({
   onSubmit,
   onCancel,
   isLoading = false,
+  defaultSupplierId,
+  defaultItems,
 }: GRNFormProps) {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -61,17 +65,20 @@ export default function GRNForm({
     formState: { errors },
   } = useForm<GRNFormData>({
     defaultValues: {
-      supplierId: "",
+      supplierId: defaultSupplierId || "",
       invoiceNumber: "",
-      items: [
-        {
-          materialId: "",
-          quantity: 0,
-          batchNumber: "",
-          expiryDate: undefined,
-          supplierBatchNo: "",
-        },
-      ],
+      items:
+        defaultItems && defaultItems.length > 0
+          ? defaultItems
+          : [
+              {
+                materialId: "",
+                quantity: 0,
+                batchNumber: "",
+                expiryDate: undefined,
+                supplierBatchNo: "",
+              },
+            ],
       notes: "",
     },
   });
@@ -144,7 +151,7 @@ export default function GRNForm({
                     value={selectedSupplier}
                     getOptionLabel={(option) => option.name}
                     onChange={(_, value) => field.onChange(value?.id || "")}
-                    disabled={isLoading}
+                    disabled={isLoading || !!defaultSupplierId}
                     renderInput={(params) => (
                       <TextField
                         {...params}

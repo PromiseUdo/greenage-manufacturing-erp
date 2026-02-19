@@ -1,7 +1,7 @@
 // src/app/dashboard/inventory/suppliers/page.tsx
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   alpha,
   Box,
@@ -31,7 +31,7 @@ import {
   ListItemText,
   CircularProgress,
   useMediaQuery,
-} from '@mui/material';
+} from "@mui/material";
 
 import {
   Business as BusinessIcon,
@@ -39,7 +39,7 @@ import {
   LocationOn as LocationOnIcon,
   Payment as PaymentIcon,
   Close as CloseIcon,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 import {
   Add as AddIcon,
@@ -52,12 +52,14 @@ import {
   TableChart as ExcelIcon,
   KeyboardArrowDown as ArrowDownIcon,
   BusinessCenter as BusinessCenterIcon,
-} from '@mui/icons-material';
-import Grid from '@mui/material/GridLegacy';
-import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
-import { SupplierFormData } from '@/types/inventory';
-import { theme } from '@/lib/theme';
+  Visibility as VisibilityIcon,
+} from "@mui/icons-material";
+import Grid from "@mui/material/GridLegacy";
+import { useRouter } from "next/navigation";
+import { useForm, Controller } from "react-hook-form";
+import { SupplierFormData } from "@/types/inventory";
+import { theme } from "@/lib/theme";
+import SupplierFormDialog from "./components/SupplierFormDialog";
 
 interface Supplier {
   id: string;
@@ -77,30 +79,30 @@ interface Supplier {
 // ── Styled Components ────────────────────────────────────────────────
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
-    backgroundColor: '#0F172A',
+    backgroundColor: "#0F172A",
     color: theme.palette.common.white,
     fontWeight: 600,
     fontSize: 13,
-    letterSpacing: '0.5px',
-    padding: '8px 16px',
-    borderBottom: 'none',
+    letterSpacing: "0.5px",
+    padding: "8px 16px",
+    borderBottom: "none",
   },
   [`&.${tableCellClasses.body}`]: {
     fontSize: 14,
-    padding: '14px 16px',
+    padding: "14px 16px",
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': {
+  "&:nth-of-type(odd)": {
     backgroundColor: theme.palette.action.hover,
   },
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.action.selected,
-    transition: 'background-color 0.2s ease',
+    transition: "background-color 0.2s ease",
   },
-  '&:last-child td': {
+  "&:last-child td": {
     borderBottom: 0,
   },
 }));
@@ -113,15 +115,15 @@ export default function SuppliersPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
-  const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const fullScreen = useMediaQuery(theme.breakpoints.down("md"));
 
   // Export menu state
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(
-    null
+    null,
   );
   const [exporting, setExporting] = useState(false);
   const exportMenuOpen = Boolean(exportAnchorEl);
@@ -151,7 +153,7 @@ export default function SuppliersPage() {
       setSuppliers(data.suppliers || []);
       setTotal(data?.pagination?.total || 0);
     } catch (error) {
-      console.error('Error fetching suppliers:', error);
+      console.error("Error fetching suppliers:", error);
     } finally {
       setLoading(false);
     }
@@ -167,21 +169,21 @@ export default function SuppliersPage() {
       setEditingSupplier(supplier);
       reset({
         name: supplier.name,
-        contactPerson: supplier.contactPerson || '',
-        email: supplier.email || '',
+        contactPerson: supplier.contactPerson || "",
+        email: supplier.email || "",
         phone: supplier.phone,
-        address: supplier.address || '',
-        paymentTerms: supplier.paymentTerms || '',
+        address: supplier.address || "",
+        paymentTerms: supplier.paymentTerms || "",
       });
     } else {
       setEditingSupplier(null);
       reset({
-        name: '',
-        contactPerson: '',
-        email: '',
-        phone: '',
-        address: '',
-        paymentTerms: '',
+        name: "",
+        contactPerson: "",
+        email: "",
+        phone: "",
+        address: "",
+        paymentTerms: "",
       });
     }
     setOpenDialog(true);
@@ -197,20 +199,20 @@ export default function SuppliersPage() {
     try {
       const url = editingSupplier
         ? `/api/inventory/suppliers/${editingSupplier.id}`
-        : '/api/inventory/suppliers';
+        : "/api/inventory/suppliers";
 
       const res = await fetch(url, {
-        method: editingSupplier ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: editingSupplier ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      if (!res.ok) throw new Error('Failed to save supplier');
+      if (!res.ok) throw new Error("Failed to save supplier");
 
       handleCloseDialog();
       fetchSuppliers();
     } catch (error) {
-      console.error('Error saving supplier:', error);
+      console.error("Error saving supplier:", error);
     }
   };
 
@@ -223,7 +225,7 @@ export default function SuppliersPage() {
     setExportAnchorEl(null);
   };
 
-  const handleExport = async (format: 'excel' | 'pdf') => {
+  const handleExport = async (format: "excel" | "pdf") => {
     handleExportClose();
     setExporting(true);
 
@@ -235,22 +237,22 @@ export default function SuppliersPage() {
 
       const res = await fetch(`/api/inventory/suppliers/export?${params}`);
 
-      if (!res.ok) throw new Error('Export failed');
+      if (!res.ok) throw new Error("Export failed");
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = `suppliers_${new Date().toISOString().split('T')[0]}.${
-        format === 'excel' ? 'xlsx' : 'pdf'
+      a.download = `suppliers_${new Date().toISOString().split("T")[0]}.${
+        format === "excel" ? "xlsx" : "pdf"
       }`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error exporting suppliers:', error);
-      alert('Failed to export suppliers. Please try again.');
+      console.error("Error exporting suppliers:", error);
+      alert("Failed to export suppliers. Please try again.");
     } finally {
       setExporting(false);
     }
@@ -261,11 +263,11 @@ export default function SuppliersPage() {
       {/* Header + Add Button */}
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 3,
-          flexWrap: 'wrap',
+          flexWrap: "wrap",
           gap: 2,
         }}
       >
@@ -285,7 +287,7 @@ export default function SuppliersPage() {
           </Typography>
         </div>
 
-        <Box sx={{ display: 'flex', gap: 1.5 }}>
+        <Box sx={{ display: "flex", gap: 1.5 }}>
           <Button
             variant="outlined"
             disableElevation
@@ -295,18 +297,18 @@ export default function SuppliersPage() {
             onClick={handleExportClick}
             disabled={exporting || suppliers.length === 0}
             sx={{
-              textTransform: 'uppercase',
-              borderColor: '#0F172A',
-              color: '#0F172A',
+              textTransform: "uppercase",
+              borderColor: "#0F172A",
+              color: "#0F172A",
               // fontWeight: 'bold',
               fontSize: 14,
-              '&:hover': {
-                borderColor: '#0F172A',
-                bgcolor: alpha('#0F172A', 0.04),
+              "&:hover": {
+                borderColor: "#0F172A",
+                bgcolor: alpha("#0F172A", 0.04),
               },
             }}
           >
-            {exporting ? 'Exporting...' : 'Export'}
+            {exporting ? "Exporting..." : "Export"}
           </Button>
 
           <Button
@@ -314,10 +316,10 @@ export default function SuppliersPage() {
             disableElevation
             onClick={() => handleOpenDialog()}
             sx={{
-              textTransform: 'uppercase',
-              bgcolor: '#0F172A',
-              color: '#ffffff',
-              fontWeight: 'bold',
+              textTransform: "uppercase",
+              bgcolor: "#0F172A",
+              color: "#ffffff",
+              fontWeight: "bold",
               fontSize: 14,
             }}
           >
@@ -332,44 +334,44 @@ export default function SuppliersPage() {
         open={exportMenuOpen}
         onClose={handleExportClose}
         anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
+          vertical: "bottom",
+          horizontal: "right",
         }}
         transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
+          vertical: "top",
+          horizontal: "right",
         }}
         PaperProps={{
           sx: {
             mt: 1,
             minWidth: 180,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
             borderRadius: 2,
           },
         }}
       >
         <MenuItem
-          onClick={() => handleExport('excel')}
+          onClick={() => handleExport("excel")}
           sx={{ py: 1.5, gap: 1.5 }}
         >
           <ListItemIcon>
-            <ExcelIcon fontSize="small" sx={{ color: '#107C41' }} />
+            <ExcelIcon fontSize="small" sx={{ color: "#107C41" }} />
           </ListItemIcon>
           <ListItemText
             primary="Download as Excel"
-            primaryTypographyProps={{ variant: 'body2' }}
+            primaryTypographyProps={{ variant: "body2" }}
           />
         </MenuItem>
         <MenuItem
-          onClick={() => handleExport('pdf')}
+          onClick={() => handleExport("pdf")}
           sx={{ py: 1.5, gap: 1.5 }}
         >
           <ListItemIcon>
-            <PdfIcon fontSize="small" sx={{ color: '#DC2626' }} />
+            <PdfIcon fontSize="small" sx={{ color: "#DC2626" }} />
           </ListItemIcon>
           <ListItemText
             primary="Download as PDF"
-            primaryTypographyProps={{ variant: 'body2' }}
+            primaryTypographyProps={{ variant: "body2" }}
           />
         </MenuItem>
       </Menu>
@@ -381,9 +383,9 @@ export default function SuppliersPage() {
           p: 2,
           mb: 3,
           borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
+          border: "1px solid",
+          borderColor: "divider",
+          bgcolor: "background.paper",
         }}
       >
         <TextField
@@ -409,9 +411,9 @@ export default function SuppliersPage() {
           elevation={0}
           sx={{
             p: 6,
-            textAlign: 'center',
-            border: '1px solid',
-            borderColor: 'divider',
+            textAlign: "center",
+            border: "1px solid",
+            borderColor: "divider",
             borderRadius: 2,
           }}
         >
@@ -425,18 +427,18 @@ export default function SuppliersPage() {
           elevation={0}
           sx={{
             p: 6,
-            border: '1px dashed',
-            borderColor: 'divider',
+            border: "1px dashed",
+            borderColor: "divider",
             borderRadius: 3,
-            textAlign: 'center',
-            backgroundColor: 'background.paper',
+            textAlign: "center",
+            backgroundColor: "background.paper",
           }}
         >
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
               gap: 1.5,
             }}
           >
@@ -444,11 +446,11 @@ export default function SuppliersPage() {
               sx={{
                 width: 56,
                 height: 56,
-                borderRadius: '50%',
-                backgroundColor: 'grey.100',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                borderRadius: "50%",
+                backgroundColor: "grey.100",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 mb: 1,
               }}
             >
@@ -456,7 +458,7 @@ export default function SuppliersPage() {
             </Box>
 
             <Typography variant="h6" fontWeight={600}>
-              {search ? 'No suppliers found' : 'No suppliers yet'}
+              {search ? "No suppliers found" : "No suppliers yet"}
             </Typography>
 
             <Typography
@@ -465,8 +467,8 @@ export default function SuppliersPage() {
               sx={{ maxWidth: 360 }}
             >
               {search
-                ? 'Try adjusting your search terms'
-                : 'Add your first supplier to start managing your vendor relationships'}
+                ? "Try adjusting your search terms"
+                : "Add your first supplier to start managing your vendor relationships"}
             </Typography>
 
             {!search && (
@@ -486,9 +488,9 @@ export default function SuppliersPage() {
           elevation={0}
           sx={{
             borderRadius: 2,
-            overflow: 'hidden',
-            border: '1px solid',
-            borderColor: 'divider',
+            overflow: "hidden",
+            border: "1px solid",
+            borderColor: "divider",
           }}
         >
           <TableContainer sx={{ maxHeight: 600 }}>
@@ -510,7 +512,7 @@ export default function SuppliersPage() {
                   <StyledTableRow key={supplier.id}>
                     <StyledTableCell>
                       <Box
-                        sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}
+                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
                       >
                         <Typography variant="body2" fontWeight={600}>
                           {supplier.name}
@@ -521,7 +523,7 @@ export default function SuppliersPage() {
                             size="small"
                             color="default"
                             variant="outlined"
-                            sx={{ height: 20, fontSize: '0.7rem' }}
+                            sx={{ height: 20, fontSize: "0.7rem" }}
                           />
                         )}
                       </Box>
@@ -529,29 +531,29 @@ export default function SuppliersPage() {
 
                     <StyledTableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {supplier.contactPerson || '—'}
+                        {supplier.contactPerson || "—"}
                       </Typography>
                     </StyledTableCell>
 
                     <StyledTableCell>
                       <Box
                         sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
+                          display: "flex",
+                          flexDirection: "column",
                           gap: 0.5,
                         }}
                       >
                         {supplier.phone && (
                           <Box
                             sx={{
-                              display: 'flex',
-                              alignItems: 'center',
+                              display: "flex",
+                              alignItems: "center",
                               gap: 1,
                             }}
                           >
                             <PhoneIcon
                               fontSize="small"
-                              sx={{ color: 'action.active', opacity: 0.6 }}
+                              sx={{ color: "action.active", opacity: 0.6 }}
                             />
                             <Typography variant="body2">
                               {supplier.phone}
@@ -561,14 +563,14 @@ export default function SuppliersPage() {
                         {supplier.email && (
                           <Box
                             sx={{
-                              display: 'flex',
-                              alignItems: 'center',
+                              display: "flex",
+                              alignItems: "center",
                               gap: 1,
                             }}
                           >
                             <EmailIcon
                               fontSize="small"
-                              sx={{ color: 'action.active', opacity: 0.6 }}
+                              sx={{ color: "action.active", opacity: 0.6 }}
                             />
                             <Typography variant="body2" color="primary">
                               {supplier.email}
@@ -580,7 +582,7 @@ export default function SuppliersPage() {
 
                     <StyledTableCell>
                       <Typography variant="body2" color="text.secondary">
-                        {supplier.paymentTerms || '—'}
+                        {supplier.paymentTerms || "—"}
                       </Typography>
                     </StyledTableCell>
 
@@ -590,8 +592,8 @@ export default function SuppliersPage() {
                         size="small"
                         sx={{
                           minWidth: 48,
-                          bgcolor: '#e3f2fd',
-                          color: '#1976d2',
+                          bgcolor: "#e3f2fd",
+                          color: "#1976d2",
                           fontWeight: 600,
                         }}
                       />
@@ -603,27 +605,50 @@ export default function SuppliersPage() {
                         size="small"
                         sx={{
                           minWidth: 48,
-                          bgcolor: '#f3e5f5',
-                          color: '#9c27b0',
+                          bgcolor: "#f3e5f5",
+                          color: "#9c27b0",
                           fontWeight: 600,
                         }}
                       />
                     </StyledTableCell>
 
                     <StyledTableCell align="center">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenDialog(supplier)}
+                      <Box
                         sx={{
-                          color: '#64748B',
-                          '&:hover': {
-                            backgroundColor: '#F1F5F9',
-                            color: '#0F172A',
-                          },
+                          display: "flex",
+                          gap: 0.5,
+                          justifyContent: "center",
                         }}
                       >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            router.push(`/inventory/suppliers/${supplier.id}`)
+                          }
+                          sx={{
+                            color: "#64748B",
+                            "&:hover": {
+                              backgroundColor: "#F1F5F9",
+                              color: "#0F172A",
+                            },
+                          }}
+                        >
+                          <VisibilityIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleOpenDialog(supplier)}
+                          sx={{
+                            color: "#64748B",
+                            "&:hover": {
+                              backgroundColor: "#F1F5F9",
+                              color: "#0F172A",
+                            },
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
                     </StyledTableCell>
                   </StyledTableRow>
                 ))}
@@ -643,9 +668,9 @@ export default function SuppliersPage() {
               setPage(1);
             }}
             sx={{
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              backgroundColor: '#F8FAFC',
+              borderTop: "1px solid",
+              borderColor: "divider",
+              backgroundColor: "#F8FAFC",
             }}
           />
         </Paper>
@@ -900,195 +925,13 @@ export default function SuppliersPage() {
         </form>
       </Dialog> */}
 
-      <Dialog
+      <SupplierFormDialog
         open={openDialog}
         onClose={handleCloseDialog}
-        maxWidth="md"
-        fullWidth
+        onSave={handleSaveSupplier}
+        supplier={editingSupplier}
         fullScreen={fullScreen}
-        PaperProps={{
-          elevation: 4,
-          sx: {
-            borderRadius: 2,
-            overflow: 'hidden',
-          },
-        }}
-      >
-        {/* Header */}
-        <Box
-          sx={{
-            px: 4,
-            py: 3,
-            bgcolor: '#0F172A',
-            color: 'white',
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Typography variant="h6" component="div" fontWeight={600}>
-            {editingSupplier ? 'Edit Supplier' : 'Add New Supplier'}
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.8, mt: 0.5 }}>
-            {editingSupplier
-              ? 'Update the supplier details below'
-              : 'Fill in the information to register a new supplier'}
-          </Typography>
-        </Box>
-
-        {/* Form Content */}
-        <form onSubmit={handleSubmit(handleSaveSupplier)}>
-          <DialogContent sx={{ px: 4, py: 4 }}>
-            <Grid container spacing={3}>
-              {/* Required fields - first row */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="name"
-                  control={control}
-                  rules={{ required: 'Supplier name is required' }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Supplier Name"
-                      fullWidth
-                      required
-                      variant="standard"
-                      error={!!errors.name}
-                      helperText={errors.name?.message}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  )}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="contactPerson"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Contact Person"
-                      fullWidth
-                      variant="standard"
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {/* Phone & Email */}
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="phone"
-                  control={control}
-                  rules={{ required: 'Phone number is required' }}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Phone Number"
-                      fullWidth
-                      required
-                      variant="standard"
-                      error={!!errors.phone}
-                      helperText={errors.phone?.message}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  )}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Controller
-                  name="email"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Email Address"
-                      type="email"
-                      fullWidth
-                      variant="standard"
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {/* Address - full width */}
-              <Grid item xs={12}>
-                <Controller
-                  name="address"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Address"
-                      fullWidth
-                      multiline
-                      rows={3}
-                      variant="standard"
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {/* Payment Terms */}
-              <Grid item xs={12}>
-                <Controller
-                  name="paymentTerms"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Payment Terms"
-                      fullWidth
-                      placeholder="e.g. Net 30 days • 50% advance • Cash on delivery"
-                      variant="standard"
-                      helperText="E.g.Net 30, Net 60, etc."
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  )}
-                />
-              </Grid>
-            </Grid>
-          </DialogContent>
-
-          {/* Actions */}
-          <DialogActions
-            sx={{
-              px: 4,
-              py: 3,
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              bgcolor: 'grey.50',
-            }}
-          >
-            <Button
-              onClick={handleCloseDialog}
-              variant="outlined"
-              color="inherit"
-              sx={{ minWidth: 100 }}
-            >
-              Cancel
-            </Button>
-
-            <Button
-              type="submit"
-              variant="contained"
-              disableElevation
-              sx={{
-                minWidth: 140,
-                bgcolor: '#0F172A',
-                fontWeight: 'bold',
-                '&:hover': { bgcolor: '#1E293B' },
-              }}
-            >
-              {editingSupplier ? 'Update Supplier' : 'Create Supplier'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+      />
     </Box>
   );
 }
