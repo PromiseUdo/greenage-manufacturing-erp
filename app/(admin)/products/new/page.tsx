@@ -339,6 +339,7 @@ export default function NewProductPage() {
                       "BATTERY",
                       "SOLAR_PANEL",
                       "CHARGE_CONTROLLER",
+                      "SOLAR_GENERATOR",
                       "ACCESSORY",
                       "PACKAGE",
                       "OTHER",

@@ -34,6 +34,7 @@ const CATEGORIES = [
   { value: "BATTERY", label: "Battery" },
   { value: "SOLAR_PANEL", label: "Solar Panel" },
   { value: "CHARGE_CONTROLLER", label: "Charge Controller" },
+  { value: "SOLAR_GENERATOR", label: "Solar Generator" },
   { value: "ACCESSORY", label: "Accessory" },
   { value: "PACKAGE", label: "Package" },
   { value: "OTHER", label: "Other" },

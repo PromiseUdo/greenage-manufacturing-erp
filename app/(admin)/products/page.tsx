@@ -93,6 +93,7 @@ const categoryColors: Record<string, { bg: string; text: string }> = {
   BATTERY: { bg: "#fef3c7", text: "#92400e" },
   SOLAR_PANEL: { bg: "#d1fae5", text: "#065f46" },
   CHARGE_CONTROLLER: { bg: "#e0e7ff", text: "#4338ca" },
+  SOLAR_GENERATOR: { bg: "#e0e7ff", text: "#4338ca" },
   ACCESSORY: { bg: "#f3f4f6", text: "#374151" },
   PACKAGE: { bg: "#fae8ff", text: "#86198f" },
   OTHER: { bg: "#f3f4f6", text: "#6b7280" },
