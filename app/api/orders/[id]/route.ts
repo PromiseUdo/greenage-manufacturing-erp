@@ -22,26 +22,29 @@ export async function GET(
       where: { id },
       include: {
         customer: true,
-        product: {
-          select: {
-            id: true,
-            name: true,
-            productNumber: true,
-            productCode: true,
-            category: true,
-            specifications: true,
+        lineItems: {
+          include: {
+            storeItem: {
+              select: {
+                id: true,
+                name: true,
+                itemNumber: true,
+                category: true,
+              },
+            },
+            product: {
+              select: {
+                id: true,
+                name: true,
+                productNumber: true,
+                productCode: true,
+                category: true,
+                specifications: true,
+              },
+            },
           },
         },
-        storeItem: {
-          select: {
-            id: true,
-            name: true,
-            itemNumber: true,
-            category: true,
-          },
-        },
-          // quote removed
-        invoices: { // Changed from invoice to invoices
+        invoices: {
           select: {
             id: true,
             invoiceNumber: true,
@@ -50,7 +53,7 @@ export async function GET(
             paidAmount: true,
             balanceAmount: true,
           },
-          take: 1, // Get the latest/first one
+          take: 1,
         },
         units: {
           orderBy: { unitNumber: 'asc' },
@@ -61,7 +64,6 @@ export async function GET(
             serialNumber: true,
             currentStage: true,
             status: true,
-            // ...
           },
         },
         createdBy: {

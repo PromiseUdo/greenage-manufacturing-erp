@@ -1,8 +1,8 @@
-// // src/app/dashboard/sales/quotes/new/page.tsx
+// src/app/dashboard/sales/quotes/new/page.tsx
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { styled } from "@mui/material/styles";
 import {
@@ -17,10 +17,13 @@ import {
   TableBody,
   TableRow,
   TableCell,
+  TableHead,
   CircularProgress,
   InputAdornment,
   Divider,
   Stack,
+  IconButton,
+  Chip,
 } from "@mui/material";
 
 import Grid from "@mui/material/GridLegacy";
@@ -36,22 +39,13 @@ import {
   Numbers,
   InfoOutlined,
   Gavel,
+  WarningAmber,
+  Add,
+  DeleteOutline,
 } from "@mui/icons-material";
 
-// --- Design Tokens (Shared with Order Page) ---
+// --- Design Tokens ---
 const SectionHeader = styled(Typography)(({ theme }) => ({
-  // fontSize: 13,
-  // fontWeight: 700,
-  // color: '#64748B', // Slate 500
-  // textTransform: 'uppercase',
-  // letterSpacing: '0.8px',
-  // marginBottom: theme.spacing(3),
-  // display: 'flex',
-  // alignItems: 'center',
-  // gap: '8px',
-  // borderBottom: '1px solid #E2E8F0',
-  // paddingBottom: theme.spacing(1),
-
   fontSize: 14,
   fontWeight: 700,
   color: "#0F172A",
@@ -93,6 +87,16 @@ interface StoreItem {
   condition: string;
 }
 
+interface LineItemRow {
+  id: string; // client-side unique key
+  storeItem: StoreItem | null;
+  quantity: number;
+  unitPrice: number;
+}
+
+let lineItemIdCounter = 0;
+const generateLineItemKey = () => `li-${++lineItemIdCounter}-${Date.now()}`;
+
 export default function NewQuotePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -106,14 +110,14 @@ export default function NewQuotePage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
-  const [selectedStoreItem, setSelectedStoreItem] = useState<StoreItem | null>(
-    null,
-  );
+
+  // Dynamic line items
+  const [lineItems, setLineItems] = useState<LineItemRow[]>([
+    { id: generateLineItemKey(), storeItem: null, quantity: 1, unitPrice: 0 },
+  ]);
 
   const [formData, setFormData] = useState({
-    quantity: 1,
     deliveryDate: "",
-    unitPrice: 0,
     taxRate: 7.5,
     discountAmount: 0,
     paymentTerms: "50% upfront, 50% on delivery",
@@ -155,18 +159,51 @@ export default function NewQuotePage() {
     }
   };
 
-  useEffect(() => {
-    if (selectedStoreItem) {
-      setFormData((prev) => ({
-        ...prev,
-        unitPrice: selectedStoreItem.unitPrice || 0,
-      }));
-    }
-  }, [selectedStoreItem]);
+  // --- Line item CRUD ---
+  const addLineItem = () => {
+    setLineItems((prev) => [
+      ...prev,
+      { id: generateLineItemKey(), storeItem: null, quantity: 1, unitPrice: 0 },
+    ]);
+  };
 
-  const totalAmount = formData.unitPrice * formData.quantity;
-  const taxAmount = (totalAmount * formData.taxRate) / 100;
-  const finalAmount = totalAmount + taxAmount - formData.discountAmount;
+  const removeLineItem = (id: string) => {
+    if (lineItems.length <= 1) return; // Keep at least one
+    setLineItems((prev) => prev.filter((li) => li.id !== id));
+  };
+
+  const updateLineItem = (id: string, updates: Partial<LineItemRow>) => {
+    setLineItems((prev) =>
+      prev.map((li) => {
+        if (li.id !== id) return li;
+        const updated = { ...li, ...updates };
+        // Auto-set unit price when store item changes
+        if (updates.storeItem !== undefined && updates.storeItem) {
+          updated.unitPrice = updates.storeItem.unitPrice || 0;
+        }
+        return updated;
+      }),
+    );
+  };
+
+  // --- Computed values ---
+  const lineItemTotals = lineItems.map((li) => ({
+    ...li,
+    total: li.unitPrice * li.quantity,
+    availableStock: li.storeItem?.quantity ?? 0,
+    isBackorderNeeded: li.storeItem
+      ? li.quantity > li.storeItem.quantity
+      : false,
+    backorderQty: li.storeItem
+      ? Math.max(0, li.quantity - li.storeItem.quantity)
+      : 0,
+  }));
+
+  const subtotal = lineItemTotals.reduce((sum, li) => sum + li.total, 0);
+  const taxAmount = (subtotal * formData.taxRate) / 100;
+  const finalAmount = subtotal + taxAmount - formData.discountAmount;
+  const hasBackorders = lineItemTotals.some((li) => li.isBackorderNeeded);
+  const validLineItems = lineItems.filter((li) => li.storeItem !== null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,19 +211,22 @@ export default function NewQuotePage() {
     setError("");
 
     try {
-      if (!selectedCustomer || !selectedStoreItem)
-        throw new Error("Please select both customer and product");
+      if (!selectedCustomer) throw new Error("Please select a customer");
+
+      if (validLineItems.length === 0)
+        throw new Error("Please add at least one line item with a store item");
 
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + formData.expiryDays);
 
       const payload = {
         customerId: selectedCustomer.id,
-        productId: selectedStoreItem.productId || undefined,
-        storeItemId: selectedStoreItem.id,
-        quantity: formData.quantity,
+        lineItems: validLineItems.map((li) => ({
+          storeItemId: li.storeItem!.id,
+          quantity: li.quantity,
+          unitPrice: li.unitPrice,
+        })),
         deliveryDate: formData.deliveryDate,
-        unitPrice: formData.unitPrice,
         taxAmount,
         discountAmount: formData.discountAmount,
         paymentTerms: formData.paymentTerms,
@@ -240,7 +280,7 @@ export default function NewQuotePage() {
             Create New Quote
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Draft a formal proposal for a customer.
+            Draft a formal proposal for a customer with multiple items.
           </Typography>
         </Box>
       </Box>
@@ -255,176 +295,310 @@ export default function NewQuotePage() {
         <Grid container spacing={3}>
           {/* LEFT COLUMN: Inputs */}
           <Grid item xs={12} md={8}>
-            {/* 1. Essentials */}
+            {/* 1. Customer Selection */}
             <FormCard>
-              <SectionHeader>
-                Quote Essentials
-                {/* <Person fontSize="small" /> Quote Essentials */}
-              </SectionHeader>
-              <Stack spacing={4}>
-                <Autocomplete
-                  options={customers}
-                  getOptionLabel={(option) =>
-                    `${option.name} (${option.phone})`
-                  }
-                  loading={customersLoading}
-                  value={selectedCustomer}
-                  onChange={(e, value) => setSelectedCustomer(value)}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Select Customer"
-                      variant="standard"
-                      required
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {customersLoading ? (
-                              <CircularProgress color="inherit" size={20} />
-                            ) : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-
-                <Autocomplete
-                  options={storeItems}
-                  getOptionLabel={(option) => option.name}
-                  loading={storeItemsLoading}
-                  value={selectedStoreItem}
-                  onChange={(e, value) => setSelectedStoreItem(value)}
-                  renderOption={(props, option) => {
-                    const { key, ...rest } = props;
-                    return (
-                      <li key={key} {...rest}>
-                        <Box
-                          sx={{
-                            width: "100%",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            py: 1,
-                          }}
-                        >
-                          <Box>
-                            <Typography variant="body2" fontWeight={600}>
-                              {option.name}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {option.itemNumber}
-                            </Typography>
-                          </Box>
-                          <Typography
-                            variant="caption"
-                            fontWeight={700}
-                            color="primary"
-                          >
-                            {option.unitPrice
-                              ? formatCurrency(option.unitPrice)
-                              : "Price N/A"}
-                          </Typography>
-                        </Box>
-                      </li>
-                    );
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Select Store Item"
-                      variant="standard"
-                      required
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {storeItemsLoading ? (
-                              <CircularProgress color="inherit" size={20} />
-                            ) : null}
-                            {params.InputProps.endAdornment}
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
-                />
-                {selectedStoreItem && (
-                  <Alert
-                    icon={<Inventory fontSize="inherit" />}
-                    severity="info"
-                    sx={{
-                      bgcolor: "#F8FAFC",
-                      color: "#334155",
-                      border: "1px solid #E2E8F0",
-                    }}
-                  >
-                    <Typography variant="body2" fontWeight={600}>
-                      {selectedStoreItem.name}
-                    </Typography>
-                    <Typography variant="caption">
-                      Store Item: {selectedStoreItem.itemNumber} • Selling
-                      Price:{" "}
-                      {selectedStoreItem.unitPrice
-                        ? formatCurrency(selectedStoreItem.unitPrice)
-                        : "N/A"}
-                    </Typography>
-                    {selectedStoreItem.product && (
-                      <Typography
-                        variant="caption"
-                        display="block"
-                        sx={{ mt: 0.5, color: "text.secondary" }}
-                      >
-                        Linked Product: {selectedStoreItem.product.productCode}{" "}
-                        {selectedStoreItem.product.model
-                          ? `(${selectedStoreItem.product.model})`
-                          : ""}
-                      </Typography>
-                    )}
-                  </Alert>
-                )}
-              </Stack>
-            </FormCard>
-
-            {/* 2. Timeline & Logistics */}
-            <FormCard>
-              <SectionHeader>
-                Quantity & Timeline
-                {/* <Description fontSize="small" /> Quantity & Timeline */}
-              </SectionHeader>
-              <Grid container spacing={4}>
-                <Grid item xs={12} md={4}>
+              <SectionHeader>Quote Essentials</SectionHeader>
+              <Autocomplete
+                options={customers}
+                getOptionLabel={(option) => `${option.name} (${option.phone})`}
+                loading={customersLoading}
+                value={selectedCustomer}
+                onChange={(e, value) => setSelectedCustomer(value)}
+                renderInput={(params) => (
                   <TextField
-                    fullWidth
-                    label="Quantity"
+                    {...params}
+                    label="Select Customer"
                     variant="standard"
-                    type="number"
                     required
-                    value={formData.quantity}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        quantity: parseInt(e.target.value) || 1,
-                      }))
-                    }
                     InputProps={{
+                      ...params.InputProps,
                       endAdornment: (
-                        <InputAdornment position="end">
-                          <Numbers
-                            fontSize="small"
-                            sx={{ color: "text.secondary" }}
-                          />
-                        </InputAdornment>
+                        <>
+                          {customersLoading ? (
+                            <CircularProgress color="inherit" size={20} />
+                          ) : null}
+                          {params.InputProps.endAdornment}
+                        </>
                       ),
                     }}
-                    inputProps={{ min: 1 }}
                   />
-                </Grid>
+                )}
+              />
+            </FormCard>
+
+            {/* 2. Line Items */}
+            <FormCard>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 2,
+                }}
+              >
+                <SectionHeader sx={{ mb: 0 }}>
+                  <Inventory fontSize="small" /> Line Items
+                </SectionHeader>
+                <Button
+                  startIcon={<Add />}
+                  onClick={addLineItem}
+                  size="small"
+                  sx={{ textTransform: "none", fontWeight: 600 }}
+                >
+                  Add Item
+                </Button>
+              </Box>
+
+              <Stack spacing={2}>
+                {lineItems.map((li, index) => {
+                  const computed = lineItemTotals[index];
+                  return (
+                    <Paper
+                      key={li.id}
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        border: computed?.isBackorderNeeded
+                          ? "1px solid #FDBA74"
+                          : "1px solid #E2E8F0",
+                        bgcolor: computed?.isBackorderNeeded
+                          ? "#FFFBF5"
+                          : "transparent",
+                      }}
+                    >
+                      <Grid container spacing={2} alignItems="flex-end">
+                        {/* Store Item Selector */}
+                        <Grid item xs={12} md={5}>
+                          <Autocomplete
+                            options={storeItems}
+                            getOptionLabel={(option) => option.name}
+                            loading={storeItemsLoading}
+                            value={li.storeItem}
+                            onChange={(e, value) =>
+                              updateLineItem(li.id, { storeItem: value })
+                            }
+                            renderOption={(props, option) => {
+                              const { key, ...rest } = props;
+                              return (
+                                <li key={key} {...rest}>
+                                  <Box
+                                    sx={{
+                                      width: "100%",
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      alignItems: "center",
+                                      py: 0.5,
+                                    }}
+                                  >
+                                    <Box>
+                                      <Typography
+                                        variant="body2"
+                                        fontWeight={600}
+                                      >
+                                        {option.name}
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                      >
+                                        {option.itemNumber} • Stock:{" "}
+                                        {option.quantity}
+                                      </Typography>
+                                    </Box>
+                                    <Typography
+                                      variant="caption"
+                                      fontWeight={700}
+                                      color="primary"
+                                    >
+                                      {option.unitPrice
+                                        ? formatCurrency(option.unitPrice)
+                                        : "N/A"}
+                                    </Typography>
+                                  </Box>
+                                </li>
+                              );
+                            }}
+                            renderInput={(params) => (
+                              <TextField
+                                {...params}
+                                label={`Item ${index + 1}`}
+                                variant="standard"
+                                required
+                                InputProps={{
+                                  ...params.InputProps,
+                                  endAdornment: (
+                                    <>
+                                      {storeItemsLoading ? (
+                                        <CircularProgress
+                                          color="inherit"
+                                          size={20}
+                                        />
+                                      ) : null}
+                                      {params.InputProps.endAdornment}
+                                    </>
+                                  ),
+                                }}
+                              />
+                            )}
+                          />
+                        </Grid>
+
+                        {/* Quantity */}
+                        <Grid item xs={4} md={2}>
+                          <TextField
+                            fullWidth
+                            label="Qty"
+                            variant="standard"
+                            type="number"
+                            required
+                            value={li.quantity}
+                            onChange={(e) =>
+                              updateLineItem(li.id, {
+                                quantity: parseInt(e.target.value) || 1,
+                              })
+                            }
+                            inputProps={{ min: 1 }}
+                          />
+                        </Grid>
+
+                        {/* Unit Price */}
+                        <Grid item xs={4} md={2}>
+                          <TextField
+                            fullWidth
+                            label="Unit Price"
+                            variant="standard"
+                            type="number"
+                            required
+                            value={li.unitPrice ?? ""}
+                            onChange={(e) =>
+                              updateLineItem(li.id, {
+                                unitPrice: parseFloat(e.target.value) || 0,
+                              })
+                            }
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  ₦
+                                </InputAdornment>
+                              ),
+                            }}
+                            inputProps={{ min: 0, step: 0.01 }}
+                          />
+                        </Grid>
+
+                        {/* Line Total */}
+                        <Grid item xs={3} md={2}>
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            sx={{ pb: 0.5, color: "#0F172A" }}
+                          >
+                            {formatCurrency(computed?.total || 0)}
+                          </Typography>
+                        </Grid>
+
+                        {/* Remove */}
+                        <Grid item xs={1} md={1}>
+                          <IconButton
+                            size="small"
+                            onClick={() => removeLineItem(li.id)}
+                            disabled={lineItems.length <= 1}
+                            sx={{ color: "#EF4444" }}
+                          >
+                            <DeleteOutline fontSize="small" />
+                          </IconButton>
+                        </Grid>
+                      </Grid>
+
+                      {/* Backorder Warning */}
+                      {computed?.isBackorderNeeded && (
+                        <Alert
+                          severity="warning"
+                          icon={<WarningAmber fontSize="inherit" />}
+                          sx={{
+                            mt: 1.5,
+                            borderRadius: 1.5,
+                            bgcolor: "#FFF7ED",
+                            border: "1px solid #FDBA74",
+                            "& .MuiAlert-icon": { color: "#EA580C" },
+                            py: 0.5,
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            fontWeight={600}
+                            color="#9A3412"
+                          >
+                            Only {computed.availableStock} in stock —{" "}
+                            {computed.backorderQty} will be backordered.
+                          </Typography>
+                        </Alert>
+                      )}
+
+                      {/* Store item info chip */}
+                      {li.storeItem && (
+                        <Box
+                          sx={{
+                            mt: 1,
+                            display: "flex",
+                            gap: 1,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <Chip
+                            label={`Stock: ${li.storeItem.quantity}`}
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontSize: 11 }}
+                          />
+                          <Chip
+                            label={li.storeItem.itemNumber}
+                            size="small"
+                            variant="outlined"
+                            sx={{ fontSize: 11 }}
+                          />
+                          {li.storeItem.product && (
+                            <Chip
+                              label={`Product: ${li.storeItem.product.productCode}`}
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontSize: 11 }}
+                            />
+                          )}
+                        </Box>
+                      )}
+                    </Paper>
+                  );
+                })}
+              </Stack>
+
+              {/* Add another button at bottom */}
+              <Button
+                startIcon={<Add />}
+                onClick={addLineItem}
+                fullWidth
+                variant="outlined"
+                sx={{
+                  mt: 2,
+                  textTransform: "none",
+                  borderStyle: "dashed",
+                  borderColor: "#CBD5E1",
+                  color: "#64748B",
+                  "&:hover": {
+                    borderColor: "#94A3B8",
+                    bgcolor: "#F8FAFC",
+                  },
+                }}
+              >
+                Add Another Item
+              </Button>
+            </FormCard>
+
+            {/* 3. Timeline */}
+            <FormCard>
+              <SectionHeader>Timeline</SectionHeader>
+              <Grid container spacing={4}>
                 <Grid item xs={12} md={4}>
                   <TextField
                     fullWidth
@@ -472,36 +646,11 @@ export default function NewQuotePage() {
               </Grid>
             </FormCard>
 
-            {/* 3. Financials */}
+            {/* 4. Financials */}
             <FormCard>
-              <SectionHeader>
-                {/* <AttachMoney fontSize="small" /> Pricing Breakdown */}
-                Pricing Breakdown
-              </SectionHeader>
+              <SectionHeader>Pricing Adjustments</SectionHeader>
               <Grid container spacing={4}>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Unit Price"
-                    variant="standard"
-                    type="number"
-                    required
-                    value={formData.unitPrice ?? ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        unitPrice: parseFloat(e.target.value) || 0,
-                      }))
-                    }
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">₦</InputAdornment>
-                      ),
-                    }}
-                    inputProps={{ min: 0, step: 0.01 }}
-                  />
-                </Grid>
-                <Grid item xs={6} md={3}>
+                <Grid item xs={6} md={4}>
                   <TextField
                     fullWidth
                     label="Tax Rate (%)"
@@ -517,7 +666,7 @@ export default function NewQuotePage() {
                     inputProps={{ min: 0, step: 0.1 }}
                   />
                 </Grid>
-                <Grid item xs={6} md={3}>
+                <Grid item xs={6} md={4}>
                   <TextField
                     fullWidth
                     label="Discount Amount"
@@ -541,12 +690,9 @@ export default function NewQuotePage() {
               </Grid>
             </FormCard>
 
-            {/* 4. Terms & Notes */}
+            {/* 5. Terms & Notes */}
             <FormCard sx={{ mb: 0 }}>
-              <SectionHeader>
-                Terms & Conditions
-                {/* <Gavel fontSize="small" /> Terms & Conditions */}
-              </SectionHeader>
+              <SectionHeader>Terms & Conditions</SectionHeader>
               <Stack spacing={3}>
                 <TextField
                   fullWidth
@@ -627,6 +773,44 @@ export default function NewQuotePage() {
               </Typography>
               <Divider sx={{ borderColor: "rgba(255,255,255,0.1)", mb: 2 }} />
 
+              {/* Line items mini-table */}
+              {validLineItems.length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                  {lineItemTotals
+                    .filter((li) => li.storeItem)
+                    .map((li, i) => (
+                      <Box
+                        key={li.id}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          py: 0.5,
+                          borderBottom: "1px solid rgba(255,255,255,0.05)",
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "rgba(255,255,255,0.7)",
+                            maxWidth: "60%",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {li.storeItem!.name} × {li.quantity}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "#fff", fontWeight: 600 }}
+                        >
+                          {formatCurrency(li.total)}
+                        </Typography>
+                      </Box>
+                    ))}
+                </Box>
+              )}
+
               <Table
                 size="small"
                 sx={{
@@ -640,9 +824,11 @@ export default function NewQuotePage() {
               >
                 <TableBody>
                   <TableRow>
-                    <TableCell>Subtotal</TableCell>
+                    <TableCell>
+                      Subtotal ({validLineItems.length} items)
+                    </TableCell>
                     <TableCell align="right" sx={{ color: "#fff" }}>
-                      {formatCurrency(totalAmount)}
+                      {formatCurrency(subtotal)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -674,7 +860,7 @@ export default function NewQuotePage() {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  mb: 4,
+                  mb: hasBackorders ? 2 : 4,
                 }}
               >
                 <Typography variant="body1" fontWeight={600}>
@@ -688,6 +874,26 @@ export default function NewQuotePage() {
                   {formatCurrency(finalAmount)}
                 </Typography>
               </Box>
+
+              {hasBackorders && (
+                <Alert
+                  severity="warning"
+                  icon={<WarningAmber fontSize="inherit" />}
+                  sx={{
+                    mb: 3,
+                    bgcolor: "rgba(251,191,36,0.1)",
+                    color: "#FBBF24",
+                    border: "1px solid rgba(251,191,36,0.3)",
+                    "& .MuiAlert-icon": { color: "#FBBF24" },
+                    borderRadius: 2,
+                  }}
+                >
+                  <Typography variant="caption" fontWeight={600}>
+                    Some items exceed available stock. Production requests will
+                    be auto-created.
+                  </Typography>
+                </Alert>
+              )}
 
               <Box
                 sx={{

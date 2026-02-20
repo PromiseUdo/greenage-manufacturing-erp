@@ -156,10 +156,10 @@ model Product {
   tags            Json?
   
   // Relations
-  quotes          Quote[]
-  orders          Order[]
-  invoices        Invoice[]
-  storeItems      StoreItem[]
+  quoteLineItems    QuoteLineItem[]   @relation("QuoteLineItems")
+  invoiceLineItems  InvoiceLineItem[] @relation("InvoiceLineItems")
+  orderLineItems    OrderLineItem[]   @relation("OrderLineItems")
+  storeItems        StoreItem[]
   materials       ProductMaterial[]
   
   createdById     String    @db.ObjectId
@@ -255,16 +255,12 @@ model Quote {
   customerId      String      @db.ObjectId
   customer        Customer    @relation(fields: [customerId], references: [id])
   
-  productId       String?      @db.ObjectId
-  product         Product?     @relation(fields: [productId], references: [id])
+  // Line items (replaces single product/storeItem/quantity/unitPrice)
+  lineItems       QuoteLineItem[]
   
-  storeItemId     String?      @db.ObjectId
-  storeItem       StoreItem?   @relation(fields: [storeItemId], references: [id])
-  
-  quantity        Int
   deliveryDate    DateTime
   
-  unitPrice       Float
+  // Quote-level aggregates (sum of line items)
   totalAmount     Float
   taxAmount       Float       @default(0)
   discountAmount  Float       @default(0)
@@ -281,9 +277,8 @@ model Quote {
   notes           String?
   termsConditions String?
   
-  // orderId removed
-  // order removed
-  invoice         Invoice?
+  invoices             Invoice[]
+  productionRequests   ProductionRequest[]
   
   createdById     String      @db.ObjectId
   createdBy       User        @relation("QuoteCreator", fields: [createdById], references: [id])
@@ -291,6 +286,37 @@ model Quote {
   updatedAt       DateTime    @updatedAt
   
   @@map("quotes")
+}
+
+model QuoteLineItem {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  
+  quoteId             String    @db.ObjectId
+  quote               Quote     @relation(fields: [quoteId], references: [id])
+  
+  storeItemId         String    @db.ObjectId
+  storeItem           StoreItem @relation("QuoteLineItems", fields: [storeItemId], references: [id])
+  
+  productId           String?   @db.ObjectId
+  product             Product?  @relation("QuoteLineItems", fields: [productId], references: [id])
+  
+  quantity            Int
+  unitPrice           Float
+  totalAmount         Float        // unitPrice × quantity
+  
+  // Backorder fields (per line item)
+  quantityAllocated   Int?
+  quantityBackordered Int?
+  quantityInvoiced    Int       @default(0)
+  backorderStatus     BackorderStatus @default(NONE)
+  backorderCreatedAt  DateTime?
+  
+  productionRequests  ProductionRequest[]
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  @@map("quote_line_items")
 }
 
 enum QuoteStatus {
@@ -302,6 +328,13 @@ enum QuoteStatus {
   CONVERTED
 }
 
+enum BackorderStatus {
+  NONE
+  PENDING
+  IN_PRODUCTION
+  FULFILLED
+}
+
 // ============================================
 // SALES - INVOICES
 // ============================================
@@ -310,24 +343,17 @@ model Invoice {
   id              String      @id @default(auto()) @map("_id") @db.ObjectId
   invoiceNumber   String      @unique
   
-  quoteId         String      @unique @db.ObjectId
+  quoteId         String      @db.ObjectId
   quote           Quote       @relation(fields: [quoteId], references: [id])
   
   customerId      String      @db.ObjectId
   customer        Customer    @relation(fields: [customerId], references: [id])
   
-  orderId         String?      @db.ObjectId
-  order           Order?       @relation(fields: [orderId], references: [id])
+  orderId         String?     @db.ObjectId
+  order           Order?      @relation(fields: [orderId], references: [id])
   
-  productId       String?      @db.ObjectId
-  product         Product?     @relation(fields: [productId], references: [id])
-
-  storeItemId     String?      @db.ObjectId
-  storeItem       StoreItem?   @relation(fields: [storeItemId], references: [id])
+  lineItems       InvoiceLineItem[]
   
-  quantity        Int
-  
-  unitPrice       Float
   totalAmount     Float
   taxAmount       Float       @default(0)
   discountAmount  Float       @default(0)
@@ -357,6 +383,28 @@ model Invoice {
   @@map("invoices")
 }
 
+model InvoiceLineItem {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  
+  invoiceId     String      @db.ObjectId
+  invoice       Invoice     @relation(fields: [invoiceId], references: [id])
+  
+  storeItemId   String?     @db.ObjectId
+  storeItem     StoreItem?  @relation("InvoiceLineItems", fields: [storeItemId], references: [id])
+  
+  productId     String?     @db.ObjectId
+  product       Product?    @relation("InvoiceLineItems", fields: [productId], references: [id])
+  
+  quantity      Int
+  unitPrice     Float
+  totalAmount   Float       // unitPrice × quantity
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  @@map("invoice_line_items")
+}
+
 enum InvoiceStatus {
   PENDING
   PARTIALLY_PAID
@@ -376,14 +424,8 @@ model Order {
   customerId      String      @db.ObjectId
   customer        Customer    @relation(fields: [customerId], references: [id])
   
-  // ✅ PRODUCT REFERENCE (instead of productType)
-  productId       String?      @db.ObjectId
-  product         Product?     @relation(fields: [productId], references: [id])
-
-  storeItemId     String?      @db.ObjectId
-  storeItem       StoreItem?   @relation(fields: [storeItemId], references: [id])
+  lineItems       OrderLineItem[]
   
-  quantity        Int         // Number of units to produce
   deliveryDate    DateTime
   paymentTerms    String?
   paymentStatus   PaymentStatus @default(PENDING)
@@ -392,22 +434,41 @@ model Order {
   priority        OrderPriority @default(NORMAL)
   
   // ✅ UNIT IDS GENERATED ON ORDER CREATION
-  // These are the unique 8-character IDs for each physical unit
-  // Generated as: [PRODUCT_CODE][SERIAL] e.g., "INV50001", "INV50002"
-  generatedUnitIds Json?      // Array of unit IDs: ["INV50001", "INV50002", ...]
+  generatedUnitIds Json?
   
   createdById     String      @db.ObjectId
   createdBy       User        @relation("OrderCreator", fields: [createdById], references: [id])
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
   
-  // quote removed
   invoices        Invoice[]
   productionPlan  ProductionPlan?
   units           ProductionUnit[]  // Physical production units
   dispatch        Dispatch?
   
   @@map("orders")
+}
+
+model OrderLineItem {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  
+  orderId       String      @db.ObjectId
+  order         Order       @relation(fields: [orderId], references: [id])
+  
+  storeItemId   String?     @db.ObjectId
+  storeItem     StoreItem?  @relation("OrderLineItems", fields: [storeItemId], references: [id])
+  
+  productId     String?     @db.ObjectId
+  product       Product?    @relation("OrderLineItems", fields: [productId], references: [id])
+  
+  quantity      Int
+  unitPrice     Float
+  totalAmount   Float       // unitPrice × quantity
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  @@map("order_line_items")
 }
 
 enum OrderStatus {
@@ -886,9 +947,10 @@ model StoreItem {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   
-  quotes          Quote[]
-  invoices        Invoice[]
-  orders          Order[]
+  quoteLineItems      QuoteLineItem[]   @relation("QuoteLineItems")
+  invoiceLineItems    InvoiceLineItem[] @relation("InvoiceLineItems")
+  orderLineItems      OrderLineItem[]   @relation("OrderLineItems")
+  productionRequests  ProductionRequest[]
   
   @@map("store_items")
 }
@@ -935,6 +997,45 @@ model StoreDispatch {
   createdAt       DateTime  @default(now())
 
   @@map("store_dispatches")
+}
+
+// ============================================
+// PRODUCTION REQUESTS
+// ============================================
+
+model ProductionRequest {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  requestNumber       String    @unique
+  
+  storeItemId         String    @db.ObjectId
+  storeItem           StoreItem @relation(fields: [storeItemId], references: [id])
+  
+  quoteId             String    @db.ObjectId
+  quote               Quote     @relation(fields: [quoteId], references: [id])
+  
+  quoteLineItemId     String    @db.ObjectId
+  quoteLineItem       QuoteLineItem @relation(fields: [quoteLineItemId], references: [id])
+  
+  quantityNeeded      Int
+  
+  status              ProductionRequestStatus @default(PENDING)
+  
+  dateRaised          DateTime  @default(now())
+  dateCompleted       DateTime?
+  
+  notes               String?
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  @@map("production_requests")
+}
+
+enum ProductionRequestStatus {
+  PENDING
+  ACKNOWLEDGED
+  SCHEDULED
+  COMPLETED
 }
 
 // ============================================

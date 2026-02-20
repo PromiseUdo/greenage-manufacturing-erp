@@ -1414,26 +1414,31 @@ const QuoteDocument = ({ quote }: { quote: any }) => {
             </Text>
           </View>
 
-          {/* Row (Single Product logic based on your data structure) */}
-          <View style={pdfStyles.tableRow}>
-            <View style={pdfStyles.col1}>
-              <Text style={{ fontWeight: 700, fontSize: 10, color: "#0F172A" }}>
-                {quote.storeItem.name}
+          {/* Line Item Rows */}
+          {(quote.lineItems || []).map((li: any, i: number) => (
+            <View key={i} style={pdfStyles.tableRow}>
+              <View style={pdfStyles.col1}>
+                <Text
+                  style={{ fontWeight: 700, fontSize: 10, color: "#0F172A" }}
+                >
+                  {li.storeItem?.name || "Item"}
+                </Text>
+                <Text style={{ fontSize: 9, color: "#64748B", marginTop: 2 }}>
+                  Code: {li.storeItem?.itemNumber || "N/A"} •{" "}
+                  {li.storeItem?.category || ""}
+                </Text>
+              </View>
+              <Text style={[pdfStyles.col2, { fontSize: 10 }]}>
+                {li.quantity}
               </Text>
-              <Text style={{ fontSize: 9, color: "#64748B", marginTop: 2 }}>
-                Code: {quote.storeItem.itemNumber} • {quote.storeItem.category}
+              <Text style={[pdfStyles.col3, { fontSize: 10 }]}>
+                {formatCurrency(li.unitPrice)}
+              </Text>
+              <Text style={[pdfStyles.col4, { fontSize: 10, fontWeight: 700 }]}>
+                {formatCurrency(li.unitPrice * li.quantity)}
               </Text>
             </View>
-            <Text style={[pdfStyles.col2, { fontSize: 10 }]}>
-              {quote.quantity}
-            </Text>
-            <Text style={[pdfStyles.col3, { fontSize: 10 }]}>
-              {formatCurrency(quote.unitPrice)}
-            </Text>
-            <Text style={[pdfStyles.col4, { fontSize: 10, fontWeight: 700 }]}>
-              {formatCurrency(quote.totalAmount)}
-            </Text>
-          </View>
+          ))}
         </View>
 
         {/* Totals */}
@@ -1538,7 +1543,12 @@ export default function QuoteDetailPage({
 
   const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const [generatingInvoice, setGeneratingInvoice] = useState(false);
   const [dueInDays, setDueInDays] = useState(30);
+
+  const hasUnbilledAllocatedStock = quote?.lineItems?.some(
+    (li: any) => (li.quantityAllocated || 0) > (li.quantityInvoiced || 0),
+  );
 
   useEffect(() => {
     fetchQuote();
@@ -1590,8 +1600,9 @@ export default function QuoteDetailPage({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to accept");
+
       setSuccess(
-        `Quote accepted! Invoice ${data.invoice.invoiceNumber} created.`,
+        `Quote accepted! ${data.invoice ? `Invoice ${data.invoice.invoiceNumber} created.` : "No initial invoice generated due to backorders."}`,
       );
       setAcceptDialogOpen(false);
       fetchQuote();
@@ -1599,6 +1610,30 @@ export default function QuoteDetailPage({
       setError(err.message);
     } finally {
       setAccepting(false);
+    }
+  };
+
+  const handleGenerateNextInvoice = async () => {
+    try {
+      setGeneratingInvoice(true);
+      setError("");
+      setSuccess("");
+      const res = await fetch(`/api/quotes/${resolvedParams.id}/invoice`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dueInDays }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate invoice");
+
+      setSuccess(
+        `Next Invoice ${data.invoice.invoiceNumber} created successfully.`,
+      );
+      fetchQuote();
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setGeneratingInvoice(false);
     }
   };
 
@@ -1700,6 +1735,21 @@ export default function QuoteDetailPage({
               Accept Quote
             </Button>
           )}
+          {quote?.status === "ACCEPTED" && hasUnbilledAllocatedStock && (
+            <Button
+              variant="contained"
+              startIcon={<Receipt />}
+              onClick={handleGenerateNextInvoice}
+              disabled={generatingInvoice}
+              sx={{
+                bgcolor: "#0ea5e9",
+                "&:hover": { bgcolor: "#0284c7" },
+                fontWeight: 600,
+              }}
+            >
+              {generatingInvoice ? "Generating..." : "Generate Next Invoice"}
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -1732,74 +1782,79 @@ export default function QuoteDetailPage({
               <SectionHeader>Line Items</SectionHeader>
             </Box>
 
-            <Box
-              sx={{
-                p: 2,
-                bgcolor: "#F8FAFC",
-                borderRadius: 2,
-                mb: 4,
-                display: "flex",
-                justifyContent: "space-between",
-              }}
-            >
-              <Box>
-                <Typography variant="body2" fontWeight={600}>
-                  {quote?.storeItem.name}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {quote?.storeItem.itemNumber}
-                </Typography>
-              </Box>
-              <Box sx={{ textAlign: "right" }}>
-                <Typography variant="body2" fontWeight={600}>
-                  {quote?.quantity} Units
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  @{formatCurrency(quote?.unitPrice)}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Divider sx={{ my: 2, borderStyle: "dashed" }} />
-
-            {/* <Box sx={{ ml: 'auto', maxWidth: 300 }}>
-              <Box
-                sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}
-              >
-                <Typography variant="body2" color="text.secondary">
-                  Subtotal
-                </Typography>
-                <Typography variant="body2" fontWeight={500}>
-                  {formatCurrency(quote?.totalAmount)}
-                </Typography>
-              </Box>
-              {quote?.discountAmount > 0 && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    mb: 1,
-                  }}
+            <Box sx={{ overflowX: "auto" }}>
+              {quote?.lineItems?.length > 0 ? (
+                <>
+                  {quote.lineItems.map((li: any, i: number) => (
+                    <Box
+                      key={li.id || i}
+                      sx={{
+                        p: 2,
+                        bgcolor: i % 2 === 0 ? "#F8FAFC" : "transparent",
+                        borderRadius: 2,
+                        mb: 1,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>
+                          {li.storeItem?.name || "Item"}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.primary"
+                          display="block"
+                        >
+                          Allocated: {li.quantityAllocated || 0} / {li.quantity}{" "}
+                          | Billed: {li.quantityInvoiced || 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {li.storeItem?.itemNumber || "N/A"}
+                          {li.backorderStatus &&
+                            li.backorderStatus !== "NONE" && (
+                              <Chip
+                                label={li.backorderStatus}
+                                size="small"
+                                sx={{
+                                  ml: 1,
+                                  fontSize: 10,
+                                  height: 20,
+                                  bgcolor:
+                                    li.backorderStatus === "FULFILLED"
+                                      ? "#dcfce7"
+                                      : "#fef3c7",
+                                  color:
+                                    li.backorderStatus === "FULFILLED"
+                                      ? "#166534"
+                                      : "#92400e",
+                                }}
+                              />
+                            )}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: "right" }}>
+                        <Typography variant="body2" fontWeight={600}>
+                          {li.quantity} × {formatCurrency(li.unitPrice)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatCurrency(li.unitPrice * li.quantity)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </>
+              ) : (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ py: 2 }}
                 >
-                  <Typography variant="body2" color="error.main">
-                    Discount
-                  </Typography>
-                  <Typography variant="body2" color="error.main">
-                    -{formatCurrency(quote?.discountAmount)}
-                  </Typography>
-                </Box>
+                  No line items found.
+                </Typography>
               )}
-              <Box
-                sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}
-              >
-                <Typography variant="h6" fontWeight={700}>
-                  Grand Total
-                </Typography>
-                <Typography variant="h6" fontWeight={700} color="primary.main">
-                  {formatCurrency(quote?.finalAmount)}
-                </Typography>
-              </Box>
-            </Box> */}
+            </Box>
 
             {/* Main Content Area -> Line Items Paper */}
             <Box sx={{ ml: "auto", maxWidth: 300 }}>
@@ -1949,7 +2004,7 @@ export default function QuoteDetailPage({
           </Paper>
 
           {/* Related Docs */}
-          {(quote?.order || quote?.invoice) && (
+          {(quote?.order || quote?.invoices?.length > 0) && (
             <Paper
               elevation={0}
               sx={{
@@ -1977,19 +2032,18 @@ export default function QuoteDetailPage({
                     Order {quote.order.orderNumber}
                   </Button>
                 )}
-                {quote?.invoice && (
+                {quote?.invoices?.map((inv: any) => (
                   <Button
+                    key={inv.id}
                     size="small"
                     variant="text"
                     startIcon={<Receipt />}
                     sx={{ justifyContent: "flex-start", color: "#0F172A" }}
-                    onClick={() =>
-                      router.push(`/sales/invoices/${quote.invoice.id}`)
-                    }
+                    onClick={() => router.push(`/sales/invoices/${inv.id}`)}
                   >
-                    Invoice {quote.invoice.invoiceNumber}
+                    Invoice {inv.invoiceNumber}
                   </Button>
-                )}
+                ))}
               </Box>
             </Paper>
           )}

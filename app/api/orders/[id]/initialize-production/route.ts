@@ -23,10 +23,14 @@ export async function POST(
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        product: {
-          select: {
-            name: true,
-            productCode: true,
+        lineItems: {
+          include: {
+            product: {
+              select: {
+                name: true,
+                productCode: true,
+              },
+            },
           },
         },
         units: {
@@ -62,10 +66,13 @@ export async function POST(
 
     const unitIds = order.generatedUnitIds as string[];
 
-    if (unitIds.length !== order.quantity) {
+    // Compute total quantity from line items
+    const totalQuantity = order.lineItems.reduce((sum: number, li: any) => sum + li.quantity, 0);
+
+    if (unitIds.length !== totalQuantity) {
       return NextResponse.json(
         {
-          error: `Mismatch: ${unitIds.length} unit IDs but order quantity is ${order.quantity}`,
+          error: `Mismatch: ${unitIds.length} unit IDs but total quantity is ${totalQuantity}`,
         },
         { status: 400 },
       );

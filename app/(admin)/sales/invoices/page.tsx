@@ -92,8 +92,23 @@ interface Invoice {
     orderNumber: string;
     status: string;
   };
-  productType: string;
-  quantity: number;
+  lineItems: {
+    id: string;
+    quantity: number;
+    unitPrice: number;
+    totalAmount: number;
+    storeItem: {
+      id: string;
+      name: string;
+      itemNumber: string;
+      category: string;
+    } | null;
+    product: {
+      id: string;
+      name: string;
+      productNumber: string;
+    } | null;
+  }[];
   finalAmount: number;
   paidAmount: number;
   balanceAmount: number;
@@ -425,10 +440,26 @@ export default function InvoicesPage() {
                     <StyledTableCell>
                       <Box>
                         <Typography variant="body2" fontWeight={500}>
-                          {invoice.productType}
+                          {invoice.lineItems?.[0]?.storeItem?.name ||
+                            invoice.lineItems?.[0]?.product?.name ||
+                            "N/A"}
+                          {invoice.lineItems?.length > 1 && (
+                            <Typography
+                              component="span"
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {" "}
+                              +{invoice.lineItems.length - 1} more
+                            </Typography>
+                          )}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Qty: {invoice.quantity}
+                          Qty:{" "}
+                          {invoice.lineItems?.reduce(
+                            (sum: number, li: any) => sum + li.quantity,
+                            0,
+                          ) || 0}
                         </Typography>
                       </Box>
                     </StyledTableCell>

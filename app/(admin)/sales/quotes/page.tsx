@@ -492,24 +492,24 @@ interface Quote {
     name: string;
     phone: string;
   };
-  product: {
+  lineItems: {
     id: string;
-    name: string;
-    productNumber: string;
-    category: string;
-  };
-  storeItem: {
-    id: string;
-    name: string;
-    category: string;
-    itemNumber: string;
-  };
-  quantity: number;
+    storeItem: {
+      id: string;
+      name: string;
+      itemNumber: string;
+      category: string;
+    } | null;
+    quantity: number;
+    unitPrice: number;
+    backorderStatus: string;
+    quantityBackordered?: number | null;
+  }[];
   finalAmount: number;
   status: string;
   isAccepted: boolean;
   order: { id: string; orderNumber: string } | null;
-  invoice: { id: string; invoiceNumber: string } | null;
+  invoices: { id: string; invoiceNumber: string }[];
   createdAt: string;
 }
 
@@ -707,13 +707,32 @@ export default function QuotesPage() {
                     onClick={() => router.push(`/sales/quotes/${quote.id}`)}
                   >
                     <StyledTableCell>
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        sx={{ color: "#0F172A" }}
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
-                        {quote.quoteNumber}
-                      </Typography>
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          sx={{ color: "#0F172A" }}
+                        >
+                          {quote.quoteNumber}
+                        </Typography>
+                        {quote.lineItems?.some(
+                          (li) => (li.quantityBackordered || 0) > 0,
+                        ) && (
+                          <Chip
+                            label="Backorders"
+                            size="small"
+                            sx={{
+                              bgcolor: "#fef3c7",
+                              color: "#92400e",
+                              fontWeight: 600,
+                              fontSize: 10,
+                              height: 20,
+                            }}
+                          />
+                        )}
+                      </Box>
                       <Typography variant="caption" color="text.secondary">
                         {new Date(quote.createdAt).toLocaleDateString()}
                       </Typography>
@@ -733,17 +752,24 @@ export default function QuotesPage() {
                     <StyledTableCell>
                       <Box>
                         <Typography variant="body2" fontWeight={500}>
-                          {quote.storeItem.name}
+                          {quote.lineItems?.length > 0
+                            ? quote.lineItems[0].storeItem?.name || "Item"
+                            : "No items"}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {quote.storeItem.itemNumber}
+                          {quote.lineItems?.length > 1
+                            ? `+${quote.lineItems.length - 1} more item${quote.lineItems.length > 2 ? "s" : ""}`
+                            : quote.lineItems?.[0]?.storeItem?.itemNumber || ""}
                         </Typography>
                       </Box>
                     </StyledTableCell>
 
                     <StyledTableCell>
                       <Typography variant="body2" fontWeight={500}>
-                        {quote.quantity}
+                        {quote.lineItems?.reduce(
+                          (sum: number, li: any) => sum + li.quantity,
+                          0,
+                        ) || 0}
                       </Typography>
                     </StyledTableCell>
 
@@ -782,24 +808,23 @@ export default function QuotesPage() {
                             </IconButton>
                           </Tooltip>
                         )}
-                        {quote.invoice && (
+                        {quote.invoices?.map((inv) => (
                           <Tooltip
-                            title={`Invoice: ${quote.invoice.invoiceNumber}`}
+                            key={inv.id}
+                            title={`Invoice: ${inv.invoiceNumber}`}
                           >
                             <IconButton
                               size="small"
                               sx={{ bgcolor: "#f1f5f9" }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(
-                                  `/sales/invoices/${quote.invoice?.id}`,
-                                );
+                                router.push(`/sales/invoices/${inv.id}`);
                               }}
                             >
                               <Receipt sx={{ fontSize: 16 }} />
                             </IconButton>
                           </Tooltip>
-                        )}
+                        ))}
                       </Box>
                     </StyledTableCell>
 

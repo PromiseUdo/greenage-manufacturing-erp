@@ -34,7 +34,6 @@ export async function GET(
             id: true,
             orderNumber: true,
             status: true,
-            quantity: true,
             deliveryDate: true,
             createdAt: true,
           },

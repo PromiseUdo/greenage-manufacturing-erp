@@ -24,7 +24,9 @@ export async function POST(
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        product: true,
+        lineItems: {
+          include: { product: true, storeItem: true },
+        },
         units: true,
       },
     });
@@ -44,13 +46,16 @@ export async function POST(
       );
     }
 
+    // Compute total quantity from line items
+    const totalQuantity = order.lineItems.reduce((sum, li) => sum + li.quantity, 0);
+
     console.log(
-      `Generating ${order.quantity} serial numbers for order ${order.orderNumber}...`,
+      `Generating ${totalQuantity} serial numbers for order ${order.orderNumber}...`,
     );
 
     // Generate unique serial numbers
     const serialNumbers = await generateUniqueSerialNumbers(
-      order.quantity,
+      totalQuantity,
       prisma,
     );
 
@@ -90,7 +95,7 @@ export async function POST(
         details: {
           orderId: order.id,
           orderNumber: order.orderNumber,
-          quantity: order.quantity,
+          quantity: totalQuantity,
           unitsCreated: productionUnits.length,
           serialNumbers: serialNumbers,
         },

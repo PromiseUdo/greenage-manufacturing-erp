@@ -22,19 +22,33 @@ export async function GET(
       where: { id },
       include: {
         customer: true,
-        product: {
-          select: {
-            id: true,
-            name: true,
-            productNumber: true,
-            productCode: true,
-            category: true,
-            model: true,
-            specifications: true,
+        lineItems: {
+          include: {
+            storeItem: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+                productNumber: true,
+                productCode: true,
+                category: true,
+                model: true,
+                specifications: true,
+              },
+            },
+            productionRequests: {
+              select: {
+                id: true,
+                requestNumber: true,
+                quantityNeeded: true,
+                status: true,
+                dateRaised: true,
+                dateCompleted: true,
+              },
+            },
           },
         },
-        storeItem: true,
-        invoice: {
+        invoices: {
           select: {
             id: true,
             invoiceNumber: true,

@@ -1,4 +1,4 @@
-// src/app/api/invoices/route.ts
+// app/api/production/requests/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
@@ -24,8 +24,9 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       where.OR = [
-        { invoiceNumber: { contains: search, mode: 'insensitive' } },
-        { customer: { name: { contains: search, mode: 'insensitive' } } },
+        { requestNumber: { contains: search, mode: 'insensitive' } },
+        { storeItem: { name: { contains: search, mode: 'insensitive' } } },
+        { quote: { quoteNumber: { contains: search, mode: 'insensitive' } } },
       ];
     }
 
@@ -33,46 +34,38 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
 
-    const [invoices, total] = await Promise.all([
-      prisma.invoice.findMany({
+    const [requests, total] = await Promise.all([
+      prisma.productionRequest.findMany({
         where,
         include: {
-          customer: {
+          storeItem: {
             select: {
               id: true,
               name: true,
-              phone: true,
+              itemNumber: true,
+              category: true,
+              quantity: true,
             },
           },
-          lineItems: {
-            include: {
-              storeItem: {
-                select: {
-                  id: true,
-                  name: true,
-                  itemNumber: true,
-                  category: true,
-                },
-              },
-              product: {
-                select: {
-                  id: true,
-                  name: true,
-                  productNumber: true,
-                },
-              },
+          quoteLineItem: {
+            select: {
+              id: true,
+              quantity: true,
+              quantityAllocated: true,
+              quantityBackordered: true,
+              backorderStatus: true,
             },
           },
           quote: {
             select: {
               id: true,
               quoteNumber: true,
-            },
-          },
-          order: {
-            select: {
-              id: true,
-              orderNumber: true,
+              customer: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -80,11 +73,11 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
       }),
-      prisma.invoice.count({ where }),
+      prisma.productionRequest.count({ where }),
     ]);
 
     return NextResponse.json({
-      invoices,
+      requests,
       pagination: {
         total,
         page,
@@ -93,9 +86,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching invoices:', error);
+    console.error('Error fetching production requests:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch invoices' },
+      { error: 'Failed to fetch production requests' },
       { status: 500 },
     );
   }

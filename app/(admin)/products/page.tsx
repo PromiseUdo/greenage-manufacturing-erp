@@ -81,7 +81,7 @@ interface Product {
   isAvailable: boolean;
   stockQuantity: number | null;
   _count: {
-    quotes: number;
+    quoteLineItems: number;
     orders: number;
   };
   createdAt: string;
@@ -358,7 +358,7 @@ export default function ProductsPage() {
                       <Box sx={{ display: "flex", gap: 0.5 }}>
                         <Tooltip title="Quotes">
                           <Chip
-                            label={product._count.quotes}
+                            label={product._count.quoteLineItems}
                             size="small"
                             variant="outlined"
                             sx={{ fontSize: 10, height: 20 }}

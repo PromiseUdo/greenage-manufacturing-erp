@@ -21,6 +21,12 @@ import {
   Divider,
   LinearProgress,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
 import Grid from "@mui/material/GridLegacy";
 
@@ -156,26 +162,94 @@ const OrderDocument = ({ order }: { order: any }) => (
 
       {/* Product Specification */}
       <View style={pdfStyles.section}>
-        <Text style={pdfStyles.sectionTitle}>Technical Specifications</Text>
-        <View style={pdfStyles.row}>
-          <View style={pdfStyles.column}>
-            <Text style={pdfStyles.label}>Product</Text>
-            <Text style={pdfStyles.value}>{order.product.name}</Text>
-          </View>
-          <View style={pdfStyles.column}>
-            <Text style={pdfStyles.label}>Quantity</Text>
-            <Text style={pdfStyles.value}>{order.quantity} Units</Text>
-          </View>
+        <Text style={pdfStyles.sectionTitle}>Order Line Items</Text>
+        {/* Table Header */}
+        <View
+          style={{
+            flexDirection: "row",
+            backgroundColor: "#F1F5F9",
+            padding: 8,
+            borderRadius: 4,
+            marginBottom: 4,
+          }}
+        >
+          <Text
+            style={{ flex: 2, fontWeight: 700, fontSize: 9, color: "#0F172A" }}
+          >
+            Item
+          </Text>
+          <Text
+            style={{
+              flex: 0.5,
+              fontWeight: 700,
+              fontSize: 9,
+              color: "#0F172A",
+              textAlign: "center",
+            }}
+          >
+            Qty
+          </Text>
+          <Text
+            style={{
+              flex: 1,
+              fontWeight: 700,
+              fontSize: 9,
+              color: "#0F172A",
+              textAlign: "right",
+            }}
+          >
+            Unit Price
+          </Text>
+          <Text
+            style={{
+              flex: 1,
+              fontWeight: 700,
+              fontSize: 9,
+              color: "#0F172A",
+              textAlign: "right",
+            }}
+          >
+            Total
+          </Text>
         </View>
-
-        <View style={pdfStyles.specGrid}>
-          {order.product.specifications?.map((spec: any, i: number) => (
-            <View key={i} style={pdfStyles.specItem}>
-              <Text style={pdfStyles.label}>{spec.label}</Text>
-              <Text style={pdfStyles.value}>{spec.value}</Text>
+        {/* Table Rows */}
+        {order.lineItems?.map((li: any, i: number) => (
+          <View
+            key={i}
+            style={{
+              flexDirection: "row",
+              padding: 8,
+              borderBottomWidth: 1,
+              borderBottomColor: "#F1F5F9",
+            }}
+          >
+            <View style={{ flex: 2 }}>
+              <Text style={pdfStyles.value}>
+                {li.storeItem?.name || li.product?.name || "Item"}
+              </Text>
+              <Text style={pdfStyles.label}>
+                {li.storeItem?.itemNumber || li.product?.productNumber || ""}
+                {li.storeItem?.category ? ` • ${li.storeItem.category}` : ""}
+              </Text>
             </View>
-          ))}
-        </View>
+            <Text style={{ flex: 0.5, textAlign: "center", fontSize: 10 }}>
+              {li.quantity}
+            </Text>
+            <Text style={{ flex: 1, textAlign: "right", fontSize: 10 }}>
+              {li.unitPrice ? `₦${li.unitPrice.toLocaleString()}` : "N/A"}
+            </Text>
+            <Text
+              style={{
+                flex: 1,
+                textAlign: "right",
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            >
+              {li.totalAmount ? `₦${li.totalAmount.toLocaleString()}` : "N/A"}
+            </Text>
+          </View>
+        ))}
       </View>
 
       {/* Footer */}
@@ -374,7 +448,11 @@ export default function OrderDetailPage({
           </Box>
           <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              Product: <strong>{order?.storeItem.name}</strong>
+              Items:{" "}
+              <strong>
+                {order?.lineItems?.length || 0} line item
+                {order?.lineItems?.length !== 1 ? "s" : ""}
+              </strong>
             </Typography>
             <Divider orientation="vertical" flexItem />
             <Typography variant="body2" color="text.secondary">
@@ -682,55 +760,99 @@ export default function OrderDetailPage({
                     </Grid>
                   </Box>
                   <Divider />
-                  {/* Product Details */}
+                  {/* Line Items Table */}
                   <Box>
-                    <SectionHeader>
-                      {/* <Inventory fontSize="small" /> Item Specification */}
-                      Item Specification
-                    </SectionHeader>
-                    <Grid container spacing={2}>
-                      <Grid item xs={6}>
-                        <Typography variant="caption" color="text.secondary">
-                          Product Category
-                        </Typography>
-                        <Typography variant="body2" fontWeight={600}>
-                          {order?.storeItem.category}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="caption" color="text.secondary">
-                          Order Quantity
-                        </Typography>
-                        <Typography variant="body2" fontWeight={600}>
-                          {order?.quantity} Units
-                        </Typography>
-                      </Grid>
-                      {order?.product?.specifications?.length > 0 &&
-                        order?.product.specifications?.map(
-                          (spec: any, i: number) => (
-                            <Grid item xs={6} key={i}>
-                              <Box
-                                sx={{
-                                  p: 1.5,
-                                  bgcolor: "#F8FAFC",
-                                  borderRadius: 2,
-                                }}
-                              >
+                    <SectionHeader>Order Line Items</SectionHeader>
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell
+                              sx={{
+                                fontWeight: 600,
+                                color: "#64748B",
+                                fontSize: 12,
+                              }}
+                            >
+                              ITEM
+                            </TableCell>
+                            <TableCell
+                              align="center"
+                              sx={{
+                                fontWeight: 600,
+                                color: "#64748B",
+                                fontSize: 12,
+                              }}
+                            >
+                              QTY
+                            </TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{
+                                fontWeight: 600,
+                                color: "#64748B",
+                                fontSize: 12,
+                              }}
+                            >
+                              UNIT PRICE
+                            </TableCell>
+                            <TableCell
+                              align="right"
+                              sx={{
+                                fontWeight: 600,
+                                color: "#64748B",
+                                fontSize: 12,
+                              }}
+                            >
+                              TOTAL
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {order?.lineItems?.map((li: any, i: number) => (
+                            <TableRow key={i}>
+                              <TableCell>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {li.storeItem?.name ||
+                                    li.product?.name ||
+                                    "Item"}
+                                </Typography>
                                 <Typography
                                   variant="caption"
                                   color="text.secondary"
-                                  display="block"
                                 >
-                                  {spec.label}
+                                  {li.storeItem?.itemNumber ||
+                                    li.product?.productNumber ||
+                                    ""}
+                                  {li.storeItem?.category
+                                    ? ` • ${li.storeItem.category}`
+                                    : ""}
                                 </Typography>
-                                <Typography variant="body2" fontWeight={700}>
-                                  {spec.value}
+                              </TableCell>
+                              <TableCell align="center">
+                                <Typography variant="body2" fontWeight={600}>
+                                  {li.quantity}
                                 </Typography>
-                              </Box>
-                            </Grid>
-                          ),
-                        )}
-                    </Grid>
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography variant="body2">
+                                  {li.unitPrice
+                                    ? `₦${li.unitPrice.toLocaleString()}`
+                                    : "N/A"}
+                                </Typography>
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography variant="body2" fontWeight={600}>
+                                  {li.totalAmount
+                                    ? `₦${li.totalAmount.toLocaleString()}`
+                                    : "N/A"}
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   </Box>
                 </Stack>
               )}

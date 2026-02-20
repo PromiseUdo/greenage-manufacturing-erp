@@ -221,22 +221,30 @@ const InvoiceDocument = ({ invoice, formatCurrency, formatDate }: any) => {
             </Text>
           </View>
 
-          <View style={pdfStyles.tableRow}>
-            <View style={pdfStyles.colDesc}>
-              <Text style={{ fontWeight: 700 }}>{invoice.storeItem.name}</Text>
-
-              <Text style={{ fontSize: 8, color: "#64748B", marginTop: 2 }}>
-                Ref: {invoice.order.orderNumber}
+          {invoice.lineItems?.map((lineItem: any, index: number) => (
+            <View key={index} style={pdfStyles.tableRow}>
+              <View style={pdfStyles.colDesc}>
+                <Text style={{ fontWeight: 700 }}>
+                  {lineItem.storeItem?.name || lineItem.product?.name || "Item"}
+                </Text>
+                <Text style={{ fontSize: 8, color: "#64748B", marginTop: 2 }}>
+                  {lineItem.storeItem?.itemNumber ||
+                    lineItem.product?.productNumber ||
+                    ""}
+                  {lineItem.storeItem?.category
+                    ? ` • ${lineItem.storeItem.category}`
+                    : ""}
+                </Text>
+              </View>
+              <Text style={pdfStyles.colQty}>{lineItem.quantity}</Text>
+              <Text style={pdfStyles.colPrice}>
+                {formatCurrency(lineItem.unitPrice)}
+              </Text>
+              <Text style={[pdfStyles.colTotal, { fontWeight: 700 }]}>
+                {formatCurrency(lineItem.totalAmount)}
               </Text>
             </View>
-            <Text style={pdfStyles.colQty}>{invoice.quantity}</Text>
-            <Text style={pdfStyles.colPrice}>
-              {formatCurrency(invoice.unitPrice)}
-            </Text>
-            <Text style={[pdfStyles.colTotal, { fontWeight: 700 }]}>
-              {formatCurrency(invoice.totalAmount)}
-            </Text>
-          </View>
+          ))}
         </View>
 
         <View style={pdfStyles.totalsContainer}>
@@ -824,30 +832,36 @@ export default function InvoiceDetailPage({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  <TableRow>
-                    <TableCell>
-                      <Typography variant="body2" fontWeight={600}>
-                        {invoice?.storeItem.name}
-                      </Typography>
-                      {invoice?.order && (
-                        <Typography variant="caption" color="text.secondary">
-                          Order Ref: {invoice?.order.orderNumber} •{" "}
-                          {invoice?.storeItem.category}
+                  {invoice?.lineItems?.map((lineItem: any, index: number) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Typography variant="body2" fontWeight={600}>
+                          {lineItem.storeItem?.name ||
+                            lineItem.product?.name ||
+                            "Item"}
                         </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell align="center">{invoice?.quantity}</TableCell>
-                    <TableCell align="right">
-                      <MoneyText variant="body2">
-                        {formatCurrency(invoice?.unitPrice)}
-                      </MoneyText>
-                    </TableCell>
-                    <TableCell align="right">
-                      <MoneyText variant="body2">
-                        {formatCurrency(invoice?.totalAmount)}
-                      </MoneyText>
-                    </TableCell>
-                  </TableRow>
+                        <Typography variant="caption" color="text.secondary">
+                          {lineItem.storeItem?.itemNumber ||
+                            lineItem.product?.productNumber ||
+                            ""}
+                          {lineItem.storeItem?.category
+                            ? ` • ${lineItem.storeItem.category}`
+                            : ""}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="center">{lineItem.quantity}</TableCell>
+                      <TableCell align="right">
+                        <MoneyText variant="body2">
+                          {formatCurrency(lineItem.unitPrice)}
+                        </MoneyText>
+                      </TableCell>
+                      <TableCell align="right">
+                        <MoneyText variant="body2">
+                          {formatCurrency(lineItem.totalAmount)}
+                        </MoneyText>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>

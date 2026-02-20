@@ -1,9 +1,9 @@
 // src/app/dashboard/customers/[id]/page.tsx
 
-'use client';
+"use client";
 
-import { useState, useEffect, use, ReactNode } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, use, ReactNode } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
   Typography,
@@ -26,7 +26,7 @@ import {
   ListItem,
   ListItemText,
   Grid,
-} from '@mui/material';
+} from "@mui/material";
 import {
   ArrowBack,
   VpnKey,
@@ -36,7 +36,7 @@ import {
   VisibilityOff,
   Delete,
   ShoppingCart,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 interface TabPanelProps {
   children?: ReactNode;
@@ -61,30 +61,30 @@ export default function CustomerDetailPage({
   const resolvedParams = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'portal' ? 1 : 0;
+  const initialTab = searchParams.get("tab") === "portal" ? 1 : 0;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [tabValue, setTabValue] = useState(initialTab);
   const [customer, setCustomer] = useState<any>(null);
 
   // Portal access states
   const [showPortalDialog, setShowPortalDialog] = useState(false);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
-  const [portalEmail, setPortalEmail] = useState('');
-  const [portalPassword, setPortalPassword] = useState('');
+  const [portalEmail, setPortalEmail] = useState("");
+  const [portalPassword, setPortalPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [credentials, setCredentials] = useState<any>(null);
   const [showCredentials, setShowCredentials] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    contactPerson: '',
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    contactPerson: "",
   });
 
   useEffect(() => {
@@ -97,16 +97,16 @@ export default function CustomerDetailPage({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to fetch customer');
+        throw new Error(data.error || "Failed to fetch customer");
       }
 
       setCustomer(data);
       setFormData({
         name: data.name,
-        email: data.email || '',
+        email: data.email || "",
         phone: data.phone,
         address: data.address,
-        contactPerson: data.contactPerson || '',
+        contactPerson: data.contactPerson || "",
       });
     } catch (err: any) {
       setError(err.message);
@@ -122,24 +122,24 @@ export default function CustomerDetailPage({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
       const res = await fetch(`/api/customers/${resolvedParams.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to update customer');
+        throw new Error(data.error || "Failed to update customer");
       }
 
       setCustomer(data);
-      setSuccess('Customer updated successfully');
+      setSuccess("Customer updated successfully");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -149,14 +149,14 @@ export default function CustomerDetailPage({
 
   const handleGrantPortalAccess = async () => {
     setSaving(true);
-    setError('');
+    setError("");
 
     try {
       const res = await fetch(
         `/api/customers/${resolvedParams.id}/portal-access`,
         {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: portalEmail,
             password: portalPassword || undefined,
@@ -167,7 +167,7 @@ export default function CustomerDetailPage({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to grant portal access');
+        throw new Error(data.error || "Failed to grant portal access");
       }
 
       setCredentials(data.credentials);
@@ -183,24 +183,24 @@ export default function CustomerDetailPage({
 
   const handleRemovePortalAccess = async () => {
     setSaving(true);
-    setError('');
+    setError("");
 
     try {
       const res = await fetch(
         `/api/customers/${resolvedParams.id}/portal-access`,
         {
-          method: 'DELETE',
+          method: "DELETE",
         },
       );
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to remove portal access');
+        throw new Error(data.error || "Failed to remove portal access");
       }
 
       setShowRemoveDialog(false);
-      setSuccess('Portal access removed successfully');
+      setSuccess("Portal access removed successfully");
       fetchCustomer();
     } catch (err: any) {
       setError(err.message);
@@ -218,10 +218,10 @@ export default function CustomerDetailPage({
     return (
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "60vh",
         }}
       >
         <CircularProgress />
@@ -251,15 +251,15 @@ export default function CustomerDetailPage({
         <Button
           startIcon={<ArrowBack />}
           onClick={() => router.back()}
-          sx={{ mb: 2, color: 'text.secondary' }}
+          sx={{ mb: 2, color: "text.secondary" }}
         >
           Back to Customers
         </Button>
         <Box
           sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
           <Box>
@@ -267,7 +267,7 @@ export default function CustomerDetailPage({
               {customer?.name}
             </Typography>
             <Box
-              sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}
+              sx={{ display: "flex", gap: 1, alignItems: "center", mt: 0.5 }}
             >
               <Typography variant="body2" color="text.secondary">
                 {customer?.phone}
@@ -278,8 +278,8 @@ export default function CustomerDetailPage({
                   size="small"
                   color="success"
                   sx={{
-                    bgcolor: '#dcfce7',
-                    color: '#166534',
+                    bgcolor: "#dcfce7",
+                    color: "#166534",
                   }}
                   icon={<VpnKey />}
                 />
@@ -290,13 +290,13 @@ export default function CustomerDetailPage({
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError("")}>
           {error}
         </Alert>
       )}
 
       {success && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
+        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess("")}>
           {success}
         </Alert>
       )}
@@ -305,21 +305,21 @@ export default function CustomerDetailPage({
       <Paper
         sx={{
           borderRadius: 2,
-          boxShadow: 'none',
-          border: '1px solid',
-          borderColor: 'divider',
+          boxShadow: "none",
+          border: "1px solid",
+          borderColor: "divider",
         }}
       >
         <Tabs
           value={tabValue}
           onChange={(e, newValue) => setTabValue(newValue)}
-          sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
+          sx={{ borderBottom: 1, borderColor: "divider", px: 2 }}
         >
           <Tab
             sx={{
               fontWeight: 600,
               fontSize: 13,
-              letterSpacing: '0.5px',
+              letterSpacing: "0.5px",
             }}
             label="Customer Details"
           />
@@ -327,7 +327,7 @@ export default function CustomerDetailPage({
             sx={{
               fontWeight: 600,
               fontSize: 13,
-              letterSpacing: '0.5px',
+              letterSpacing: "0.5px",
             }}
             label="Portal Access"
           />
@@ -335,7 +335,7 @@ export default function CustomerDetailPage({
             sx={{
               fontWeight: 600,
               fontSize: 13,
-              letterSpacing: '0.5px',
+              letterSpacing: "0.5px",
             }}
             label="Orders"
           />
@@ -352,7 +352,7 @@ export default function CustomerDetailPage({
                   variant="standard"
                   required
                   value={formData.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
+                  onChange={(e) => handleChange("name", e.target.value)}
                   disabled={saving}
                 />
               </Grid>
@@ -364,7 +364,7 @@ export default function CustomerDetailPage({
                   variant="standard"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
+                  onChange={(e) => handleChange("email", e.target.value)}
                   disabled={saving}
                 />
               </Grid>
@@ -376,7 +376,7 @@ export default function CustomerDetailPage({
                   variant="standard"
                   required
                   value={formData.phone}
-                  onChange={(e) => handleChange('phone', e.target.value)}
+                  onChange={(e) => handleChange("phone", e.target.value)}
                   disabled={saving}
                 />
               </Grid>
@@ -388,7 +388,7 @@ export default function CustomerDetailPage({
                   variant="standard"
                   value={formData.contactPerson}
                   onChange={(e) =>
-                    handleChange('contactPerson', e.target.value)
+                    handleChange("contactPerson", e.target.value)
                   }
                   disabled={saving}
                 />
@@ -403,7 +403,7 @@ export default function CustomerDetailPage({
                   multiline
                   rows={2}
                   value={formData.address}
-                  onChange={(e) => handleChange('address', e.target.value)}
+                  onChange={(e) => handleChange("address", e.target.value)}
                   disabled={saving}
                 />
               </Grid>
@@ -411,9 +411,9 @@ export default function CustomerDetailPage({
               <Grid size={{ xs: 12 }}>
                 <Box
                   sx={{
-                    display: 'flex',
+                    display: "flex",
                     gap: 2,
-                    justifyContent: 'flex-end',
+                    justifyContent: "flex-end",
                     mt: 2,
                   }}
                 >
@@ -429,12 +429,12 @@ export default function CustomerDetailPage({
                     variant="contained"
                     disabled={saving}
                     sx={{
-                      bgcolor: '#0F172A',
-                      fontWeight: 'bold',
-                      '&:hover': { bgcolor: '#1e293b' },
+                      bgcolor: "#0F172A",
+                      fontWeight: "bold",
+                      "&:hover": { bgcolor: "#1e293b" },
                     }}
                   >
-                    {saving ? 'Saving...' : 'Save Changes'}
+                    {saving ? "Saving..." : "Save Changes"}
                   </Button>
                 </Box>
               </Grid>
@@ -454,9 +454,9 @@ export default function CustomerDetailPage({
                   elevation={0}
                   sx={{
                     p: 3,
-                    bgcolor: '#f8fafc',
-                    border: '1px solid',
-                    borderColor: 'divider',
+                    bgcolor: "#f8fafc",
+                    border: "1px solid",
+                    borderColor: "divider",
                   }}
                 >
                   <Typography variant="subtitle2" gutterBottom>
@@ -495,8 +495,8 @@ export default function CustomerDetailPage({
                   startIcon={<VpnKey />}
                   onClick={() => setShowPortalDialog(true)}
                   sx={{
-                    bgcolor: '#0F172A',
-                    '&:hover': { bgcolor: '#1e293b' },
+                    bgcolor: "#0F172A",
+                    "&:hover": { bgcolor: "#1e293b" },
                   }}
                 >
                   Grant Portal Access
@@ -515,8 +515,8 @@ export default function CustomerDetailPage({
                   <ListItem
                     key={order.id}
                     sx={{
-                      border: '1px solid',
-                      borderColor: 'divider',
+                      border: "1px solid",
+                      borderColor: "divider",
                       borderRadius: 1,
                       mb: 1,
                     }}
@@ -525,8 +525,8 @@ export default function CustomerDetailPage({
                       primary={
                         <Box
                           sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
+                            display: "flex",
+                            justifyContent: "space-between",
                           }}
                         >
                           <Typography variant="body2" fontWeight={600}>
@@ -538,10 +538,11 @@ export default function CustomerDetailPage({
                       secondary={
                         <Box sx={{ mt: 0.5 }}>
                           <Typography variant="caption" display="block">
-                            Quantity: {order.quantity}
+                            Created:{" "}
+                            {new Date(order.createdAt).toLocaleDateString()}
                           </Typography>
                           <Typography variant="caption" display="block">
-                            Delivery:{' '}
+                            Delivery:{" "}
                             {new Date(order.deliveryDate).toLocaleDateString()}
                           </Typography>
                         </Box>
@@ -551,9 +552,9 @@ export default function CustomerDetailPage({
                 ))}
               </List>
             ) : (
-              <Box sx={{ textAlign: 'center', py: 8 }}>
+              <Box sx={{ textAlign: "center", py: 8 }}>
                 <ShoppingCart
-                  sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }}
+                  sx={{ fontSize: 64, color: "text.secondary", mb: 2 }}
                 />
                 <Typography variant="body2" color="text.secondary">
                   No orders yet
@@ -593,7 +594,7 @@ export default function CustomerDetailPage({
           <TextField
             fullWidth
             label="Password (Optional)"
-            type={showPassword ? 'text' : 'password'}
+            type={showPassword ? "text" : "password"}
             value={portalPassword}
             onChange={(e) => setPortalPassword(e.target.value)}
             disabled={saving}
@@ -621,11 +622,11 @@ export default function CustomerDetailPage({
             onClick={handleGrantPortalAccess}
             disabled={saving || !portalEmail}
             sx={{
-              bgcolor: '#0F172A',
-              '&:hover': { bgcolor: '#1e293b' },
+              bgcolor: "#0F172A",
+              "&:hover": { bgcolor: "#1e293b" },
             }}
           >
-            {saving ? 'Creating...' : 'Grant Access'}
+            {saving ? "Creating..." : "Grant Access"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -654,7 +655,7 @@ export default function CustomerDetailPage({
             onClick={handleRemovePortalAccess}
             disabled={saving}
           >
-            {saving ? 'Removing...' : 'Remove Access'}
+            {saving ? "Removing..." : "Remove Access"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -666,7 +667,7 @@ export default function CustomerDetailPage({
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ bgcolor: '#0F172A', color: 'white' }}>
+        <DialogTitle sx={{ bgcolor: "#0F172A", color: "white" }}>
           Portal Access Created
         </DialogTitle>
         <DialogContent sx={{ mt: 3 }}>
@@ -679,9 +680,9 @@ export default function CustomerDetailPage({
             elevation={0}
             sx={{
               p: 3,
-              bgcolor: '#f8fafc',
-              border: '1px solid',
-              borderColor: 'divider',
+              bgcolor: "#f8fafc",
+              border: "1px solid",
+              borderColor: "divider",
             }}
           >
             <Typography variant="body2" color="text.secondary">
@@ -696,7 +697,7 @@ export default function CustomerDetailPage({
             <Typography
               variant="body1"
               fontWeight={600}
-              sx={{ fontFamily: 'monospace' }}
+              sx={{ fontFamily: "monospace" }}
               gutterBottom
             >
               {credentials?.password}
@@ -718,8 +719,8 @@ export default function CustomerDetailPage({
             onClick={() => setShowCredentials(false)}
             variant="contained"
             sx={{
-              bgcolor: '#0F172A',
-              '&:hover': { bgcolor: '#1e293b' },
+              bgcolor: "#0F172A",
+              "&:hover": { bgcolor: "#1e293b" },
             }}
           >
             Done

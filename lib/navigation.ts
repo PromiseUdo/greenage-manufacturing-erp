@@ -13,6 +13,8 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
+import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
 import { SvgIconProps } from '@mui/material';
 
@@ -36,6 +38,11 @@ export const navigation: { section: string; items: NavItem[] }[] = [
         icon: Inventory2Icon,
         path: '/products',
       },
+      {
+        label: 'Production Requests',
+        icon: PrecisionManufacturingIcon,
+        path: '/production/requests',
+      },
     ],
   },
 
@@ -50,6 +57,7 @@ export const navigation: { section: string; items: NavItem[] }[] = [
           { label: 'Quotes', path: '/sales/quotes', icon: DescriptionIcon },
           { label: 'Invoices', path: '/sales/invoices', icon: ReceiptIcon },
                     { label: 'Orders', path: '/sales/orders', icon: DescriptionIcon },
+          { label: 'Backorders', path: '/sales/backorders', icon: WarningAmberIcon },
 
         ],
       },

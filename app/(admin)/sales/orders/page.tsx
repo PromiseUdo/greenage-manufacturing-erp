@@ -83,19 +83,24 @@ interface Order {
   id: string;
   orderNumber: string;
   customer: { id: string; name: string; phone: string };
-  product: {
+  lineItems: {
     id: string;
-    name: string;
-    productNumber: string;
-    productCode: string;
-  };
-  storeItem: {
-    id: string;
-    name: string;
-    itemNumber: string;
-    category: string;
-  };
-  quantity: number;
+    quantity: number;
+    unitPrice: number;
+    totalAmount: number;
+    storeItem: {
+      id: string;
+      name: string;
+      itemNumber: string;
+      category: string;
+    } | null;
+    product: {
+      id: string;
+      name: string;
+      productNumber: string;
+      productCode: string;
+    } | null;
+  }[];
   status: string;
   priority: string;
   paymentStatus: string;
@@ -399,10 +404,24 @@ export default function OrdersPage() {
                     <StyledTableCell>
                       <Box>
                         <Typography variant="body2" fontWeight={500}>
-                          {order.storeItem.name}
+                          {order.lineItems?.[0]?.storeItem?.name ||
+                            order.lineItems?.[0]?.product?.name ||
+                            "N/A"}
+                          {order.lineItems?.length > 1 && (
+                            <Typography
+                              component="span"
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {" "}
+                              +{order.lineItems.length - 1} more
+                            </Typography>
+                          )}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {order.storeItem.itemNumber}
+                          {order.lineItems?.[0]?.storeItem?.itemNumber ||
+                            order.lineItems?.[0]?.product?.productNumber ||
+                            ""}
                         </Typography>
                       </Box>
                     </StyledTableCell>
@@ -411,7 +430,10 @@ export default function OrdersPage() {
                         sx={{ display: "flex", alignItems: "center", gap: 1 }}
                       >
                         <Typography variant="body2" fontWeight={700}>
-                          {order.quantity}
+                          {order.lineItems?.reduce(
+                            (sum: number, li: any) => sum + li.quantity,
+                            0,
+                          ) || 0}
                         </Typography>
                         {order.generatedUnitIds && (
                           <Tooltip

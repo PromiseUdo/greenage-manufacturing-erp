@@ -1,4 +1,4 @@
-// src/app/api/quotes/[id]/accept/route.ts
+// src/app/api/quotes/[id]/invoice/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
@@ -38,32 +38,22 @@ export async function POST(
       return NextResponse.json({ error: 'Quote not found' }, { status: 404 });
     }
 
-    if (quote.isAccepted) {
+    if (quote.status !== 'ACCEPTED') {
       return NextResponse.json(
-        { error: 'Quote already accepted' },
+        { error: 'Quote must be accepted to generate an invoice' },
         { status: 400 },
       );
     }
 
-    // ✅ ACCEPT QUOTE
+    // ✅ FIND UNBILLED STOCK AND CREATE INVOICE
     const result = await prisma.$transaction(async (tx) => {
-      // Update quote status
-      const updatedQuote = await tx.quote.update({
-        where: { id: quoteId },
-        data: {
-          isAccepted: true,
-          acceptedAt: new Date(),
-          acceptedBy: session.user.name,
-          status: 'ACCEPTED',
-        },
-      });
-
-      // Calculate the portion of the quote that can be invoiced right now (allocated stock)
+      // Calculate the portion of the quote that can be invoiced right now (allocated stock not yet invoiced)
       let invoicedTotalAmount = 0;
       const invoiceLineItemsData = [];
 
       for (const qli of quote.lineItems) {
-        const qtyToInvoice = qli.quantityAllocated || 0;
+        const qtyToInvoice = (qli.quantityAllocated || 0) - (qli.quantityInvoiced || 0);
+        
         if (qtyToInvoice > 0) {
           const liTotal = qli.unitPrice * qtyToInvoice;
           invoicedTotalAmount += liTotal;
@@ -79,9 +69,9 @@ export async function POST(
         }
       }
 
-      // If nothing is allocated, we just accept the quote and don't create an invoice yet
+      // If nothing is pending to invoice, return an error
       if (invoiceLineItemsData.length === 0) {
-        return { quote: updatedQuote, invoice: null };
+        throw new Error('No unbilled allocated items available to invoice.');
       }
 
       // Generate invoice number
@@ -151,32 +141,29 @@ export async function POST(
         });
       }
 
-      return { quote: updatedQuote, invoice };
+      return { invoice };
     });
 
     // Log activity
     await prisma.activityLog.create({
       data: {
         userId: session.user.id,
-        action: 'Accepted Quote',
+        action: 'Generated Partial Invoice',
         module: 'Sales',
         details: {
           quoteId,
           quoteNumber: quote.quoteNumber,
-          invoiceGenerated: !!result.invoice,
-          ...(result.invoice && {
-            invoiceId: result.invoice.id,
-            invoiceNumber: result.invoice.invoiceNumber,
-          }),
+          invoiceId: result.invoice.id,
+          invoiceNumber: result.invoice.invoiceNumber,
         },
       },
     });
 
     return NextResponse.json(result, { status: 200 });
   } catch (error: any) {
-    console.error('Error accepting quote:', error);
+    console.error('Error creating partial invoice:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to accept quote' },
+      { error: error.message || 'Failed to create partial invoice' },
       { status: 500 },
     );
   }

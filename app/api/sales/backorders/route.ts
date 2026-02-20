@@ -1,4 +1,4 @@
-// src/app/api/invoices/route.ts
+// app/api/sales/backorders/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
@@ -20,71 +20,76 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    // Query QuoteLineItems that are backordered
+    const where: any = {
+      backorderStatus: {
+        in: ['PENDING', 'IN_PRODUCTION'],
+      },
+    };
 
     if (search) {
       where.OR = [
-        { invoiceNumber: { contains: search, mode: 'insensitive' } },
-        { customer: { name: { contains: search, mode: 'insensitive' } } },
+        { quote: { quoteNumber: { contains: search, mode: 'insensitive' } } },
+        { quote: { customer: { name: { contains: search, mode: 'insensitive' } } } },
+        { storeItem: { name: { contains: search, mode: 'insensitive' } } },
       ];
     }
 
     if (status) {
-      where.status = status;
+      where.backorderStatus = status;
     }
 
-    const [invoices, total] = await Promise.all([
-      prisma.invoice.findMany({
+    const [backorders, total] = await Promise.all([
+      prisma.quoteLineItem.findMany({
         where,
         include: {
-          customer: {
-            select: {
-              id: true,
-              name: true,
-              phone: true,
-            },
-          },
-          lineItems: {
-            include: {
-              storeItem: {
-                select: {
-                  id: true,
-                  name: true,
-                  itemNumber: true,
-                  category: true,
-                },
-              },
-              product: {
-                select: {
-                  id: true,
-                  name: true,
-                  productNumber: true,
-                },
-              },
-            },
-          },
           quote: {
             select: {
               id: true,
               quoteNumber: true,
+              customerId: true,
+              customer: {
+                select: {
+                  id: true,
+                  name: true,
+                  phone: true,
+                },
+              },
+              createdBy: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
-          order: {
+          storeItem: {
             select: {
               id: true,
-              orderNumber: true,
+              name: true,
+              itemNumber: true,
+              quantity: true,
+            },
+          },
+          productionRequests: {
+            select: {
+              id: true,
+              requestNumber: true,
+              status: true,
+              quantityNeeded: true,
+              dateRaised: true,
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { backorderCreatedAt: 'desc' },
         skip,
         take: limit,
       }),
-      prisma.invoice.count({ where }),
+      prisma.quoteLineItem.count({ where }),
     ]);
 
     return NextResponse.json({
-      invoices,
+      backorders,
       pagination: {
         total,
         page,
@@ -93,9 +98,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching invoices:', error);
+    console.error('Error fetching backorders:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch invoices' },
+      { error: 'Failed to fetch backorders' },
       { status: 500 },
     );
   }

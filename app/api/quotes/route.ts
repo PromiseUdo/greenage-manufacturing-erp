@@ -285,12 +285,11 @@
 //   }
 // }
 
-// src/app/api/quotes/route.ts - CORRECTED WITH DATE FIX
+// src/app/api/quotes/route.ts - Multi-line item support
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { generateUnitIds } from '@/lib/unitIdGenerator';
 
 export async function GET(request: NextRequest) {
   try {
@@ -315,7 +314,7 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { quoteNumber: { contains: search, mode: 'insensitive' } },
         { customer: { name: { contains: search, mode: 'insensitive' } } },
-        { product: { name: { contains: search, mode: 'insensitive' } } },
+        { lineItems: { some: { storeItem: { name: { contains: search, mode: 'insensitive' } } } } },
       ];
     }
 
@@ -339,21 +338,23 @@ export async function GET(request: NextRequest) {
               phone: true,
             },
           },
-          product: {
-            select: {
-              id: true,
-              name: true,
-              productNumber: true,
-              productCode: true,
-              category: true,
-            },
-          },
-          storeItem: {
-            select: {
-              id: true,
-              name: true,
-              itemNumber:true,
-              category: true,
+          lineItems: {
+            include: {
+              storeItem: {
+                select: {
+                  id: true,
+                  name: true,
+                  itemNumber: true,
+                  category: true,
+                },
+              },
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  productCode: true,
+                },
+              },
             },
           },
           createdBy: {
@@ -362,8 +363,7 @@ export async function GET(request: NextRequest) {
               name: true,
             },
           },
-          // order removed
-          invoice: {
+          invoices: {
             select: {
               id: true,
               invoiceNumber: true,
@@ -396,6 +396,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
+interface LineItemInput {
+  storeItemId: string;
+  quantity: number;
+  unitPrice?: number;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -407,11 +413,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       customerId,
-      productId,
-      storeItemId,
-      quantity,
+      lineItems,
       deliveryDate,
-      unitPrice,
       taxAmount,
       discountAmount,
       paymentTerms,
@@ -421,67 +424,57 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validation
-    if (!customerId || (!productId && !storeItemId) || !quantity || !deliveryDate) {
+    if (!customerId || !lineItems || !Array.isArray(lineItems) || lineItems.length === 0 || !deliveryDate) {
       return NextResponse.json(
         {
-          error: 'Customer, product/store item, quantity, and delivery date are required',
+          error: 'Customer, at least one line item, and delivery date are required',
         },
         { status: 400 },
       );
     }
 
-    let product = null;
-    let storeItem = null;
-    let basePrice = 0;
-
-    // Get product details if productId is provided
-    if (productId) {
-      product = await prisma.product.findUnique({
-        where: { id: productId },
-        select: {
-          id: true,
-          name: true,
-          productCode: true,
-          costPrice: true,
-          isActive: true,
-          isAvailable: true,
-        },
-      });
-
-      if (!product) {
-        return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-      }
-
-      if (!product.isActive || !product.isAvailable) {
+    // Validate each line item
+    for (const item of lineItems as LineItemInput[]) {
+      if (!item.storeItemId || !item.quantity || item.quantity < 1) {
         return NextResponse.json(
-          { error: 'Product is not available' },
+          { error: 'Each line item must have a store item and quantity >= 1' },
           { status: 400 },
         );
       }
-      basePrice = product.costPrice;
     }
 
-    // Get store item details if storeItemId is provided
-    if (storeItemId) {
-        storeItem = await prisma.storeItem.findUnique({
-            where: { id: storeItemId },
-            select: { id: true, unitPrice: true, name: true, productId: true }
-        });
+    // Fetch all store items referenced
+    const storeItemIds = (lineItems as LineItemInput[]).map((li) => li.storeItemId);
+    const storeItemRecords = await prisma.storeItem.findMany({
+      where: { id: { in: storeItemIds } },
+      select: { id: true, unitPrice: true, name: true, productId: true, quantity: true },
+    });
 
-        if (!storeItem) {
-            return NextResponse.json({ error: 'Store Item not found' }, { status: 404 });
-        }
-        
-        // If no product linked or no basePrice yet, use store item unit price
-        if (!basePrice) basePrice = storeItem.unitPrice || 0;
+    const storeItemMap = new Map(storeItemRecords.map((s) => [s.id, s]));
+
+    // Check all items exist
+    for (const item of lineItems as LineItemInput[]) {
+      if (!storeItemMap.has(item.storeItemId)) {
+        return NextResponse.json(
+          { error: `Store item not found: ${item.storeItemId}` },
+          { status: 404 },
+        );
+      }
     }
 
-    // Calculate provided unit price or default
-    const finalUnitPrice = unitPrice || basePrice;
-    const totalAmount = finalUnitPrice * quantity;
+    // Calculate line item totals
+    const processedItems = (lineItems as LineItemInput[]).map((item) => {
+      const storeItem = storeItemMap.get(item.storeItemId)!;
+      const itemUnitPrice = item.unitPrice || storeItem.unitPrice || 0;
+      const itemTotal = itemUnitPrice * item.quantity;
+      return { ...item, unitPrice: itemUnitPrice, totalAmount: itemTotal, storeItem };
+    });
+
+    // Quote-level aggregates
+    const subtotal = processedItems.reduce((sum, item) => sum + item.totalAmount, 0);
     const finalTax = taxAmount || 0;
     const finalDiscount = discountAmount || 0;
-    const finalAmount = totalAmount + finalTax - finalDiscount;
+    const finalAmount = subtotal + finalTax - finalDiscount;
 
     // Generate quote number
     const year = new Date().getFullYear();
@@ -504,16 +497,13 @@ export async function POST(request: NextRequest) {
     const expiryDateTime = expiryDate ? new Date(expiryDate) : null;
 
     const result = await prisma.$transaction(async (tx) => {
+      // Create the quote (header)
       const quote = await tx.quote.create({
         data: {
           quoteNumber,
           customerId,
-          productId: productId || undefined,
-          storeItemId: storeItemId || undefined,
-          quantity,
           deliveryDate: deliveryDateTime,
-          unitPrice: finalUnitPrice,
-          totalAmount,
+          totalAmount: subtotal,
           taxAmount: finalTax,
           discountAmount: finalDiscount,
           finalAmount,
@@ -524,14 +514,106 @@ export async function POST(request: NextRequest) {
           termsConditions,
           createdById: session.user.id,
         },
+      });
+
+      // Process each line item
+      const createdLineItems = [];
+      const createdProductionRequests = [];
+
+      // Track production request counter for this transaction
+      let prCounter = 0;
+      const prYear = new Date().getFullYear();
+      const lastPR = await tx.productionRequest.findFirst({
+        where: { requestNumber: { contains: `PR-${prYear}` } },
+        orderBy: { createdAt: 'desc' },
+      });
+      let lastPRNum = lastPR ? parseInt(lastPR.requestNumber.split('-')[2]) : 0;
+
+      for (const item of processedItems) {
+        const storeItem = item.storeItem;
+        const availableStock = storeItem.quantity;
+
+        // Stock split logic
+        let quantityAllocated = item.quantity;
+        let quantityBackordered = 0;
+        let backorderStatus: 'NONE' | 'PENDING' = 'NONE';
+        let backorderCreatedAt: Date | null = null;
+
+        if (item.quantity <= availableStock) {
+          quantityAllocated = item.quantity;
+          quantityBackordered = 0;
+          backorderStatus = 'NONE';
+        } else {
+          quantityAllocated = availableStock;
+          quantityBackordered = item.quantity - availableStock;
+          backorderStatus = 'PENDING';
+          backorderCreatedAt = new Date();
+        }
+
+        // Deduct allocated stock
+        if (quantityAllocated > 0) {
+          await tx.storeItem.update({
+            where: { id: storeItem.id },
+            data: { quantity: { decrement: quantityAllocated } },
+          });
+          // Update local tracker so subsequent items referencing the same storeItem get correct stock
+          storeItem.quantity -= quantityAllocated;
+        }
+
+        // Create line item
+        const lineItem = await tx.quoteLineItem.create({
+          data: {
+            quoteId: quote.id,
+            storeItemId: storeItem.id,
+            productId: storeItem.productId || undefined,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalAmount: item.totalAmount,
+            quantityAllocated,
+            quantityBackordered,
+            backorderStatus,
+            backorderCreatedAt,
+          },
+        });
+
+        createdLineItems.push(lineItem);
+
+        // Auto-generate production request if backordered
+        if (quantityBackordered > 0) {
+          lastPRNum++;
+          const requestNumber = `PR-${prYear}-${String(lastPRNum).padStart(3, '0')}`;
+
+          const productionRequest = await tx.productionRequest.create({
+            data: {
+              requestNumber,
+              storeItemId: storeItem.id,
+              quoteId: quote.id,
+              quoteLineItemId: lineItem.id,
+              quantityNeeded: quantityBackordered,
+              status: 'PENDING',
+              dateRaised: new Date(),
+            },
+          });
+
+          createdProductionRequests.push(productionRequest);
+        }
+      }
+
+      // Fetch the full quote with relations
+      const fullQuote = await tx.quote.findUnique({
+        where: { id: quote.id },
         include: {
           customer: true,
-          product: true,
-          storeItem: true,
+          lineItems: {
+            include: {
+              storeItem: true,
+              product: true,
+            },
+          },
         },
       });
 
-      return { quote };
+      return { quote: fullQuote, productionRequests: createdProductionRequests };
     });
 
     await prisma.activityLog.create({
@@ -540,12 +622,13 @@ export async function POST(request: NextRequest) {
         action: 'Created Quote',
         module: 'Sales',
         details: {
-          quoteId: result.quote.id,
-          quoteNumber: result.quote.quoteNumber,
+          quoteId: result.quote!.id,
+          quoteNumber: result.quote!.quoteNumber,
           customerId,
-          productId,
-          storeItemId,
-          quantity,
+          lineItemCount: (lineItems as LineItemInput[]).length,
+          totalAmount: subtotal,
+          finalAmount,
+          productionRequestCount: result.productionRequests.length,
         },
       },
     });
@@ -559,3 +642,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

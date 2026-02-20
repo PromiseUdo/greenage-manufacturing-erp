@@ -33,8 +33,13 @@ export async function POST(
       where: { id: invoiceId },
       include: {
         order: true,
-        quote: true, // Needed for delivery date if creating order
-        product: true, // Needed for product code/cost if creating order
+        quote: true,
+        lineItems: {
+          include: {
+            storeItem: true,
+            product: true,
+          },
+        },
       },
     });
 
@@ -83,41 +88,59 @@ export async function POST(
           ? `ORD-${year}-${String(parseInt(lastOrder.orderNumber.split('-')[2]) + 1).padStart(3, '0')}`
           : `ORD-${year}-001`;
 
-        // Generate unit IDs ONLY if linked to a product and not a store item (store items are already units)
-        // Or if it IS a store item, we don't need to generate new unit IDs
+        // Compute total quantity from line items
+        const totalQuantity = invoice.lineItems.reduce((sum, li) => sum + li.quantity, 0);
+
+        // Check if any line item has a product that needs production
+        const hasProductItems = invoice.lineItems.some(li => li.productId && !li.storeItemId);
+        const allStoreItems = invoice.lineItems.every(li => li.storeItemId);
+
+        // Generate unit IDs ONLY for product items (not store items)
         let unitIds: string[] = [];
-        if (invoice.productId && !invoice.storeItemId) {
-             unitIds = await generateUnitIds(
-              invoice.productId,
-              invoice.quantity,
-            );
+        if (hasProductItems) {
+          // Generate unit IDs for the first product found (for production tracking)
+          const productItem = invoice.lineItems.find(li => li.productId);
+          if (productItem?.productId) {
+            const productQty = invoice.lineItems
+              .filter(li => li.productId && !li.storeItemId)
+              .reduce((sum, li) => sum + li.quantity, 0);
+            unitIds = await generateUnitIds(productItem.productId, productQty);
+          }
         }
 
-        // Determine status
-        // If Store Item, it is ready for dispatch. If Product, it needs planning.
-        const orderStatus = invoice.storeItemId ? 'READY_FOR_DISPATCH' : 'PENDING_PLANNING';
+        // Determine status: store items are ready for dispatch, products need planning
+        const orderStatus = allStoreItems ? 'READY_FOR_DISPATCH' : 'PENDING_PLANNING';
 
-        // Create Order
+        // Create Order (header only)
         newOrder = await tx.order.create({
           data: {
             orderNumber,
             customerId: invoice.customerId,
-            productId: invoice.productId,
-            storeItemId: invoice.storeItemId, // ✅ Link Store Item
-            quantity: invoice.quantity,
-            deliveryDate: invoice.quote?.deliveryDate || new Date(), // Fallback to now if no quote
+            deliveryDate: invoice.quote?.deliveryDate || new Date(),
             paymentTerms: invoice.paymentTerms,
             priority: 'NORMAL',
-            status: orderStatus, // ✅ Set status based on item type
+            status: orderStatus,
             generatedUnitIds: unitIds.length > 0 ? unitIds : undefined,
             createdById: session.user.id,
-            paymentStatus: newPaymentStatus, // Initialize with current status
+            paymentStatus: newPaymentStatus,
           },
         });
 
         orderId = newOrder.id;
 
-        // Quote link removed
+        // ✅ Create OrderLineItems from InvoiceLineItems
+        for (const ili of invoice.lineItems) {
+          await tx.orderLineItem.create({
+            data: {
+              orderId: newOrder.id,
+              storeItemId: ili.storeItemId,
+              productId: ili.productId,
+              quantity: ili.quantity,
+              unitPrice: ili.unitPrice,
+              totalAmount: ili.unitPrice * ili.quantity,
+            },
+          });
+        }
       } else {
         // Update existing order payment status
         await tx.order.update({

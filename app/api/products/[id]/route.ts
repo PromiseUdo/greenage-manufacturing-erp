@@ -35,9 +35,9 @@ export async function GET(
         },
         _count: {
           select: {
-            quotes: true,
-            orders: true,
-            invoices: true,
+            quoteLineItems: true,
+            orderLineItems: true,
+            invoiceLineItems: true,
           },
         },
       },
@@ -181,9 +181,9 @@ export async function DELETE(
       include: {
         _count: {
           select: {
-            quotes: true,
-            orders: true,
-            invoices: true,
+            quoteLineItems: true,
+            orderLineItems: true,
+            invoiceLineItems: true,
           },
         },
       },
@@ -195,9 +195,9 @@ export async function DELETE(
 
     // Check if product has related records
     if (
-      product._count.quotes > 0 ||
-      product._count.orders > 0 ||
-      product._count.invoices > 0
+      product._count.quoteLineItems > 0 ||
+      product._count.orderLineItems > 0 ||
+      product._count.invoiceLineItems > 0
     ) {
       return NextResponse.json(
         {
