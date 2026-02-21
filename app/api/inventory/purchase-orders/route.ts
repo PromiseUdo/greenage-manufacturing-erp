@@ -27,6 +27,19 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
 
+    const ungrouped = searchParams.get('ungrouped');
+    if (ungrouped === 'true') {
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            { groupId: null },
+            { groupId: { isSet: false } },
+          ],
+        },
+      ];
+    }
+
     if (search) {
       where.OR = [
         { poNumber: { contains: search, mode: 'insensitive' } },
@@ -83,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { supplierId, items, currency, tax, discount, notes } = body;
+    const { supplierId, items, currency, tax, discount, notes, groupId } = body;
 
     if (!supplierId || !items || items.length === 0) {
       return NextResponse.json(
@@ -134,6 +147,7 @@ export async function POST(request: NextRequest) {
         createdBy: session.user.name as string,
         invoiceDate: new Date(),
         invoiceStartDate: new Date(),
+        ...(groupId ? { groupId } : {}),
       },
       include: {
         supplier: true,

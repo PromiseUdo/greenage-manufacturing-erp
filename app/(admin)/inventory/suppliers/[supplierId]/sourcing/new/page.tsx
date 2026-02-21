@@ -24,7 +24,7 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
 } from "@mui/icons-material";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 
 interface Material {
@@ -56,6 +56,8 @@ export default function NewPurchaseOrderPage({
 }) {
   const { supplierId } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const groupId = searchParams.get("groupId");
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -183,6 +185,7 @@ export default function NewPurchaseOrderPage({
           tax: data.tax,
           discount: data.discount,
           notes: data.notes,
+          ...(groupId ? { groupId } : {}),
         }),
       });
 
@@ -192,7 +195,11 @@ export default function NewPurchaseOrderPage({
       }
 
       const po = await res.json();
-      router.push(`/inventory/suppliers/${supplierId}/sourcing/${po.id}`);
+      if (groupId) {
+        router.push(`/inventory/po-groups/${groupId}`);
+      } else {
+        router.push(`/inventory/suppliers/${supplierId}/sourcing/${po.id}`);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

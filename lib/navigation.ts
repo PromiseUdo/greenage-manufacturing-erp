@@ -106,6 +106,11 @@ export const navigation: { section: string; items: NavItem[] }[] = [
             icon: PeopleIcon,
           },
           {
+            label: 'PO Groups',
+            path: '/inventory/po-groups',
+            icon: Inventory2Icon,
+          },
+          {
             label: 'Purchase Orders',
             path: '/inventory/purchase-orders',
             icon: DescriptionIcon,

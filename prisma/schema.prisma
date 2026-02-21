@@ -640,6 +640,25 @@ model Supplier {
   @@map("suppliers")
 }
 
+// ============================================
+// PURCHASE ORDER GROUPS
+// ============================================
+
+model PurchaseOrderGroup {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  groupNumber     String    @unique
+  name            String
+  description     String?
+
+  purchaseOrders  PurchaseOrder[]
+
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("purchase_order_groups")
+}
+
 enum PurchaseOrderStatus {
   DRAFT
   PLANNED
@@ -657,6 +676,10 @@ model PurchaseOrder {
 
   supplierId          String    @db.ObjectId
   supplier            Supplier  @relation(fields: [supplierId], references: [id])
+
+  // Group (optional)
+  groupId             String?   @db.ObjectId
+  group               PurchaseOrderGroup? @relation(fields: [groupId], references: [id])
 
   // Status
   status              PurchaseOrderStatus @default(DRAFT)
