@@ -433,7 +433,7 @@ export default function PurchaseOrdersPage() {
           <Table>
             <TableHead>
               <TableRow>
-                <StyledTableCell>PO Number</StyledTableCell>
+                <StyledTableCell>PO #</StyledTableCell>
                 <StyledTableCell>Supplier</StyledTableCell>
                 <StyledTableCell>Group</StyledTableCell>
                 <StyledTableCell>Status</StyledTableCell>
