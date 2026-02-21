@@ -509,7 +509,7 @@ interface Quote {
   status: string;
   isAccepted: boolean;
   order: { id: string; orderNumber: string } | null;
-  invoices: { id: string; invoiceNumber: string }[];
+  invoice: { id: string; invoiceNumber: string } | null;
   createdAt: string;
 }
 
@@ -808,23 +808,24 @@ export default function QuotesPage() {
                             </IconButton>
                           </Tooltip>
                         )}
-                        {quote.invoices?.map((inv) => (
+                        {quote.invoice && (
                           <Tooltip
-                            key={inv.id}
-                            title={`Invoice: ${inv.invoiceNumber}`}
+                            title={`Invoice: ${quote.invoice.invoiceNumber}`}
                           >
                             <IconButton
                               size="small"
                               sx={{ bgcolor: "#f1f5f9" }}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                router.push(`/sales/invoices/${inv.id}`);
+                                router.push(
+                                  `/sales/invoices/${quote.invoice?.id}`,
+                                );
                               }}
                             >
                               <Receipt sx={{ fontSize: 16 }} />
                             </IconButton>
                           </Tooltip>
-                        ))}
+                        )}
                       </Box>
                     </StyledTableCell>
 

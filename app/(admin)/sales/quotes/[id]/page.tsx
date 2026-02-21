@@ -1543,12 +1543,7 @@ export default function QuoteDetailPage({
 
   const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
   const [accepting, setAccepting] = useState(false);
-  const [generatingInvoice, setGeneratingInvoice] = useState(false);
   const [dueInDays, setDueInDays] = useState(30);
-
-  const hasUnbilledAllocatedStock = quote?.lineItems?.some(
-    (li: any) => (li.quantityAllocated || 0) > (li.quantityInvoiced || 0),
-  );
 
   useEffect(() => {
     fetchQuote();
@@ -1602,7 +1597,7 @@ export default function QuoteDetailPage({
       if (!res.ok) throw new Error(data.error || "Failed to accept");
 
       setSuccess(
-        `Quote accepted! ${data.invoice ? `Invoice ${data.invoice.invoiceNumber} created.` : "No initial invoice generated due to backorders."}`,
+        `Quote accepted! Invoice ${data.invoice.invoiceNumber} created.`,
       );
       setAcceptDialogOpen(false);
       fetchQuote();
@@ -1610,30 +1605,6 @@ export default function QuoteDetailPage({
       setError(err.message);
     } finally {
       setAccepting(false);
-    }
-  };
-
-  const handleGenerateNextInvoice = async () => {
-    try {
-      setGeneratingInvoice(true);
-      setError("");
-      setSuccess("");
-      const res = await fetch(`/api/quotes/${resolvedParams.id}/invoice`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ dueInDays }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to generate invoice");
-
-      setSuccess(
-        `Next Invoice ${data.invoice.invoiceNumber} created successfully.`,
-      );
-      fetchQuote();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setGeneratingInvoice(false);
     }
   };
 
@@ -1735,21 +1706,6 @@ export default function QuoteDetailPage({
               Accept Quote
             </Button>
           )}
-          {quote?.status === "ACCEPTED" && hasUnbilledAllocatedStock && (
-            <Button
-              variant="contained"
-              startIcon={<Receipt />}
-              onClick={handleGenerateNextInvoice}
-              disabled={generatingInvoice}
-              sx={{
-                bgcolor: "#0ea5e9",
-                "&:hover": { bgcolor: "#0284c7" },
-                fontWeight: 600,
-              }}
-            >
-              {generatingInvoice ? "Generating..." : "Generate Next Invoice"}
-            </Button>
-          )}
         </Box>
       </Box>
 
@@ -1801,14 +1757,6 @@ export default function QuoteDetailPage({
                       <Box>
                         <Typography variant="body2" fontWeight={600}>
                           {li.storeItem?.name || "Item"}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          color="text.primary"
-                          display="block"
-                        >
-                          Allocated: {li.quantityAllocated || 0} / {li.quantity}{" "}
-                          | Billed: {li.quantityInvoiced || 0}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {li.storeItem?.itemNumber || "N/A"}
@@ -2004,7 +1952,7 @@ export default function QuoteDetailPage({
           </Paper>
 
           {/* Related Docs */}
-          {(quote?.order || quote?.invoices?.length > 0) && (
+          {(quote?.order || quote?.invoice) && (
             <Paper
               elevation={0}
               sx={{
@@ -2032,18 +1980,19 @@ export default function QuoteDetailPage({
                     Order {quote.order.orderNumber}
                   </Button>
                 )}
-                {quote?.invoices?.map((inv: any) => (
+                {quote?.invoice && (
                   <Button
-                    key={inv.id}
                     size="small"
                     variant="text"
                     startIcon={<Receipt />}
                     sx={{ justifyContent: "flex-start", color: "#0F172A" }}
-                    onClick={() => router.push(`/sales/invoices/${inv.id}`)}
+                    onClick={() =>
+                      router.push(`/sales/invoices/${quote.invoice.id}`)
+                    }
                   >
-                    Invoice {inv.invoiceNumber}
+                    Invoice {quote.invoice.invoiceNumber}
                   </Button>
-                ))}
+                )}
               </Box>
             </Paper>
           )}

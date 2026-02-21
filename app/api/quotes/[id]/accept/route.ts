@@ -45,7 +45,7 @@ export async function POST(
       );
     }
 
-    // ✅ ACCEPT QUOTE
+    // ✅ ACCEPT QUOTE AND CREATE FULL INVOICE
     const result = await prisma.$transaction(async (tx) => {
       // Update quote status
       const updatedQuote = await tx.quote.update({
@@ -57,32 +57,6 @@ export async function POST(
           status: 'ACCEPTED',
         },
       });
-
-      // Calculate the portion of the quote that can be invoiced right now (allocated stock)
-      let invoicedTotalAmount = 0;
-      const invoiceLineItemsData = [];
-
-      for (const qli of quote.lineItems) {
-        const qtyToInvoice = qli.quantityAllocated || 0;
-        if (qtyToInvoice > 0) {
-          const liTotal = qli.unitPrice * qtyToInvoice;
-          invoicedTotalAmount += liTotal;
-
-          invoiceLineItemsData.push({
-            quoteLineItemId: qli.id,
-            storeItemId: qli.storeItemId,
-            productId: qli.productId,
-            quantity: qtyToInvoice,
-            unitPrice: qli.unitPrice,
-            totalAmount: liTotal,
-          });
-        }
-      }
-
-      // If nothing is allocated, we just accept the quote and don't create an invoice yet
-      if (invoiceLineItemsData.length === 0) {
-        return { quote: updatedQuote, invoice: null };
-      }
 
       // Generate invoice number
       const year = new Date().getFullYear();
@@ -105,23 +79,17 @@ export async function POST(
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + dueInDays);
 
-      // Calculate proportionate tax, discount, and final amounts
-      const invoiceRatio = quote.totalAmount > 0 ? invoicedTotalAmount / quote.totalAmount : 0;
-      const invoicedTaxAmount = quote.taxAmount * invoiceRatio;
-      const invoicedDiscountAmount = quote.discountAmount * invoiceRatio;
-      const invoicedFinalAmount = invoicedTotalAmount + invoicedTaxAmount - invoicedDiscountAmount;
-
-      // ✅ Create invoice (header only — no single-item fields)
+      // ✅ Create invoice with full quote totals
       const invoice = await tx.invoice.create({
         data: {
           invoiceNumber,
           quoteId,
           customerId: quote.customerId,
-          totalAmount: invoicedTotalAmount,
-          taxAmount: invoicedTaxAmount,
-          discountAmount: invoicedDiscountAmount,
-          finalAmount: invoicedFinalAmount,
-          balanceAmount: invoicedFinalAmount,
+          totalAmount: quote.totalAmount,
+          taxAmount: quote.taxAmount,
+          discountAmount: quote.discountAmount,
+          finalAmount: quote.finalAmount,
+          balanceAmount: quote.finalAmount,
           paymentTerms: quote.paymentTerms,
           dueDate,
           status: 'PENDING',
@@ -129,24 +97,16 @@ export async function POST(
         },
       });
 
-      // ✅ Create InvoiceLineItems and update QuoteLineItems quantityInvoiced
-      for (const itemData of invoiceLineItemsData) {
+      // ✅ Create InvoiceLineItems from ALL QuoteLineItems at full quantity
+      for (const qli of quote.lineItems) {
         await tx.invoiceLineItem.create({
           data: {
             invoiceId: invoice.id,
-            storeItemId: itemData.storeItemId,
-            productId: itemData.productId,
-            quantity: itemData.quantity,
-            unitPrice: itemData.unitPrice,
-            totalAmount: itemData.totalAmount,
-          },
-        });
-
-        // Update the quote line item to reflect what has been invoiced
-        await tx.quoteLineItem.update({
-          where: { id: itemData.quoteLineItemId },
-          data: {
-            quantityInvoiced: { increment: itemData.quantity },
+            storeItemId: qli.storeItemId,
+            productId: qli.productId,
+            quantity: qli.quantity,
+            unitPrice: qli.unitPrice,
+            totalAmount: qli.unitPrice * qli.quantity,
           },
         });
       }
@@ -163,11 +123,9 @@ export async function POST(
         details: {
           quoteId,
           quoteNumber: quote.quoteNumber,
-          invoiceGenerated: !!result.invoice,
-          ...(result.invoice && {
-            invoiceId: result.invoice.id,
-            invoiceNumber: result.invoice.invoiceNumber,
-          }),
+          invoiceId: result.invoice.id,
+          invoiceNumber: result.invoice.invoiceNumber,
+          lineItemCount: quote.lineItems.length,
         },
       },
     });

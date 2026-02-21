@@ -48,7 +48,7 @@ export async function GET(
             },
           },
         },
-        invoices: {
+        invoice: {
           select: {
             id: true,
             invoiceNumber: true,

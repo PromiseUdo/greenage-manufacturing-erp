@@ -277,7 +277,7 @@ model Quote {
   notes           String?
   termsConditions String?
   
-  invoices             Invoice[]
+  invoice              Invoice?
   productionRequests   ProductionRequest[]
   
   createdById     String      @db.ObjectId
@@ -307,7 +307,7 @@ model QuoteLineItem {
   // Backorder fields (per line item)
   quantityAllocated   Int?
   quantityBackordered Int?
-  quantityInvoiced    Int       @default(0)
+
   backorderStatus     BackorderStatus @default(NONE)
   backorderCreatedAt  DateTime?
   
@@ -343,7 +343,7 @@ model Invoice {
   id              String      @id @default(auto()) @map("_id") @db.ObjectId
   invoiceNumber   String      @unique
   
-  quoteId         String      @db.ObjectId
+  quoteId         String      @unique @db.ObjectId
   quote           Quote       @relation(fields: [quoteId], references: [id])
   
   customerId      String      @db.ObjectId

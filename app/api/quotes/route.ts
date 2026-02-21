@@ -363,7 +363,7 @@ export async function GET(request: NextRequest) {
               name: true,
             },
           },
-          invoices: {
+          invoice: {
             select: {
               id: true,
               invoiceNumber: true,
