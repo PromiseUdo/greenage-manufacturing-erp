@@ -60,6 +60,7 @@ interface PurchaseOrder {
   supplier: { id: string; name: string };
   grn: any;
   payments: Payment[];
+  group?: { id: string; groupNumber: string; name: string } | null;
   // Planned fields
   plannedInvoiceStartDate?: string;
   plannedInvoiceEndDate?: string;
@@ -434,6 +435,7 @@ export default function PurchaseOrdersPage() {
               <TableRow>
                 <StyledTableCell>PO Number</StyledTableCell>
                 <StyledTableCell>Supplier</StyledTableCell>
+                <StyledTableCell>Group</StyledTableCell>
                 <StyledTableCell>Status</StyledTableCell>
                 <StyledTableCell align="right">Total</StyledTableCell>
                 <StyledTableCell align="right">Paid</StyledTableCell>
@@ -445,7 +447,7 @@ export default function PurchaseOrdersPage() {
             <TableBody>
               {loading && purchaseOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
                     <CircularProgress size={32} />
                     <Typography
                       variant="body2"
@@ -458,7 +460,7 @@ export default function PurchaseOrdersPage() {
                 </TableRow>
               ) : purchaseOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
                     <POIcon sx={{ fontSize: 48, color: "#cbd5e1", mb: 1 }} />
                     <Typography variant="body2" color="text.secondary">
                       No purchase orders found
@@ -498,6 +500,32 @@ export default function PurchaseOrdersPage() {
                         <Typography variant="body2">
                           {po.supplier?.name || "—"}
                         </Typography>
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        {po.group ? (
+                          <Chip
+                            label={po.group.name}
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(
+                                `/inventory/po-groups/${po.group!.id}`,
+                              );
+                            }}
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: 11,
+                              bgcolor: "#ede9fe",
+                              color: "#6d28d9",
+                              cursor: "pointer",
+                              "&:hover": { bgcolor: "#ddd6fe" },
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="body2" color="text.disabled">
+                            —
+                          </Typography>
+                        )}
                       </StyledTableCell>
                       <StyledTableCell>
                         <Chip

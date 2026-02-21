@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
           supplier: true,
           grn: true,
           payments: true,
+          group: true,
         },
         orderBy: { createdAt: 'desc' },
         skip,
