@@ -388,7 +388,7 @@ export default function POGroupDetailPage({
           <Box sx={{ display: "flex", gap: 1.5 }}>
             <Button
               variant="outlined"
-              startIcon={<CreatePOIcon />}
+              // startIcon={<CreatePOIcon />}
               onClick={() => {
                 setCreatePODialogOpen(true);
                 fetchSuppliers();
@@ -405,7 +405,7 @@ export default function POGroupDetailPage({
             </Button>
             <Button
               variant="contained"
-              startIcon={<AddIcon />}
+              // startIcon={<AddIcon />}
               onClick={() => {
                 setAddDialogOpen(true);
                 fetchAvailablePOs();
