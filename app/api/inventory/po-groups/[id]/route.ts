@@ -54,6 +54,40 @@ export async function GET(
       else overallStatus = 'DRAFT';
     }
 
+    // Helper: pick the latest date from a list of nullable Date/string values
+    const latestDate = (dates: (Date | string | null | undefined)[]) => {
+      const valid = dates
+        .map((d) => (d ? new Date(d) : null))
+        .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+      return valid.length > 0 ? valid.reduce((a, b) => (a > b ? a : b)) : null;
+    };
+
+    // Derive group date range from POs
+    const startDate =
+      totalPOs > 0
+        ? pos.reduce<Date>(
+            (min, po) => (new Date(po.createdAt) < min ? new Date(po.createdAt) : min),
+            new Date(pos[0].createdAt)
+          )
+        : null;
+
+    const endDate =
+      totalPOs > 0
+        ? latestDate(
+            pos.flatMap((po) => [
+              po.receivingEndDate,
+              po.plannedReceivingEndDate,
+              po.shipmentEndDate,
+              po.plannedShipmentEndDate,
+              po.paymentEndDate,
+              po.plannedPaymentEndDate,
+              po.invoiceEndDate,
+              po.plannedInvoiceEndDate,
+              po.updatedAt,
+            ])
+          )
+        : null;
+
     return NextResponse.json({
       ...group,
       _stats: {
@@ -66,6 +100,8 @@ export async function GET(
         totalPaid,
         completionPct,
         overallStatus,
+        startDate,
+        endDate,
       },
     });
   } catch (error) {
@@ -183,11 +219,17 @@ export async function DELETE(
       return NextResponse.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    // Unlink all POs from this group
-    if (existing.purchaseOrders.length > 0) {
-      await prisma.purchaseOrder.updateMany({
-        where: { groupId: id },
-        data: { groupId: null },
+    const poIds = existing.purchaseOrders.map((po) => po.id);
+
+    if (poIds.length > 0) {
+      // Delete payments for all POs in the group first
+      await prisma.payment.deleteMany({
+        where: { purchaseOrderId: { in: poIds } },
+      });
+
+      // Delete all POs in the group
+      await prisma.purchaseOrder.deleteMany({
+        where: { id: { in: poIds } },
       });
     }
 
@@ -204,11 +246,12 @@ export async function DELETE(
           groupId: id,
           groupNumber: existing.groupNumber,
           name: existing.name,
+          deletedPOCount: poIds.length,
         },
       },
     });
 
-    return NextResponse.json({ message: 'Group deleted successfully' });
+    return NextResponse.json({ message: 'Group and all its POs deleted successfully' });
   } catch (error) {
     console.error('Error deleting PO group:', error);
     return NextResponse.json(

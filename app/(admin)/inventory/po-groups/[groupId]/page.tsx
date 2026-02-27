@@ -38,6 +38,7 @@ import {
   Description as POIcon,
   Layers as LayersIcon,
   NoteAdd as CreatePOIcon,
+  DeleteOutline as DeleteIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -74,6 +75,8 @@ interface GroupStats {
   totalPaid: number;
   completionPct: number;
   overallStatus: string;
+  startDate: string | null;
+  endDate: string | null;
 }
 
 interface POGroup {
@@ -200,6 +203,16 @@ export default function POGroupDetailPage({
   } | null>(null);
   const [loadingSuppliers, setLoadingSuppliers] = useState(false);
 
+  // Delete group state
+  const [deleteGroupOpen, setDeleteGroupOpen] = useState(false);
+  const [deletingGroup, setDeletingGroup] = useState(false);
+
+  // Delete individual PO state
+  const [deletePOTarget, setDeletePOTarget] = useState<PurchaseOrder | null>(
+    null,
+  );
+  const [deletingPO, setDeletingPO] = useState(false);
+
   const fetchGroup = useCallback(async () => {
     try {
       const res = await fetch(`/api/inventory/po-groups/${groupId}`);
@@ -294,6 +307,41 @@ export default function POGroupDetailPage({
     router.push(
       `/inventory/suppliers/${selectedSupplier.id}/sourcing/new?groupId=${groupId}`,
     );
+  };
+
+  const handleDeleteGroup = async () => {
+    setDeletingGroup(true);
+    try {
+      const res = await fetch(`/api/inventory/po-groups/${groupId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        router.push("/inventory/po-groups");
+      }
+    } catch (err) {
+      console.error("Failed to delete group:", err);
+    } finally {
+      setDeletingGroup(false);
+    }
+  };
+
+  const handleDeletePO = async () => {
+    if (!deletePOTarget) return;
+    setDeletingPO(true);
+    try {
+      const res = await fetch(
+        `/api/inventory/purchase-orders/${deletePOTarget.id}`,
+        { method: "DELETE" },
+      );
+      if (res.ok) {
+        setDeletePOTarget(null);
+        fetchGroup();
+      }
+    } catch (err) {
+      console.error("Failed to delete PO:", err);
+    } finally {
+      setDeletingPO(false);
+    }
   };
 
   if (loading) {
@@ -419,6 +467,19 @@ export default function POGroupDetailPage({
             >
               Add Existing POs
             </Button>
+            <Button
+              variant="outlined"
+              onClick={() => setDeleteGroupOpen(true)}
+              sx={{
+                fontWeight: 600,
+                textTransform: "none",
+                borderColor: "#dc2626",
+                color: "#dc2626",
+                "&:hover": { borderColor: "#b91c1c", bgcolor: "#fff1f2" },
+              }}
+            >
+              Delete Group
+            </Button>
           </Box>
         </Box>
 
@@ -533,6 +594,22 @@ export default function POGroupDetailPage({
           color={
             stats.totalAmount - stats.totalPaid > 0 ? "#b91c1c" : "#16a34a"
           }
+        />
+        <InfoCard
+          label="Start Date"
+          value={
+            stats.startDate
+              ? format(new Date(stats.startDate), "dd MMM yyyy")
+              : "—"
+          }
+          sub="Earliest PO start"
+        />
+        <InfoCard
+          label="End Date"
+          value={
+            stats.endDate ? format(new Date(stats.endDate), "dd MMM yyyy") : "—"
+          }
+          sub="Latest PO end"
         />
       </Box>
 
@@ -756,10 +833,29 @@ export default function POGroupDetailPage({
                             }}
                             sx={{
                               color: "#94a3b8",
-                              "&:hover": { color: "#dc2626" },
+                              "&:hover": { color: "#64748b" },
                             }}
                           >
                             <CloseIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete PO permanently">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletePOTarget(po);
+                            }}
+                            sx={{
+                              color: "#94a3b8",
+                              ml: 0.5,
+                              "&:hover": {
+                                color: "#dc2626",
+                                bgcolor: "#fee2e2",
+                              },
+                            }}
+                          >
+                            <DeleteIcon sx={{ fontSize: 18 }} />
                           </IconButton>
                         </Tooltip>
                       </StyledTableCell>
@@ -907,6 +1003,118 @@ export default function POGroupDetailPage({
             }}
           >
             Continue to PO Form
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Group Confirmation Dialog */}
+      <Dialog
+        open={deleteGroupOpen}
+        onClose={() => setDeleteGroupOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: "#dc2626" }}>
+          Delete PO Group
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Are you sure you want to delete <strong>{group?.name}</strong> (
+            {group?.groupNumber})?
+          </Typography>
+          {group && group.purchaseOrders.length > 0 && (
+            <Box
+              sx={{
+                mt: 2,
+                p: 1.5,
+                bgcolor: "#fff1f2",
+                border: "1px solid #fecdd3",
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="body2" color="#b91c1c" fontWeight={600}>
+                This will permanently delete all {group.purchaseOrders.length}{" "}
+                purchase order
+                {group.purchaseOrders.length !== 1 ? "s" : ""} within this group
+                and their payment records. This action cannot be undone.
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setDeleteGroupOpen(false)}
+            sx={{ color: "#64748b" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDeleteGroup}
+            disabled={deletingGroup}
+            sx={{
+              bgcolor: "#dc2626",
+              fontWeight: 600,
+              textTransform: "none",
+              "&:hover": { bgcolor: "#b91c1c" },
+            }}
+          >
+            {deletingGroup ? "Deleting..." : "Delete Group"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete PO Confirmation Dialog */}
+      <Dialog
+        open={!!deletePOTarget}
+        onClose={() => setDeletePOTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: "#dc2626" }}>
+          Delete Purchase Order
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Are you sure you want to permanently delete{" "}
+            <strong>{deletePOTarget?.poNumber}</strong>?
+          </Typography>
+          <Box
+            sx={{
+              mt: 2,
+              p: 1.5,
+              bgcolor: "#fff1f2",
+              border: "1px solid #fecdd3",
+              borderRadius: 1,
+            }}
+          >
+            <Typography variant="body2" color="#b91c1c" fontWeight={600}>
+              This will permanently delete the purchase order and all associated
+              payment records. This action cannot be undone.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setDeletePOTarget(null)}
+            sx={{ color: "#64748b" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDeletePO}
+            disabled={deletingPO}
+            sx={{
+              bgcolor: "#dc2626",
+              fontWeight: 600,
+              textTransform: "none",
+              "&:hover": { bgcolor: "#b91c1c" },
+            }}
+          >
+            {deletingPO ? "Deleting..." : "Delete PO"}
           </Button>
         </DialogActions>
       </Dialog>

@@ -262,13 +262,10 @@ export async function DELETE(
       );
     }
 
-    if (existing.status !== 'DRAFT') {
-      return NextResponse.json(
-        { error: 'Only DRAFT purchase orders can be deleted' },
-        { status: 400 }
-      );
-    }
+    // Delete payments first (FK constraint)
+    await prisma.payment.deleteMany({ where: { purchaseOrderId: id } });
 
+    // Delete the PO
     await prisma.purchaseOrder.delete({ where: { id } });
 
     await prisma.activityLog.create({
@@ -278,6 +275,7 @@ export async function DELETE(
         module: 'Inventory',
         details: {
           poNumber: existing.poNumber,
+          status: existing.status,
         },
       },
     });

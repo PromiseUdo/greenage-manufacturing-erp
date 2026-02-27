@@ -33,9 +33,11 @@ import {
   Schedule as ClockIcon,
   Add as AddIcon,
   Layers as LayersIcon,
+  DeleteOutline as DeleteIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import IconButton from "@mui/material/IconButton";
 
 // === Types ===
 interface GroupStats {
@@ -47,6 +49,8 @@ interface GroupStats {
   totalPaid: number;
   completionPct: number;
   overallStatus: string;
+  startDate: string | null;
+  endDate: string | null;
 }
 
 interface POGroup {
@@ -171,6 +175,10 @@ export default function POGroupsPage() {
   const [newDesc, setNewDesc] = useState("");
   const [creating, setCreating] = useState(false);
 
+  // Delete dialog state
+  const [deleteTarget, setDeleteTarget] = useState<POGroup | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const fetchGroups = useCallback(async () => {
     setLoading(true);
     try {
@@ -217,6 +225,24 @@ export default function POGroupsPage() {
       console.error("Failed to create group:", err);
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/inventory/po-groups/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setDeleteTarget(null);
+        fetchGroups();
+      }
+    } catch (err) {
+      console.error("Failed to delete group:", err);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -342,13 +368,15 @@ export default function POGroupsPage() {
                 <StyledTableCell align="center">Completion</StyledTableCell>
                 <StyledTableCell>Status</StyledTableCell>
                 <StyledTableCell align="right">Total Amount</StyledTableCell>
-                <StyledTableCell>Created</StyledTableCell>
+                <StyledTableCell>Start Date</StyledTableCell>
+                <StyledTableCell>End Date</StyledTableCell>
+                <StyledTableCell align="center">Actions</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading && groups.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
                     <CircularProgress size={32} />
                     <Typography
                       variant="body2"
@@ -361,7 +389,7 @@ export default function POGroupsPage() {
                 </TableRow>
               ) : groups.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
                     <LayersIcon
                       sx={{ fontSize: 48, color: "#cbd5e1", mb: 1 }}
                     />
@@ -489,8 +517,43 @@ export default function POGroupsPage() {
                       </StyledTableCell>
                       <StyledTableCell>
                         <Typography variant="body2" color="text.secondary">
-                          {format(new Date(group.createdAt), "dd MMM yyyy")}
+                          {group._stats.startDate
+                            ? format(
+                                new Date(group._stats.startDate),
+                                "dd MMM yyyy",
+                              )
+                            : "—"}
                         </Typography>
+                      </StyledTableCell>
+                      <StyledTableCell>
+                        <Typography variant="body2" color="text.secondary">
+                          {group._stats.endDate
+                            ? format(
+                                new Date(group._stats.endDate),
+                                "dd MMM yyyy",
+                              )
+                            : "—"}
+                        </Typography>
+                      </StyledTableCell>
+                      <StyledTableCell align="center">
+                        <Tooltip title="Delete group">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget(group);
+                            }}
+                            sx={{
+                              color: "#94a3b8",
+                              "&:hover": {
+                                color: "#dc2626",
+                                bgcolor: "#fee2e2",
+                              },
+                            }}
+                          >
+                            <DeleteIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
                       </StyledTableCell>
                     </StyledTableRow>
                   );
@@ -513,7 +576,63 @@ export default function POGroupsPage() {
         />
       </Paper>
 
-      {/* Create Dialog */}
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: "#dc2626" }}>
+          Delete PO Group
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Are you sure you want to delete{" "}
+            <strong>{deleteTarget?.name}</strong> ({deleteTarget?.groupNumber})?
+          </Typography>
+          {deleteTarget && deleteTarget._stats.totalPOs > 0 && (
+            <Box
+              sx={{
+                mt: 2,
+                p: 1.5,
+                bgcolor: "#fff1f2",
+                border: "1px solid #fecdd3",
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="body2" color="#b91c1c" fontWeight={600}>
+                This will permanently delete all {deleteTarget._stats.totalPOs}{" "}
+                purchase order
+                {deleteTarget._stats.totalPOs !== 1 ? "s" : ""} within this
+                group and their payment records. This action cannot be undone.
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setDeleteTarget(null)}
+            sx={{ color: "#64748b" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDeleteGroup}
+            disabled={deleting}
+            sx={{
+              bgcolor: "#dc2626",
+              fontWeight: 600,
+              textTransform: "none",
+              "&:hover": { bgcolor: "#b91c1c" },
+            }}
+          >
+            {deleting ? "Deleting..." : "Delete Group"}
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Dialog
         open={createOpen}
         onClose={() => setCreateOpen(false)}

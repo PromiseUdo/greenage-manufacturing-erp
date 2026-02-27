@@ -42,6 +42,14 @@ export async function GET(request: NextRequest) {
       prisma.purchaseOrderGroup.count({ where }),
     ]);
 
+    // Helper: pick the latest date from a list of nullable Date/string values
+    const latestDate = (dates: (Date | string | null | undefined)[]) => {
+      const valid = dates
+        .map((d) => (d ? new Date(d) : null))
+        .filter((d): d is Date => d !== null && !isNaN(d.getTime()));
+      return valid.length > 0 ? valid.reduce((a, b) => (a > b ? a : b)) : null;
+    };
+
     // Compute stats for each group
     const enrichedGroups = groups.map((group) => {
       const pos = group.purchaseOrders;
@@ -65,6 +73,32 @@ export async function GET(request: NextRequest) {
         else overallStatus = 'DRAFT';
       }
 
+      // Derive group date range from POs
+      const startDate =
+        totalPOs > 0
+          ? pos.reduce<Date>(
+              (min, po) => (new Date(po.createdAt) < min ? new Date(po.createdAt) : min),
+              new Date(pos[0].createdAt)
+            )
+          : null;
+
+      const endDate =
+        totalPOs > 0
+          ? latestDate(
+              pos.flatMap((po) => [
+                po.receivingEndDate,
+                po.plannedReceivingEndDate,
+                po.shipmentEndDate,
+                po.plannedShipmentEndDate,
+                po.paymentEndDate,
+                po.plannedPaymentEndDate,
+                po.invoiceEndDate,
+                po.plannedInvoiceEndDate,
+                po.updatedAt,
+              ])
+            )
+          : null;
+
       return {
         ...group,
         _stats: {
@@ -76,6 +110,8 @@ export async function GET(request: NextRequest) {
           totalPaid,
           completionPct,
           overallStatus,
+          startDate,
+          endDate,
         },
       };
     });

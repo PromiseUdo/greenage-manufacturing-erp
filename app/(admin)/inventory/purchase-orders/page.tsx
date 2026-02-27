@@ -24,6 +24,12 @@ import {
   InputLabel,
   Tooltip,
   LinearProgress,
+  IconButton,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -34,6 +40,7 @@ import {
   AttachMoney as MoneyIcon,
   TrendingUp as TrendingIcon,
   ErrorOutline as ErrorIcon,
+  DeleteOutline as DeleteIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -266,6 +273,12 @@ export default function PurchaseOrdersPage() {
   const [rowsPerPage, setRowsPerPage] = useState(15);
   const [total, setTotal] = useState(0);
 
+  // Delete state
+  const [deletePOTarget, setDeletePOTarget] = useState<PurchaseOrder | null>(
+    null,
+  );
+  const [deleting, setDeleting] = useState(false);
+
   const fetchPOs = useCallback(async () => {
     setLoading(true);
     try {
@@ -290,6 +303,25 @@ export default function PurchaseOrdersPage() {
   useEffect(() => {
     fetchPOs();
   }, [fetchPOs]);
+
+  const handleDeletePO = async () => {
+    if (!deletePOTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(
+        `/api/inventory/purchase-orders/${deletePOTarget.id}`,
+        { method: "DELETE" },
+      );
+      if (res.ok) {
+        setDeletePOTarget(null);
+        fetchPOs();
+      }
+    } catch (err) {
+      console.error("Failed to delete PO:", err);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // Compute stats
   const stats = {
@@ -442,12 +474,13 @@ export default function PurchaseOrdersPage() {
                 <StyledTableCell align="center">Progress</StyledTableCell>
                 <StyledTableCell align="center">Health</StyledTableCell>
                 <StyledTableCell>Created</StyledTableCell>
+                <StyledTableCell align="center">Actions</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading && purchaseOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
                     <CircularProgress size={32} />
                     <Typography
                       variant="body2"
@@ -460,7 +493,7 @@ export default function PurchaseOrdersPage() {
                 </TableRow>
               ) : purchaseOrders.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
+                  <TableCell colSpan={10} align="center" sx={{ py: 8 }}>
                     <POIcon sx={{ fontSize: 48, color: "#cbd5e1", mb: 1 }} />
                     <Typography variant="body2" color="text.secondary">
                       No purchase orders found
@@ -611,6 +644,26 @@ export default function PurchaseOrdersPage() {
                           {format(new Date(po.createdAt), "dd MMM yyyy")}
                         </Typography>
                       </StyledTableCell>
+                      <StyledTableCell align="center">
+                        <Tooltip title="Delete PO">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletePOTarget(po);
+                            }}
+                            sx={{
+                              color: "#94a3b8",
+                              "&:hover": {
+                                color: "#dc2626",
+                                bgcolor: "#fee2e2",
+                              },
+                            }}
+                          >
+                            <DeleteIcon sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </StyledTableCell>
                     </StyledTableRow>
                   );
                 })
@@ -631,6 +684,60 @@ export default function PurchaseOrdersPage() {
           rowsPerPageOptions={[10, 15, 25, 50]}
         />
       </Paper>
+
+      {/* Delete PO Confirmation Dialog */}
+      <Dialog
+        open={!!deletePOTarget}
+        onClose={() => setDeletePOTarget(null)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: "#dc2626" }}>
+          Delete Purchase Order
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            Are you sure you want to permanently delete{" "}
+            <strong>{deletePOTarget?.poNumber}</strong>?
+          </Typography>
+          <Box
+            sx={{
+              mt: 2,
+              p: 1.5,
+              bgcolor: "#fff1f2",
+              border: "1px solid #fecdd3",
+              borderRadius: 1,
+            }}
+          >
+            <Typography variant="body2" color="#b91c1c" fontWeight={600}>
+              This will permanently delete the purchase order and all associated
+              payment records. This action cannot be undone.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setDeletePOTarget(null)}
+            sx={{ color: "#64748b" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDeletePO}
+            disabled={deleting}
+            sx={{
+              bgcolor: "#dc2626",
+              fontWeight: 600,
+              textTransform: "none",
+              "&:hover": { bgcolor: "#b91c1c" },
+            }}
+          >
+            {deleting ? "Deleting..." : "Delete PO"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
