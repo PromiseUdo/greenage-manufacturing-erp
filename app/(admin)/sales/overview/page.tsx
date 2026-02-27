@@ -520,7 +520,7 @@ export default function SalesOverviewPage() {
             Sales Overview
           </Typography>
           <Typography variant="body2" color="text.secondary" mt={0.25}>
-            Real-time snapshot of your sales pipeline and revenue performance
+            Real time snapshot of your sales pipeline and revenue performance
           </Typography>
         </Box>
 
