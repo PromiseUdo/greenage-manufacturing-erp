@@ -54,9 +54,12 @@ export interface StoreDispatchItemInput {
   storeItemId: string;
   quantity: number;
   notes?: string;
+  maxAllowed?: number;
 }
 
 export interface StoreDispatchFormData {
+  orderId?: string;
+  dispatchDate: string;
   customerId: string;
   invoiceId?: string;
   items: StoreDispatchItemInput[];

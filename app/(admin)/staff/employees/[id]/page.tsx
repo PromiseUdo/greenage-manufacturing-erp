@@ -18,32 +18,14 @@ import {
 import Grid from '@mui/material/GridLegacy';
 import { ArrowBack, LockReset } from '@mui/icons-material';
 
-const DEPARTMENTS = [
-  { value: 'OPERATIONS', label: 'Operations' },
-  { value: 'PRODUCTION', label: 'Production' },
-  { value: 'STORE', label: 'Store' },
-  { value: 'MANAGEMENT', label: 'Management' },
-];
-
-const ROLES = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'OPERATION_MANAGER', label: 'Operation Manager' },
-  { value: 'PRODUCTION_MANAGER', label: 'Production Manager' },
-  { value: 'STORE_KEEPER', label: 'Store Keeper' },
-  { value: 'PRODUCTION_STAFF', label: 'Production Staff' },
-  { value: 'QC_TEAM', label: 'QC Team' },
-  { value: 'PACKAGING_TEAM', label: 'Packaging Team' },
-  { value: 'SALES_TEAM', label: 'Sales Team' },
-  { value: 'DISPATCH_OFFICER', label: 'Dispatch Officer' },
-  { value: 'ACCOUNTANT', label: 'Accountant' },
-];
-
+// DEPARTMENTS are now fetched from the database
 interface Employee {
   id: string;
   employeeNumber: string;
   phone: string;
   address: string;
   department: string;
+  departmentId: string | null;
   position?: string;
   isActive: boolean;
   notes?: string;
@@ -52,6 +34,7 @@ interface Employee {
     name: string;
     email: string;
     role: string;
+    appRoleId: string | null;
     isActive: boolean;
   };
 }
@@ -73,12 +56,39 @@ export default function EditEmployeePage({
     name: '',
     phone: '',
     address: '',
-    department: '',
+    departmentId: '',
     position: '',
-    role: '',
+    appRoleId: '',
     isActive: true,
     notes: '',
   });
+
+  const [dbRoles, setDbRoles] = useState<any[]>([]);
+  const [dbDepartments, setDbDepartments] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [rolesRes, deptsRes] = await Promise.all([
+          fetch("/api/settings/roles"),
+          fetch("/api/settings/departments")
+        ]);
+
+        if (rolesRes.ok) {
+          const rolesData = await rolesRes.json();
+          setDbRoles(rolesData);
+        }
+
+        if (deptsRes.ok) {
+          const deptsData = await deptsRes.json();
+          setDbDepartments(deptsData);
+        }
+      } catch (e) {
+        console.error("Failed to load settings data", e);
+      }
+    };
+    loadData();
+  }, []);
 
   useEffect(() => {
     fetchEmployee();
@@ -98,9 +108,9 @@ export default function EditEmployeePage({
         name: data.user.name,
         phone: data.phone,
         address: data.address || '',
-        department: data.department,
+        departmentId: data.departmentId || '',
         position: data.position || '',
-        role: data.user.role,
+        appRoleId: data.user.appRoleId || '',
         isActive: data.isActive,
         notes: data.notes || '',
       });
@@ -298,13 +308,13 @@ export default function EditEmployeePage({
                 label="Department"
                 variant="standard"
                 required
-                value={formData.department}
-                onChange={(e) => handleChange('department', e.target.value)}
-                disabled={saving}
+                value={formData.departmentId}
+                onChange={(e) => handleChange('departmentId', e.target.value)}
+                disabled={saving || dbDepartments.length === 0}
               >
-                {DEPARTMENTS.map((dept) => (
-                  <MenuItem key={dept.value} value={dept.value}>
-                    {dept.label}
+                {dbDepartments.map((dept) => (
+                  <MenuItem key={dept.id} value={dept.id}>
+                    {dept.name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -328,13 +338,13 @@ export default function EditEmployeePage({
                 label="System Role"
                 variant="standard"
                 required
-                value={formData.role}
-                onChange={(e) => handleChange('role', e.target.value)}
-                disabled={saving}
+                value={formData.appRoleId}
+                onChange={(e) => handleChange('appRoleId', e.target.value)}
+                disabled={saving || dbRoles.length === 0}
               >
-                {ROLES.map((role) => (
-                  <MenuItem key={role.value} value={role.value}>
-                    {role.label}
+                {dbRoles.map((role) => (
+                  <MenuItem key={role.id} value={role.id}>
+                    {role.name}
                   </MenuItem>
                 ))}
               </TextField>

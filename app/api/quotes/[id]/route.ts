@@ -120,3 +120,87 @@ export async function PATCH(
     );
   }
 }
+
+
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+
+    console.log('SESSION USER:', session.user);
+
+
+    // if (
+    //   !['ADMIN', 'PRODUCTION_MANAGER'].includes(session.user.role) &&
+    //   !session.user.permissions?.includes('sales:delete')
+    // ) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
+
+
+    if (!session.user.permissions?.includes('sales:delete')) {
+  return NextResponse.json({ error: 'You do not have permission to delete quotes.' }, { status: 403 });
+}
+
+
+ // Fetch user with role + permissions from DB
+
+
+    const { id } = await params;
+
+    const quote = await prisma.quote.findUnique({
+      where: { id },
+    });
+
+    if (!quote) {
+      return NextResponse.json(
+        { error: 'Quote not found' },
+        { status: 404 }
+      );
+    }
+
+    if (quote.status !== 'DRAFT') {
+      return NextResponse.json(
+        { error: 'Only DRAFT quotes can be deleted' },
+        { status: 400 }
+      );
+    }
+
+
+      // Delete order
+      await prisma.quote.delete({
+        where: { id },
+      });
+      
+
+    
+
+    // Log activity
+    await prisma.activityLog.create({
+      data: {
+        userId: session.user.id,
+        action: 'Deleted Quote',
+        module: 'Sales',
+        details: {
+          quoteNumber: quote.quoteNumber,
+        },
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting production order:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete production order' },
+      { status: 500 }
+    );
+  }
+}

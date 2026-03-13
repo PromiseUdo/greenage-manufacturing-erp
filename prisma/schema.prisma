@@ -21,6 +21,10 @@ model User {
   name          String
   password      String
   role          UserRole
+  
+  appRoleId     String?   @db.ObjectId
+  appRole       Role?     @relation(fields: [appRoleId], references: [id])
+  
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -36,11 +40,26 @@ model User {
   createdQuotes   Quote[]   @relation("QuoteCreator")
   createdInvoices Invoice[] @relation("InvoiceCreator")
   createdProducts Product[] @relation("ProductCreator")
+  recordedInvoicePayments InvoicePayment[] @relation("InvoicePaymentRecorder")
 
   productionLogs  ProductionLog[]
   qcTests         QualityControl[]
   activityLogs    ActivityLog[]
-  
+
+  // Production workflow relations
+  managedProductionOrders  ProductionOrder[]       @relation("ProductionOrderManager")
+  responsibleStages        ProductionStageEntry[]  @relation("StageResponsible")
+  responsibleActions       ProductionActionItem[]  @relation("ActionItemResponsible")
+  recordedQCEntries        ProductionQCEntry[]     @relation("QCEntryRecorder")
+  raisedRequisitions       ProductionMaterialRequisition[] @relation("MRQRequester")
+  fulfilledRequisitions    ProductionMaterialRequisition[] @relation("MRQFulfiller")
+  stepActivities           ProductionStepActivity[] @relation("StepActivityAuthor")
+
+  // Return relations
+  receivedReturns          ProductReturn[]         @relation("ReturnReceiver")
+  handledReturns           ProductReturn[]         @relation("ReturnHandler")
+  recommendedReturns       ProductReturn[]         @relation("ReturnRecommender")
+
   @@map("users")
 }
 
@@ -53,7 +72,9 @@ model Employee {
   
   phone           String
   address         String?
-  department      Department
+  department      String    // kept for legacy string data
+  departmentId    String?   @db.ObjectId
+  departmentRef   Department? @relation(fields: [departmentId], references: [id])
   position        String?
   dateHired       DateTime  @default(now())
   dateTerminated  DateTime?
@@ -89,15 +110,22 @@ model Customer {
   quotes        Quote[]
   invoices      Invoice[]
   dispatches    StoreDispatch[]
+  productReturns ProductReturn[]
   
   @@map("customers")
 }
 
-enum Department {
-  OPERATIONS
-  PRODUCTION
-  STORE
-  MANAGEMENT
+model Department {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  name        String     @unique
+  description String?
+  
+  employees   Employee[]
+  
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  @@map("departments")
 }
 
 enum UserRole {
@@ -111,6 +139,20 @@ enum UserRole {
   SALES_TEAM
   DISPATCH_OFFICER
   ACCOUNTANT
+}
+
+model Role {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String?
+  permissions String[]
+  
+  users       User[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("roles")
 }
 
 
@@ -160,7 +202,9 @@ model Product {
   invoiceLineItems  InvoiceLineItem[] @relation("InvoiceLineItems")
   orderLineItems    OrderLineItem[]   @relation("OrderLineItems")
   storeItems        StoreItem[]
-  materials       ProductMaterial[]
+  materials         ProductMaterial[]
+  productionOrders  ProductionOrder[]
+  returns           ProductReturn[]
   
   createdById     String    @db.ObjectId
   createdBy       User      @relation("ProductCreator", fields: [createdById], references: [id])
@@ -292,7 +336,7 @@ model QuoteLineItem {
   id                  String    @id @default(auto()) @map("_id") @db.ObjectId
   
   quoteId             String    @db.ObjectId
-  quote               Quote     @relation(fields: [quoteId], references: [id])
+  quote               Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   
   storeItemId         String    @db.ObjectId
   storeItem           StoreItem @relation("QuoteLineItems", fields: [storeItemId], references: [id])
@@ -353,6 +397,7 @@ model Invoice {
   order           Order?      @relation(fields: [orderId], references: [id])
   
   lineItems       InvoiceLineItem[]
+  payments        InvoicePayment[]
   
   totalAmount     Float
   taxAmount       Float       @default(0)
@@ -399,10 +444,36 @@ model InvoiceLineItem {
   unitPrice     Float
   totalAmount   Float       // unitPrice × quantity
   
+  // Backorder fields (per line item)
+  quantityAllocated   Int?
+  quantityBackordered Int?
+  backorderStatus     BackorderStatus @default(NONE)
+  backorderCreatedAt  DateTime?
+  
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   
   @@map("invoice_line_items")
+}
+
+model InvoicePayment {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  
+  invoiceId       String    @db.ObjectId
+  invoice         Invoice   @relation(fields: [invoiceId], references: [id])
+  
+  amount          Float
+  paymentMethod   String?
+  reference       String?
+  notes           String?
+  paymentDate     DateTime  @default(now())
+  
+  recordedById    String    @db.ObjectId
+  recordedBy      User      @relation("InvoicePaymentRecorder", fields: [recordedById], references: [id])
+  
+  createdAt       DateTime  @default(now())
+  
+  @@map("invoice_payments")
 }
 
 enum InvoiceStatus {
@@ -446,6 +517,9 @@ model Order {
   units           ProductionUnit[]  // Physical production units
   dispatch        Dispatch?
   
+  storeDispatches StoreDispatch[]
+  productReturns  ProductReturn[]
+  
   @@map("orders")
 }
 
@@ -464,6 +538,12 @@ model OrderLineItem {
   quantity      Int
   unitPrice     Float
   totalAmount   Float       // unitPrice × quantity
+  
+  // Backorder fields (per line item)
+  quantityAllocated   Int?
+  quantityBackordered Int?
+  backorderStatus     BackorderStatus @default(NONE)
+  backorderCreatedAt  DateTime?
   
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -546,7 +626,8 @@ model Material {
   issuances       MaterialIssuance[]
   bomItems        BOMItem[]
   products        ProductMaterial[]
-  
+  productionRequisitionItems ProductionMaterialRequisitionItem[] @relation("MaterialRequisitionItems")
+
   @@map("materials")
 }
 
@@ -931,6 +1012,7 @@ model Dispatch {
 }
 
 enum DispatchStatus {
+  REQUESTED
   PENDING
   IN_TRANSIT
   DELIVERED
@@ -1005,17 +1087,23 @@ model StoreDispatch {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
   dispatchNumber  String    @unique
   dispatchDate    DateTime  @default(now())
+  deliveryDate    DateTime?
 
   customerId      String    @db.ObjectId
   customer        Customer  @relation(fields: [customerId], references: [id])
 
   invoiceId       String?   @db.ObjectId
 
+  orderId         String?   @db.ObjectId
+  order           Order?    @relation(fields: [orderId], references: [id])
+
   items           Json
   dispatchedBy    String
   deliveryMethod  String?
   deliveryAddress String?
   notes           String?
+  
+  status          DispatchStatus @default(PENDING)
 
   createdAt       DateTime  @default(now())
 
@@ -1034,10 +1122,10 @@ model ProductionRequest {
   storeItem           StoreItem @relation(fields: [storeItemId], references: [id])
   
   quoteId             String    @db.ObjectId
-  quote               Quote     @relation(fields: [quoteId], references: [id])
+  quote               Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   
   quoteLineItemId     String    @db.ObjectId
-  quoteLineItem       QuoteLineItem @relation(fields: [quoteLineItemId], references: [id])
+  quoteLineItem       QuoteLineItem @relation(fields: [quoteLineItemId], references: [id], onDelete: Cascade)
   
   quantityNeeded      Int
   
@@ -1047,6 +1135,9 @@ model ProductionRequest {
   dateCompleted       DateTime?
   
   notes               String?
+  
+  productionOrderId   String?   @db.ObjectId
+  productionOrder     ProductionOrder? @relation(fields: [productionOrderId], references: [id])
   
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
@@ -1309,4 +1400,366 @@ model SystemSettings {
   updatedAt       DateTime  @updatedAt
   
   @@map("system_settings")
+}
+
+// ============================================
+// COMPANY DETAILS
+// ============================================
+
+model CompanyDetails {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  address           String
+  phone             String
+  email             String
+  website           String
+  bankAccountNumber String
+  bankAccountName   String
+  bankName          String
+  
+  updatedAt         DateTime  @updatedAt
+
+  @@map("company_details")
+}
+
+// ============================================
+// PRODUCTION WORKFLOW
+// ============================================
+
+enum ProductionOrderStatus {
+  DRAFT
+  IN_PROGRESS
+  ON_HOLD
+  PARTIALLY_COMPLETED   // Closed with fewer units than planned — shortfall exists
+  COMPLETED
+  CANCELLED
+}
+
+enum ProductionStageStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ActionItemStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+  FAILED
+}
+
+model ProductionOrder {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  orderNumber         String    @unique   // e.g. "PRD-2026-0001"
+  
+  productId           String    @db.ObjectId
+  product             Product   @relation(fields: [productId], references: [id])
+  
+  // Quantity tracking — started may differ from what's finally packaged
+  quantity            Int                 // original planned quantity (kept for backward compat)
+  quantityStarted     Int?                // units that entered production
+  quantityPassed      Int?                // units that passed final QC
+  quantityRejected    Int?                // units scrapped / irreparable
+  quantityReworked    Int?                // units sent back for rework at some point
+  quantityPackaged    Int?                // units actually packaged and ready for store
+  yieldRate           Float?              // (quantityPassed / quantityStarted) * 100
+  
+  scheduledStart      DateTime
+  scheduledEnd        DateTime
+  actualStart         DateTime?
+  actualEnd           DateTime?
+  
+  status              ProductionOrderStatus @default(DRAFT)
+  priority            OrderPriority         @default(NORMAL)
+  
+  notes               String?
+  
+  // Manager who created / oversees
+  managerId           String    @db.ObjectId
+  manager             User      @relation("ProductionOrderManager", fields: [managerId], references: [id])
+  
+  stages              ProductionStageEntry[]
+  qcEntries           ProductionQCEntry[]
+  materialRequisitions ProductionMaterialRequisition[]
+  productionRequests  ProductionRequest[]
+
+  // Store integration
+  storeReceiptCreated Boolean   @default(false)
+
+  // ── Top-Up Run (Shortfall) Support ──────────────────────────────────────
+  // When a production order closes with fewer units than planned, it moves
+  // to PARTIALLY_COMPLETED.  A new linked "top-up run" child order can then
+  // be created to produce the remaining quantity.
+  isTopUpRun          Boolean   @default(false)  // true for child top-up orders
+  parentOrderId       String?   @db.ObjectId      // set on top-up runs
+  parentOrder         ProductionOrder?  @relation("TopUpRuns", fields: [parentOrderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  topUpRuns           ProductionOrder[] @relation("TopUpRuns")
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  @@map("production_orders")
+}
+
+model ProductionStageEntry {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  
+  productionOrderId   String    @db.ObjectId
+  productionOrder     ProductionOrder @relation(fields: [productionOrderId], references: [id], onDelete: Cascade)
+  
+  stageName           String              // "PREPARATION", "ASSEMBLY", "QUALITY_CONTROL"
+  stageLabel          String              // "Preparation Station (Soldering/Staging)"
+  sortOrder           Int                 // 1, 2, 3
+  
+  scheduledStart      DateTime?
+  scheduledEnd        DateTime?
+  actualStart         DateTime?
+  actualEnd           DateTime?
+  
+  status              ProductionStageStatus @default(NOT_STARTED)
+  
+  // Person responsible for the stage
+  responsibleId       String?   @db.ObjectId
+  responsible         User?     @relation("StageResponsible", fields: [responsibleId], references: [id])
+  
+  completedAt         DateTime?
+  completedById       String?   @db.ObjectId
+  
+  actionItems         ProductionActionItem[]
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  @@map("production_stage_entries")
+}
+
+model ProductionActionItem {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  
+  stageEntryId        String    @db.ObjectId
+  stageEntry          ProductionStageEntry @relation(fields: [stageEntryId], references: [id], onDelete: Cascade)
+  
+  stepId              String              // "P-1", "A-3", "QC-5"
+  actionName          String              // "Sign Out All Required Parts from Store"
+  defaultResponsibility String            // "Store Keeper / Assembly Lead"
+  outputNextStep      String              // "Complete Parts Kit"
+  focusGoal           String?             // Quality gate / notes
+  sortOrder           Int
+  
+  // Decision-point fields (for steps like QC-2, QC-6, P-3, A-2.6)
+  isDecisionPoint     Boolean   @default(false)
+  decisionOutcome     String?             // "PASS" | "FAIL" | "REWORK"
+  quantityAffected    Int?                // how many units this decision covers
+  rejectionReason     String?             // documented reason if outcome is FAIL/REWORK
+  rejectionCategory   String?             // "COMPONENT_DEFECT" | "ASSEMBLY_FAULT" | "WIRING_ERROR" | "QC_FAILURE" | "OTHER"
+  
+  status              ActionItemStatus    @default(PENDING)
+  
+  scheduledStart      DateTime?
+  scheduledEnd        DateTime?
+  
+  // Person responsible for this action
+  responsibleId       String?   @db.ObjectId
+  responsible         User?     @relation("ActionItemResponsible", fields: [responsibleId], references: [id])
+  
+  startedAt           DateTime?
+  completedAt         DateTime?
+  completedById       String?   @db.ObjectId
+  
+  notes               String?
+
+  activities          ProductionStepActivity[]
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  @@map("production_action_items")
+}
+
+// Per-step comments and file attachments — used by all production workers
+model ProductionStepActivity {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+
+  actionItemId  String    @db.ObjectId
+  actionItem    ProductionActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+
+  authorId      String    @db.ObjectId
+  author        User      @relation("StepActivityAuthor", fields: [authorId], references: [id])
+
+  // "COMMENT" | "ATTACHMENT" | "STATUS_CHANGE"
+  type          String    @default("COMMENT")
+
+  comment       String?
+
+  // [{name, mimeType, base64, sizeBytes}] — stored for images/PDFs uploaded from phones
+  attachments   Json?
+
+  createdAt     DateTime  @default(now())
+
+  @@map("production_step_activities")
+}
+
+// Structured record for each QC checkpoint outcome — pass/fail/rework log
+model ProductionQCEntry {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  
+  productionOrderId   String    @db.ObjectId
+  productionOrder     ProductionOrder @relation(fields: [productionOrderId], references: [id], onDelete: Cascade)
+  
+  checkpointStepId    String              // "P-3", "A-2.6", "QC-2", "QC-6"
+  checkpointName      String              // human-readable label
+  
+  quantityInspected   Int
+  quantityPassed      Int
+  quantityFailed      Int
+  quantityReworked    Int       @default(0)
+  
+  outcome             String              // "PASS" | "FAIL" | "PARTIAL" | "REWORK"
+  failureCategory     String?             // "COMPONENT_DEFECT" | "ASSEMBLY_FAULT" | "WIRING_ERROR" | "QC_FAILURE" | "OTHER"
+  failureDetails      String?             // free-text description of what failed
+  correctiveAction    String?             // what was done to address it
+  
+  recordedById        String    @db.ObjectId
+  recordedBy          User      @relation("QCEntryRecorder", fields: [recordedById], references: [id])
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  @@map("production_qc_entries")
+}
+
+// ============================================
+// MATERIAL REQUISITION WORKFLOW (P-1)
+// Production dept → Inventory dept formal BOM sign-out request
+// ============================================
+
+enum RequisitionStatus {
+  PENDING              // Sent, awaiting inventory action
+  PARTIALLY_FULFILLED  // Some items issued, some still pending
+  FULFILLED            // All items issued — P-1 can auto-complete
+  CANCELLED
+}
+
+// One requisition per production order (can be re-raised if items run out)
+model ProductionMaterialRequisition {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  requisitionNumber   String    @unique   // "MRQ-2026-0001"
+
+  productionOrderId   String?   @db.ObjectId
+  productionOrder     ProductionOrder? @relation(fields: [productionOrderId], references: [id], onDelete: Cascade)
+
+  productReturnId     String?   @db.ObjectId
+  productReturn       ProductReturn?   @relation(fields: [productReturnId], references: [id], onDelete: Cascade)
+
+  status              RequisitionStatus @default(PENDING)
+
+  // Who raised it (production manager / assembly lead)
+  requestedById       String    @db.ObjectId
+  requestedBy         User      @relation("MRQRequester", fields: [requestedById], references: [id])
+
+  // Who fulfilled it (store keeper / inventory team)
+  fulfilledById       String?   @db.ObjectId
+  fulfilledBy         User?     @relation("MRQFulfiller", fields: [fulfilledById], references: [id])
+  fulfilledAt         DateTime?
+
+  notes               String?   // Production's notes (urgency, special handling)
+  inventoryNotes      String?   // Store keeper's remarks on fulfillment
+
+  items               ProductionMaterialRequisitionItem[]
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("production_material_requisitions")
+}
+
+// One row per BOM material in the requisition
+model ProductionMaterialRequisitionItem {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+
+  requisitionId       String    @db.ObjectId
+  requisition         ProductionMaterialRequisition @relation(fields: [requisitionId], references: [id], onDelete: Cascade)
+
+  materialId          String    @db.ObjectId
+  material            Material  @relation("MaterialRequisitionItems", fields: [materialId], references: [id])
+
+  // BOM-derived quantities
+  quantityRequired    Float     // qty per unit × production order quantity
+  quantityIssued      Float?    // what store keeper actually signed out
+
+  // PENDING | ISSUED | PARTIAL | UNAVAILABLE
+  status              String    @default("PENDING")
+  stockAtRequest      Float?    // snapshot of stock when request was made
+  notes               String?   // e.g. "Only 8 in stock — remainder on order"
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("production_material_requisition_items")
+}
+
+// ============================================
+// PRODUCT RETURNS
+// ============================================
+
+enum ReturnStatus {
+  RECEIVED
+  INSPECTING
+  PENDING_APPROVAL
+  IN_REPAIR
+  REPAIR_COMPLETED
+  READY_FOR_DISPATCH
+  DISPATCHED
+  SCRAPPED
+}
+
+model ProductReturn {
+  id              String       @id @default(auto()) @map("_id") @db.ObjectId
+  returnNumber    String       @unique
+  dateReceived    DateTime     @default(now())
+
+  customerId      String       @db.ObjectId
+  customer        Customer     @relation(fields: [customerId], references: [id])
+  
+  orderId         String?      @db.ObjectId
+  order           Order?       @relation(fields: [orderId], references: [id])
+  
+  productId       String       @db.ObjectId
+  product         Product      @relation(fields: [productId], references: [id])
+  
+  unitId          String?
+  serialNumber    String?
+  quantity        Int          @default(1)
+  
+  issueReported   String
+  condition       String?
+  
+  status          ReturnStatus @default(RECEIVED)
+  
+  evaluationNotes String?
+  
+  recommendedAction String?
+  recommendedById   String?    @db.ObjectId
+  recommendedBy     User?      @relation("ReturnRecommender", fields: [recommendedById], references: [id])
+  recommendationDate DateTime?
+  
+  repairNotes     String?
+  partsReplaced   Json?
+  repairCost      Float?
+  
+  dateDispatched  DateTime?
+  dispatchNotes   String?
+  
+  receivedById    String       @db.ObjectId
+  receivedBy      User         @relation("ReturnReceiver", fields: [receivedById], references: [id])
+  
+  handledById     String?      @db.ObjectId
+  handledBy       User?        @relation("ReturnHandler", fields: [handledById], references: [id])
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  materialRequisitions ProductionMaterialRequisition[]
+
+  @@map("product_returns")
 }

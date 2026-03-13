@@ -15,11 +15,30 @@ import {
   MenuItem,
   Tooltip,
   Chip,
+  Alert,
 } from "@mui/material";
 import Grid from "@mui/material/GridLegacy";
 import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { StoreDispatchFormData } from "@/types/store";
+
+export interface StoreDispatchFormProps {
+  onSubmit: (data: StoreDispatchFormData | any) => Promise<void>;
+  onCancel: () => void;
+  isLoading?: boolean;
+  initialData?: {
+    orderId?: string;
+    customerId?: string;
+    invoiceId?: string;
+    deliveryAddress?: string;
+    items?: Array<{
+      storeItemId: string;
+      quantity: number;
+      notes: string;
+      maxAllowed?: number;
+    }>;
+  };
+}
 
 interface CustomerOption {
   id: string;
@@ -44,12 +63,6 @@ interface StoreItemOption {
   quantity: number;
 }
 
-interface StoreDispatchFormProps {
-  onSubmit: (data: StoreDispatchFormData) => Promise<void>;
-  onCancel: () => void;
-  isLoading?: boolean;
-}
-
 const DELIVERY_METHODS = [
   "Pickup",
   "Delivery",
@@ -62,11 +75,17 @@ export default function StoreDispatchForm({
   onSubmit,
   onCancel,
   isLoading = false,
+  initialData,
 }: StoreDispatchFormProps) {
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [invoices, setInvoices] = useState<InvoiceOption[]>([]);
   const [storeItems, setStoreItems] = useState<StoreItemOption[]>([]);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(
+    initialData?.customerId || "",
+  );
+  const [formError, setFormError] = useState("");
+
+  const todayStr = new Date().toISOString().split("T")[0];
 
   const {
     control,
@@ -76,17 +95,21 @@ export default function StoreDispatchForm({
     watch,
   } = useForm<StoreDispatchFormData>({
     defaultValues: {
-      customerId: "",
-      invoiceId: "",
-      items: [
-        {
-          storeItemId: "",
-          quantity: 0,
-          notes: "",
-        },
-      ],
+      orderId: initialData?.orderId || "",
+      dispatchDate: todayStr,
+      customerId: initialData?.customerId || "",
+      invoiceId: initialData?.invoiceId || "",
+      items: initialData?.items?.length
+        ? initialData.items
+        : [
+            {
+              storeItemId: "",
+              quantity: 1,
+              notes: "",
+            },
+          ],
       deliveryMethod: "",
-      deliveryAddress: "",
+      deliveryAddress: initialData?.deliveryAddress || "",
       notes: "",
     },
   });
@@ -141,7 +164,7 @@ export default function StoreDispatchForm({
     fetchStoreItems();
   }, []);
 
-  // Fetch PAID invoices for selected customer
+  // Fetch PAID or PARTIALLY PAID invoices for selected customer
   useEffect(() => {
     const fetchInvoices = async () => {
       if (!selectedCustomerId) {
@@ -150,7 +173,9 @@ export default function StoreDispatchForm({
       }
 
       try {
-        const res = await fetch(`/api/invoices?limit=1000&status=PAID`);
+        const res = await fetch(
+          `/api/invoices?limit=1000&status=PAID,PARTIALLY_PAID`,
+        );
         const data = await res.json();
         // Filter to selected customer's invoices
         const filtered = (data.invoices || []).filter(
@@ -194,9 +219,23 @@ export default function StoreDispatchForm({
     }
   };
 
+  const onSubmitHandler = async (data: any) => {
+    setFormError("");
+    try {
+      await onSubmit(data);
+    } catch (err: any) {
+      setFormError(err.message || "An error occurred during submission.");
+    }
+  };
+
   return (
     <Paper sx={{ p: 4, borderRadius: 2 }}>
-      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+      <Box component="form" onSubmit={handleSubmit(onSubmitHandler)}>
+        {formError && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {formError}
+          </Alert>
+        )}
         <Grid container spacing={4}>
           {/* Customer */}
           <Grid item xs={12} md={6}>
@@ -226,7 +265,7 @@ export default function StoreDispatchForm({
                         variant="standard"
                         required
                         error={!!errors.customerId}
-                        helperText={errors.customerId?.message}
+                        helperText={errors.customerId?.message as string}
                       />
                     )}
                   />
@@ -235,7 +274,7 @@ export default function StoreDispatchForm({
             />
           </Grid>
 
-          {/* Invoice (optional, filtered to PAID for selected customer) */}
+          {/* Invoice (optional, filtered to PAID/PARTIALLY_PAID for selected customer) */}
           <Grid item xs={12} md={6}>
             <Controller
               name="invoiceId"
@@ -249,23 +288,23 @@ export default function StoreDispatchForm({
                     options={invoices}
                     value={selectedInvoice}
                     getOptionLabel={(option) =>
-                      `${option.invoiceNumber} — ₦${option.finalAmount?.toLocaleString()}`
+                      `${option.invoiceNumber} — ₦${option.finalAmount?.toLocaleString()} (${option.status.replace(/_/g, " ")})`
                     }
                     onChange={(_, value) => field.onChange(value?.id || "")}
                     disabled={isLoading || !selectedCustomerId}
                     noOptionsText={
                       selectedCustomerId
-                        ? "No paid invoices for this customer"
+                        ? "No eligible invoices for this customer"
                         : "Select a customer first"
                     }
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Linked Invoice (PAID only)"
+                        label="Linked Invoice (PAID/PARTIAL)"
                         variant="standard"
                         helperText={
                           selectedCustomerId
-                            ? "Optional — link to a paid invoice"
+                            ? "Optional — link to an eligible invoice"
                             : "Select a customer first"
                         }
                       />
@@ -276,52 +315,119 @@ export default function StoreDispatchForm({
             />
           </Grid>
 
-          {/* Delivery Method */}
-          <Grid item xs={12} md={6}>
-            <Controller
-              name="deliveryMethod"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  select
-                  label="Delivery Method"
-                  fullWidth
-                  variant="standard"
-                  disabled={isLoading}
-                  helperText="How items will be delivered (optional)"
-                  size="small"
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  {DELIVERY_METHODS.map((m) => (
-                    <MenuItem key={m} value={m}>
-                      {m}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              )}
-            />
-          </Grid>
+          {/* Dispatch Info and Delivery Address combined for better flow */}
+          <Grid item xs={12}>
+            <Box
+              sx={{
+                p: 3,
+                bgcolor: "#F8FAFC",
+                borderRadius: 2,
+                border: "1px solid #E2E8F0",
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                fontWeight={600}
+                color="text.secondary"
+                sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              >
+                <AddIcon fontSize="small" />
+                Dispatch & Delivery Information
+              </Typography>
 
-          {/* Delivery Address */}
-          <Grid item xs={12} md={6}>
-            <Controller
-              name="deliveryAddress"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Delivery Address"
-                  variant="standard"
-                  fullWidth
-                  disabled={isLoading}
-                  helperText="Auto-filled from customer, editable"
-                  size="small"
-                />
-              )}
-            />
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
+                    <Controller
+                      name="dispatchDate"
+                      control={control}
+                      rules={{ required: "Dispatch Date is required" }}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          type="date"
+                          label="Dispatch Date"
+                          variant="standard"
+                          fullWidth
+                          disabled={isLoading}
+                          InputLabelProps={{ shrink: true }}
+                          error={!!errors.dispatchDate}
+                          helperText={errors.dispatchDate?.message}
+                        />
+                      )}
+                    />
+                    {initialData?.orderId && (
+                      <Box sx={{ mt: 1 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Linked Order
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          sx={{ color: "#0F172A" }}
+                        >
+                          # {initialData.orderId.substring(0, 8)}...
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+                  >
+                    <Controller
+                      name="deliveryMethod"
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          select
+                          label="Delivery Method"
+                          fullWidth
+                          variant="standard"
+                          disabled={isLoading}
+                          helperText="How items will be delivered (optional)"
+                          size="small"
+                        >
+                          <MenuItem value="">
+                            <em>None</em>
+                          </MenuItem>
+                          {DELIVERY_METHODS.map((m) => (
+                            <MenuItem key={m} value={m}>
+                              {m}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      )}
+                    />
+                    <Controller
+                      name="deliveryAddress"
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          label="Delivery Address"
+                          variant="standard"
+                          fullWidth
+                          disabled={isLoading}
+                          helperText="Auto-filled from customer, editable"
+                          size="small"
+                          multiline
+                          maxRows={2}
+                        />
+                      )}
+                    />
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
           </Grid>
 
           {/* Items Header */}
@@ -439,9 +545,9 @@ export default function StoreDispatchForm({
                                 label="Store Item"
                                 variant="standard"
                                 required
-                                error={!!errors.items?.[index]?.storeItemId}
+                                error={!!(errors.items as any)?.[index]?.storeItemId}
                                 helperText={
-                                  errors.items?.[index]?.storeItemId?.message ||
+                                  (errors.items as any)?.[index]?.storeItemId?.message ||
                                   (selectedItem
                                     ? `Available: ${selectedItem.quantity} ${selectedItem.unit}`
                                     : "")
@@ -462,24 +568,57 @@ export default function StoreDispatchForm({
                       rules={{
                         required: "Required",
                         min: { value: 1, message: "Must be ≥ 1" },
-                      }}
-                      render={({ field }) => (
-                        <TextField
-                          {...field}
-                          label="Quantity"
-                          variant="standard"
-                          type="number"
-                          fullWidth
-                          required
-                          disabled={isLoading}
-                          error={!!errors.items?.[index]?.quantity}
-                          helperText={errors.items?.[index]?.quantity?.message}
-                          inputProps={{ min: 1, step: 1 }}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value) || 0)
+                        validate: (val, formValues) => {
+                          const itemId = formValues.items[index]?.storeItemId;
+                          const item = storeItems.find((s) => s.id === itemId);
+                          const maxAllowed =
+                            formValues.items[index]?.maxAllowed;
+
+                          let maxStock =
+                            item?.quantity ?? Number.MAX_SAFE_INTEGER;
+                          let effectiveMax =
+                            maxAllowed !== undefined
+                              ? Math.min(maxStock, maxAllowed)
+                              : maxStock;
+
+                          if (val > effectiveMax) {
+                            return `Max allowed: ${effectiveMax}`;
                           }
-                        />
-                      )}
+                          return true;
+                        },
+                      }}
+                      render={({ field }) => {
+                        const itemId = watch(`items.${index}.storeItemId`);
+                        const item = storeItems.find((s) => s.id === itemId);
+                        const maxAllowed = watch(`items.${index}.maxAllowed`);
+
+                        let maxStock =
+                          item?.quantity ?? Number.MAX_SAFE_INTEGER;
+                        let effectiveMax =
+                          maxAllowed !== undefined
+                            ? Math.min(maxStock, maxAllowed)
+                            : maxStock;
+
+                        return (
+                          <TextField
+                            {...field}
+                            label="Quantity"
+                            variant="standard"
+                            type="number"
+                            fullWidth
+                            required
+                            disabled={isLoading}
+                            error={!!(errors.items as any)?.[index]?.quantity}
+                            helperText={
+                              (errors.items as any)?.[index]?.quantity?.message
+                            }
+                            inputProps={{ min: 1, max: effectiveMax, step: 1 }}
+                            onChange={(e) =>
+                              field.onChange(Number(e.target.value) || 0)
+                            }
+                          />
+                        );
+                      }}
                     />
                   </Grid>
 

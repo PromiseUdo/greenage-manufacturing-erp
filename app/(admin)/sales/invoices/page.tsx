@@ -103,6 +103,8 @@ interface Invoice {
       itemNumber: string;
       category: string;
     } | null;
+    quantityBackordered?: number | null;
+    backorderStatus?: string;
     product: {
       id: string;
       name: string;
@@ -405,25 +407,43 @@ export default function InvoicesPage() {
                     onClick={() => router.push(`/sales/invoices/${invoice.id}`)}
                   >
                     <StyledTableCell>
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-                      >
-                        <Typography
-                          variant="body2"
-                          fontWeight={600}
-                          sx={{ color: "#0F172A" }}
+                      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                         >
-                          {invoice.invoiceNumber}
-                        </Typography>
-                        {isOverdue(invoice) && (
-                          <Tooltip title="Payment Overdue">
-                            <Warning sx={{ fontSize: 16, color: "#dc2626" }} />
-                          </Tooltip>
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            sx={{ color: "#0F172A" }}
+                          >
+                            {invoice.invoiceNumber}
+                          </Typography>
+                          {isOverdue(invoice) && (
+                            <Tooltip title="Payment Overdue">
+                              <Warning sx={{ fontSize: 16, color: "#dc2626" }} />
+                            </Tooltip>
+                          )}
+                        </Box>
+                        {invoice.lineItems?.some(
+                          (li) => (li.quantityBackordered || 0) > 0,
+                        ) && (
+                          <Chip
+                            label={`${invoice.lineItems.reduce((sum, li) => sum + (li.quantityBackordered || 0), 0)} on Backorder`}
+                            size="small"
+                            sx={{
+                              bgcolor: "#fef3c7",
+                              color: "#92400e",
+                              fontWeight: 600,
+                              fontSize: 10,
+                              height: 20,
+                              alignSelf: "flex-start",
+                            }}
+                          />
                         )}
+                        <Typography variant="caption" color="text.secondary">
+                          {formatDate(invoice.issueDate)}
+                        </Typography>
                       </Box>
-                      <Typography variant="caption" color="text.secondary">
-                        {formatDate(invoice.issueDate)}
-                      </Typography>
                     </StyledTableCell>
 
                     <StyledTableCell>
@@ -462,6 +482,23 @@ export default function InvoicesPage() {
                           ) || 0}
                         </Typography>
                       </Box>
+                      {invoice.lineItems?.some(
+                        (li) => (li.quantityBackordered || 0) > 0,
+                      ) && (
+                        <Typography
+                          variant="caption"
+                          color="error.main"
+                          fontWeight={600}
+                          display="block"
+                          sx={{ mt: 0.5 }}
+                        >
+                          {invoice.lineItems.reduce(
+                            (sum, li) => sum + (li.quantityBackordered || 0),
+                            0,
+                          )}{" "}
+                          Backordered
+                        </Typography>
+                      )}
                     </StyledTableCell>
 
                     <StyledTableCell>

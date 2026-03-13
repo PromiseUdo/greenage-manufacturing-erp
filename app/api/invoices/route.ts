@@ -30,7 +30,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (status) {
-      where.status = status;
+      if (status.includes(',')) {
+        where.status = { in: status.split(',') };
+      } else {
+        where.status = status;
+      }
     }
 
     const [invoices, total] = await Promise.all([

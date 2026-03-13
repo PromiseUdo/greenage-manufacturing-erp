@@ -16,6 +16,10 @@ import Inventory2Icon from '@mui/icons-material/Inventory2';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 
+import SettingsIcon from '@mui/icons-material/Settings';
+import SecurityIcon from '@mui/icons-material/Security';
+import BusinessIcon from '@mui/icons-material/Business';
+
 import { SvgIconProps } from '@mui/material';
 
 export interface NavItem {
@@ -39,9 +43,13 @@ export const navigation: { section: string; items: NavItem[] }[] = [
         path: '/products',
       },
       {
-        label: 'Production Requests',
+        label: 'Production',
         icon: PrecisionManufacturingIcon,
-        path: '/production/requests',
+        children: [
+          { label: 'Orders', path: '/production/orders', icon: DescriptionIcon },
+          { label: 'Requests', path: '/production/requests', icon: InventoryIcon },
+          { label: 'Returns', path: '/production/returns', icon: AssignmentReturnIcon },
+        ],
       },
     ],
   },
@@ -58,6 +66,7 @@ export const navigation: { section: string; items: NavItem[] }[] = [
           { label: 'Invoices', path: '/sales/invoices', icon: ReceiptIcon },
                     { label: 'Orders', path: '/sales/orders', icon: DescriptionIcon },
           { label: 'Backorders', path: '/sales/backorders', icon: WarningAmberIcon },
+          { label: 'Returns', path: '/returns', icon: AssignmentReturnIcon },
 
         ],
       },
@@ -72,6 +81,11 @@ export const navigation: { section: string; items: NavItem[] }[] = [
           },
           { label: 'Stock', path: '/sales/store', icon: Inventory2Icon },
           { label: 'Receipts', path: '/sales/store/receipts', icon: ReceiptIcon },
+          {
+            label: 'Pending Production',
+            path: '/sales/store/pending-production',
+            icon: PrecisionManufacturingIcon,
+          },
           {
             label: 'Dispatches',
             path: '/sales/store/dispatches',
@@ -106,6 +120,11 @@ export const navigation: { section: string; items: NavItem[] }[] = [
             icon: AssignmentReturnIcon,
           },
           { label: 'GRN', path: '/inventory/grn', icon: LocalShippingIcon },
+          {
+            label: 'Production Requests',
+            path: '/inventory/production-requests',
+            icon: PrecisionManufacturingIcon,
+          },
         ],
       },
     ],
@@ -148,6 +167,27 @@ export const navigation: { section: string; items: NavItem[] }[] = [
         label: 'Customers',
         icon: StorefrontIcon,
         path: '/customers', // Direct path instead of children
+      },
+      {
+        label: 'Settings',
+        icon: SettingsIcon,
+        children: [
+          {
+            label: 'Roles & Permissions',
+            path: '/settings/roles',
+            icon: SecurityIcon,
+          },
+          {
+            label: 'Departments',
+            path: '/settings/departments',
+            icon: BusinessIcon,
+          },
+          {
+            label: 'Company Details',
+            path: '/settings/company',
+            icon: BusinessIcon,
+          },
+        ],
       },
     ],
   },

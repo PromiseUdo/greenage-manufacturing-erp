@@ -17,6 +17,10 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const search = searchParams.get('search') || '';
     const customerId = searchParams.get('customerId') || '';
+    const dateFrom = searchParams.get('dateFrom') || '';
+    const dateTo = searchParams.get('dateTo') || '';
+    const deliveryMethod = searchParams.get('deliveryMethod') || '';
+    const isExport = searchParams.get('export') === 'true';
 
     const skip = (page - 1) * limit;
 
@@ -34,23 +38,43 @@ export async function GET(request: NextRequest) {
       where.customerId = customerId;
     }
 
-    const [dispatches, total] = await Promise.all([
-      prisma.storeDispatch.findMany({
-        where,
-        include: {
-          customer: {
-            select: {
-              id: true,
-              name: true,
-              phone: true,
-              address: true,
-            },
+    if (deliveryMethod) {
+      where.deliveryMethod = deliveryMethod;
+    }
+
+    if (dateFrom || dateTo) {
+      where.dispatchDate = {};
+      if (dateFrom) where.dispatchDate.gte = new Date(dateFrom);
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setHours(23, 59, 59, 999);
+        where.dispatchDate.lte = end;
+      }
+    }
+
+    const queryOptions = {
+      where,
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            address: true,
           },
         },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
+      },
+      orderBy: { createdAt: 'desc' as const },
+    };
+
+    // Export mode: return all matching records without pagination
+    if (isExport) {
+      const dispatches = await prisma.storeDispatch.findMany(queryOptions);
+      return NextResponse.json({ dispatches });
+    }
+
+    const [dispatches, total] = await Promise.all([
+      prisma.storeDispatch.findMany({ ...queryOptions, skip, take: limit }),
       prisma.storeDispatch.count({ where }),
     ]);
 
@@ -89,7 +113,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { customerId, invoiceId, items, deliveryMethod, deliveryAddress, notes } = body;
+    const { customerId, invoiceId, orderId, dispatchDate, items, deliveryMethod, deliveryAddress, notes, status } = body;
 
     if (!customerId || !items || items.length === 0) {
       return NextResponse.json(
@@ -125,9 +149,9 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (invoice.status !== 'PAID') {
+      if (invoice.status !== 'PAID' && invoice.status !== 'PARTIALLY_PAID') {
         return NextResponse.json(
-          { error: `Invoice ${invoice.invoiceNumber} is not PAID (status: ${invoice.status})` },
+          { error: `Invoice ${invoice.invoiceNumber} is not fully or partially paid (status: ${invoice.status})` },
           { status: 400 },
         );
       }
@@ -195,11 +219,14 @@ export async function POST(request: NextRequest) {
           dispatchNumber,
           customerId,
           invoiceId: invoiceId || null,
+          orderId: orderId || null,
+          dispatchDate: dispatchDate ? new Date(dispatchDate) : new Date(),
           items: itemSnapshots,
           dispatchedBy: session.user.name as string,
           deliveryMethod: deliveryMethod || null,
           deliveryAddress: deliveryAddress || null,
           notes: notes || null,
+          status: status || 'PENDING',
         },
         include: {
           customer: {
@@ -208,16 +235,18 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Decrement each store item's quantity
-      for (const item of items) {
-        await tx.storeItem.update({
-          where: { id: item.storeItemId },
-          data: {
-            quantity: {
-              decrement: item.quantity,
+      // Decrement each store item's quantity ONLY if it's an actual fulfillment or pending dispatch, not just a bare request
+      if (status !== 'REQUESTED') {
+        for (const item of items) {
+          await tx.storeItem.update({
+            where: { id: item.storeItemId },
+            data: {
+              quantity: {
+                decrement: item.quantity,
+              },
             },
-          },
-        });
+          });
+        }
       }
 
       return newDispatch;

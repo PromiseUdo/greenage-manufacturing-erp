@@ -220,6 +220,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email: credentials.email as string },
           include: {
             employee: true, // ✅ Include employee data
+            appRole: true,  // ✅ Include appRole data
           },
         });
 
@@ -239,6 +240,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           role: user.role,
           mustChangePassword: user.employee?.mustChangePassword || false, // ✅ Add this
+          permissions: user.appRole?.permissions || [], // ✅ Add this
         };
       },
     }),
@@ -251,6 +253,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id as string;
         token.role = user.role;
         token.mustChangePassword = user.mustChangePassword; // ✅ Set on login
+        token.permissions = user.permissions;
       }
 
       // ✅ On update trigger (when password is changed), refresh the flag
@@ -259,11 +262,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string },
-            include: { employee: true },
+            include: { employee: true, appRole: true },
           });
 
           if (dbUser?.employee) {
             token.mustChangePassword = dbUser.employee.mustChangePassword;
+          }
+          if (dbUser?.appRole) {
+            token.permissions = dbUser.appRole.permissions;
           }
         } catch (error) {
           console.error('Error refreshing mustChangePassword flag:', error);
@@ -279,6 +285,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
         session.user.role = token.role as UserRole;
         session.user.mustChangePassword = token.mustChangePassword as boolean; // ✅ Add to session
+        session.user.permissions = (token.permissions as string[]) || []; // ✅ Add to session
       }
       return session;
     },

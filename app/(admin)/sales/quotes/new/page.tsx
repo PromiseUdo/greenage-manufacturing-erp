@@ -118,7 +118,7 @@ export default function NewQuotePage() {
 
   const [formData, setFormData] = useState({
     deliveryDate: "",
-    taxRate: 7.5,
+    taxRate: 0,
     discountAmount: 0,
     paymentTerms: "50% upfront, 50% on delivery",
     expiryDays: 30,
@@ -381,7 +381,7 @@ export default function NewQuotePage() {
                             renderOption={(props, option) => {
                               const { key, ...rest } = props;
                               return (
-                                <li key={key} {...rest}>
+                                <li key={option.id} {...rest}>
                                   <Box
                                     sx={{
                                       width: "100%",

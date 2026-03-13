@@ -848,6 +848,20 @@ export default function InvoiceDetailPage({
                             ? ` • ${lineItem.storeItem.category}`
                             : ""}
                         </Typography>
+                        {(lineItem.quantityBackordered || 0) > 0 && (
+                          <Chip
+                            label={`${lineItem.quantityBackordered} Backordered`}
+                            size="small"
+                            sx={{
+                              mt: 1,
+                              bgcolor: "#fef3c7",
+                              color: "#92400e",
+                              fontWeight: 600,
+                              fontSize: 10,
+                              height: 20,
+                            }}
+                          />
+                        )}
                       </TableCell>
                       <TableCell align="center">{lineItem.quantity}</TableCell>
                       <TableCell align="right">
@@ -929,6 +943,92 @@ export default function InvoiceDetailPage({
             </Box>
           </Paper>
         </Grid>
+
+        {/* Payment History Table */}
+        {invoice?.payments?.length > 0 && (
+          <Grid item xs={12}>
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 3,
+                border: "1px solid #E2E8F0",
+                overflow: "hidden",
+                mt: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: "#F8FAFC",
+                  borderBottom: "1px solid #E2E8F0",
+                }}
+              >
+                <SectionHeader sx={{ mb: 0 }}>
+                  Payment History
+                </SectionHeader>
+              </Box>
+              <TableContainer>
+                <Table>
+                  <TableHead sx={{ bgcolor: "#F8FAFC" }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}>
+                        DATE
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}>
+                        AMOUNT
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}>
+                        METHOD
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}>
+                        REFERENCE
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}>
+                        RECORDED BY
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {invoice.payments.map((payment: any) => (
+                      <TableRow key={payment.id} hover>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ color: "#334155" }}>
+                            {formatDate(payment.paymentDate)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {new Date(payment.paymentDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight={600} sx={{ color: "#166534" }}>
+                            {formatCurrency(payment.amount)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={payment.paymentMethod || "N/A"} 
+                            size="small" 
+                            variant="outlined" 
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {payment.reference || "-"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {payment.recordedBy?.name || "Unknown"}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Grid>
+        )}
       </Grid>
 
       {/* Record Payment Dialog */}

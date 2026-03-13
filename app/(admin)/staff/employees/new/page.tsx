@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -27,25 +27,10 @@ import {
   ContentCopy,
 } from '@mui/icons-material';
 
-const DEPARTMENTS = [
-  { value: 'OPERATIONS', label: 'Operations' },
-  { value: 'PRODUCTION', label: 'Production' },
-  { value: 'STORE', label: 'Store' },
-  { value: 'MANAGEMENT', label: 'Management' },
-];
+// DEPARTMENTS are now fetched from the database
 
-const ROLES = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'OPERATION_MANAGER', label: 'Operation Manager' },
-  { value: 'PRODUCTION_MANAGER', label: 'Production Manager' },
-  { value: 'STORE_KEEPER', label: 'Store Keeper' },
-  { value: 'PRODUCTION_STAFF', label: 'Production Staff' },
-  { value: 'QC_TEAM', label: 'QC Team' },
-  { value: 'PACKAGING_TEAM', label: 'Packaging Team' },
-  { value: 'SALES_TEAM', label: 'Sales Team' },
-  { value: 'DISPATCH_OFFICER', label: 'Dispatch Officer' },
-  { value: 'ACCOUNTANT', label: 'Accountant' },
-];
+// Removing static roles
+// const ROLES = [...]
 
 export default function NewEmployeePage() {
   const router = useRouter();
@@ -60,12 +45,39 @@ export default function NewEmployeePage() {
     email: '',
     phone: '',
     address: '',
-    department: '',
+    departmentId: '',
     position: '',
-    role: '',
+    appRoleId: '',
     password: '',
     notes: '',
   });
+
+  const [dbRoles, setDbRoles] = useState<any[]>([]);
+  const [dbDepartments, setDbDepartments] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [rolesRes, deptsRes] = await Promise.all([
+          fetch("/api/settings/roles"),
+          fetch("/api/settings/departments")
+        ]);
+
+        if (rolesRes.ok) {
+          const rolesData = await rolesRes.json();
+          setDbRoles(rolesData);
+        }
+
+        if (deptsRes.ok) {
+          const deptsData = await deptsRes.json();
+          setDbDepartments(deptsData);
+        }
+      } catch (e) {
+        console.error("Failed to load settings data", e);
+      }
+    };
+    loadData();
+  }, []);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -206,13 +218,13 @@ export default function NewEmployeePage() {
                 label="Department"
                 variant="standard"
                 required
-                value={formData.department}
-                onChange={(e) => handleChange('department', e.target.value)}
+                value={formData.departmentId}
+                onChange={(e) => handleChange('departmentId', e.target.value)}
                 disabled={loading}
               >
-                {DEPARTMENTS.map((dept) => (
-                  <MenuItem key={dept.value} value={dept.value}>
-                    {dept.label}
+                {dbDepartments.map((dept) => (
+                  <MenuItem key={dept.id} value={dept.id}>
+                    {dept.name}
                   </MenuItem>
                 ))}
               </TextField>
@@ -236,13 +248,13 @@ export default function NewEmployeePage() {
                 label="System Role"
                 variant="standard"
                 required
-                value={formData.role}
-                onChange={(e) => handleChange('role', e.target.value)}
+                value={formData.appRoleId}
+                onChange={(e) => handleChange('appRoleId', e.target.value)}
                 disabled={loading}
               >
-                {ROLES.map((role) => (
-                  <MenuItem key={role.value} value={role.value}>
-                    {role.label}
+                {dbRoles.map((role) => (
+                  <MenuItem key={role.id} value={role.id}>
+                    {role.name}
                   </MenuItem>
                 ))}
               </TextField>

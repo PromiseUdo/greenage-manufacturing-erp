@@ -145,7 +145,7 @@ export default function IssuancesTable({
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <StyledTableCell>Date & Time</StyledTableCell>
+              <StyledTableCell sx={{ minWidth: 160 }}>Date & Time</StyledTableCell>
               <StyledTableCell>Material</StyledTableCell>
               <StyledTableCell>Part Number</StyledTableCell>
               <StyledTableCell align="right">Quantity</StyledTableCell>

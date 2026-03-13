@@ -30,6 +30,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Autocomplete,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -41,6 +42,7 @@ import {
   TrendingUp as TrendingIcon,
   ErrorOutline as ErrorIcon,
   DeleteOutline as DeleteIcon,
+  Add as AddIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -279,6 +281,35 @@ export default function PurchaseOrdersPage() {
   );
   const [deleting, setDeleting] = useState(false);
 
+  // Create PO dialog state
+  const [createPODialogOpen, setCreatePODialogOpen] = useState(false);
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>(
+    [],
+  );
+  const [selectedSupplier, setSelectedSupplier] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+
+  const fetchSuppliers = async () => {
+    setLoadingSuppliers(true);
+    try {
+      const res = await fetch("/api/inventory/suppliers?limit=200");
+      const data = await res.json();
+      setSuppliers(data.suppliers || []);
+    } catch (err) {
+      console.error("Failed to fetch suppliers:", err);
+    } finally {
+      setLoadingSuppliers(false);
+    }
+  };
+
+  const handleCreatePO = () => {
+    if (!selectedSupplier) return;
+    router.push(`/inventory/suppliers/${selectedSupplier.id}/sourcing/new`);
+  };
+
   const fetchPOs = useCallback(async () => {
     setLoading(true);
     try {
@@ -347,16 +378,41 @@ export default function PurchaseOrdersPage() {
   return (
     <Box sx={{ p: 3, maxWidth: 1400, mx: "auto" }}>
       {/* Page Header */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
-        {/* <POIcon sx={{ fontSize: 32, color: "#0F172A" }} /> */}
-        <Box>
-          <Typography variant="h5" fontWeight={800} color="#0F172A">
-            Purchase Orders
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Manage and monitor all purchase orders across suppliers
-          </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 4,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {/* <POIcon sx={{ fontSize: 32, color: "#0F172A" }} /> */}
+          <Box>
+            <Typography variant="h5" fontWeight={800} color="#0F172A">
+              Purchase Orders
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Manage and monitor all purchase orders across suppliers
+            </Typography>
+          </Box>
         </Box>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => {
+            setCreatePODialogOpen(true);
+            fetchSuppliers();
+          }}
+          sx={{
+            bgcolor: "#0F172A",
+            fontWeight: 600,
+            textTransform: "none",
+            "&:hover": { bgcolor: "#1e293b" },
+          }}
+        >
+          Create Purchase Order
+        </Button>
       </Box>
 
       {/* Stat Cards */}
@@ -536,24 +592,33 @@ export default function PurchaseOrdersPage() {
                       </StyledTableCell>
                       <StyledTableCell>
                         {po.group ? (
-                          <Chip
-                            label={po.group.name}
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              router.push(
-                                `/inventory/po-groups/${po.group!.id}`,
-                              );
-                            }}
-                            sx={{
-                              fontWeight: 600,
-                              fontSize: 11,
-                              bgcolor: "#ede9fe",
-                              color: "#6d28d9",
-                              cursor: "pointer",
-                              "&:hover": { bgcolor: "#ddd6fe" },
-                            }}
-                          />
+                          <Tooltip title={po.group.name} arrow placement="top">
+                            <Chip
+                              label={po.group.name}
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(
+                                  `/inventory/po-groups/${po.group!.id}`,
+                                );
+                              }}
+                              sx={{
+                                fontWeight: 600,
+                                fontSize: 11,
+                                bgcolor: "#ede9fe",
+                                color: "#6d28d9",
+                                cursor: "pointer",
+                                maxWidth: 120,
+                                "& .MuiChip-label": {
+                                  display: "block",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                },
+                                "&:hover": { bgcolor: "#ddd6fe" },
+                              }}
+                            />
+                          </Tooltip>
                         ) : (
                           <Typography variant="body2" color="text.disabled">
                             —
@@ -735,6 +800,72 @@ export default function PurchaseOrdersPage() {
             }}
           >
             {deleting ? "Deleting..." : "Delete PO"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create PO Dialog */}
+      <Dialog
+        open={createPODialogOpen}
+        onClose={() => {
+          setCreatePODialogOpen(false);
+          setSelectedSupplier(null);
+        }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 2, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Create Purchase Order
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Select a supplier to create a new purchase order.
+          </Typography>
+          {loadingSuppliers ? (
+            <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+              <CircularProgress size={28} />
+            </Box>
+          ) : (
+            <Autocomplete
+              options={suppliers}
+              getOptionLabel={(s) => s.name}
+              value={selectedSupplier}
+              onChange={(_, value) => setSelectedSupplier(value)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Supplier"
+                  placeholder="Search supplier name..."
+                  sx={{ mt: 1 }}
+                />
+              )}
+              sx={{ mt: 1 }}
+            />
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              setCreatePODialogOpen(false);
+              setSelectedSupplier(null);
+            }}
+            sx={{ color: "#64748b" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleCreatePO}
+            disabled={!selectedSupplier}
+            sx={{
+              bgcolor: "#0F172A",
+              fontWeight: 600,
+              textTransform: "none",
+              "&:hover": { bgcolor: "#1e293b" },
+            }}
+          >
+            Continue to Sourcing
           </Button>
         </DialogActions>
       </Dialog>

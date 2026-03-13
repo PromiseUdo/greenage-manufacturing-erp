@@ -1,9 +1,9 @@
 // src/app/dashboard/customers/page.tsx
 
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -23,7 +23,7 @@ import {
   MenuItem,
   Tooltip,
   CircularProgress,
-} from '@mui/material';
+} from "@mui/material";
 import {
   Search,
   Add,
@@ -34,7 +34,7 @@ import {
   Phone,
   Email,
   Person,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 interface Customer {
   id: string;
@@ -55,35 +55,35 @@ interface Customer {
   createdAt: string;
 }
 
-import { styled, tableCellClasses } from '@mui/material';
+import { styled, tableCellClasses } from "@mui/material";
 
 /* ---------- Shared Table Styles ---------- */
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
-    backgroundColor: '#0F172A',
+    backgroundColor: "#0F172A",
     color: theme.palette.common.white,
     fontWeight: 600,
     fontSize: 13,
-    letterSpacing: '0.5px',
-    padding: '12px 16px',
-    borderBottom: 'none',
+    letterSpacing: "0.5px",
+    padding: "12px 16px",
+    borderBottom: "none",
   },
   [`&.${tableCellClasses.body}`]: {
     fontSize: 14,
-    padding: '14px 16px',
+    padding: "14px 16px",
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(odd)': {
+  "&:nth-of-type(odd)": {
     backgroundColor: theme.palette.action.hover,
   },
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.action.selected,
-    transition: 'background-color 0.2s ease',
+    transition: "background-color 0.2s ease",
   },
-  '&:last-child td': {
+  "&:last-child td": {
     borderBottom: 0,
   },
 }));
@@ -95,8 +95,8 @@ export default function CustomersPage() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState('');
-  const [portalFilter, setPortalFilter] = useState<string>('');
+  const [search, setSearch] = useState("");
+  const [portalFilter, setPortalFilter] = useState<string>("");
 
   useEffect(() => {
     fetchCustomers();
@@ -120,7 +120,7 @@ export default function CustomersPage() {
         setTotal(data.pagination.total);
       }
     } catch (error) {
-      console.error('Error fetching customers:', error);
+      console.error("Error fetching customers:", error);
     } finally {
       setLoading(false);
     }
@@ -155,9 +155,9 @@ export default function CustomersPage() {
       {/* Header */}
       <Box
         sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
           mb: 3,
         }}
       >
@@ -172,12 +172,12 @@ export default function CustomersPage() {
         <Button
           variant="contained"
           // startIcon={<Add />}
-          onClick={() => router.push('/customers/new')}
+          onClick={() => router.push("/customers/new")}
           sx={{
-            fontWeight: 'bold',
-            bgcolor: '#0F172A',
-            textTransform: 'uppercase',
-            '&:hover': { bgcolor: '#1e293b' },
+            fontWeight: "bold",
+            bgcolor: "#0F172A",
+            textTransform: "uppercase",
+            "&:hover": { bgcolor: "#1e293b" },
           }}
         >
           Add Customer
@@ -185,8 +185,11 @@ export default function CustomersPage() {
       </Box>
 
       {/* Filters */}
-      <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+      <Paper
+        elevation={0}
+        sx={{ p: 2, mb: 3, borderRadius: 2, border: "1px solid #e2e8f0" }}
+      >
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           <TextField
             placeholder="Search customers..."
             value={search}
@@ -225,9 +228,9 @@ export default function CustomersPage() {
           elevation={0}
           sx={{
             p: 6,
-            textAlign: 'center',
-            border: '1px solid',
-            borderColor: 'divider',
+            textAlign: "center",
+            border: "1px solid",
+            borderColor: "divider",
             borderRadius: 2,
           }}
         >
@@ -241,18 +244,18 @@ export default function CustomersPage() {
           elevation={0}
           sx={{
             p: 6,
-            border: '1px dashed',
-            borderColor: 'divider',
+            border: "1px dashed",
+            borderColor: "divider",
             borderRadius: 3,
-            textAlign: 'center',
-            backgroundColor: 'background.paper',
+            textAlign: "center",
+            backgroundColor: "background.paper",
           }}
         >
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
               gap: 1.5,
             }}
           >
@@ -260,15 +263,15 @@ export default function CustomersPage() {
               sx={{
                 width: 56,
                 height: 56,
-                borderRadius: '50%',
-                backgroundColor: 'grey.100',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                borderRadius: "50%",
+                backgroundColor: "grey.100",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
                 mb: 1,
               }}
             >
-              <Person sx={{ fontSize: 28, color: 'action.active' }} />
+              <Person sx={{ fontSize: 28, color: "action.active" }} />
             </Box>
 
             <Typography variant="h6" fontWeight={600}>
@@ -286,11 +289,11 @@ export default function CustomersPage() {
             <Button
               variant="contained"
               startIcon={<Add />}
-              onClick={() => router.push('/customers/new')}
+              onClick={() => router.push("/customers/new")}
               sx={{
                 mt: 2,
-                bgcolor: '#0F172A',
-                '&:hover': { bgcolor: '#1e293b' },
+                bgcolor: "#0F172A",
+                "&:hover": { bgcolor: "#1e293b" },
               }}
             >
               Add Customer
@@ -301,10 +304,10 @@ export default function CustomersPage() {
         <Paper
           elevation={0}
           sx={{
-            width: '100%',
-            overflow: 'hidden',
-            border: '1px solid',
-            borderColor: 'divider',
+            width: "100%",
+            overflow: "hidden",
+            border: "1px solid",
+            borderColor: "divider",
             borderRadius: 2,
           }}
         >
@@ -325,7 +328,7 @@ export default function CustomersPage() {
                   <StyledTableRow
                     key={customer.id}
                     hover
-                    sx={{ cursor: 'pointer' }}
+                    sx={{ cursor: "pointer" }}
                     onClick={() => handleEdit(customer.id)}
                   >
                     <StyledTableCell>
@@ -336,7 +339,7 @@ export default function CustomersPage() {
                         <Typography
                           variant="caption"
                           color="text.secondary"
-                          sx={{ display: 'block', mt: 0.5 }}
+                          sx={{ display: "block", mt: 0.5 }}
                         >
                           {customer.contactPerson}
                         </Typography>
@@ -349,7 +352,7 @@ export default function CustomersPage() {
                         <Typography
                           variant="caption"
                           color="text.secondary"
-                          sx={{ display: 'block' }}
+                          sx={{ display: "block" }}
                         >
                           {customer.email}
                         </Typography>
@@ -388,8 +391,8 @@ export default function CustomersPage() {
                           color="success"
                           icon={<VpnKey />}
                           sx={{
-                            bgcolor: '#dcfce7',
-                            color: '#166534',
+                            bgcolor: "#dcfce7",
+                            color: "#166534",
                             fontWeight: 500,
                             fontSize: 11,
                           }}
@@ -400,8 +403,8 @@ export default function CustomersPage() {
                           size="small"
                           variant="outlined"
                           sx={{
-                            bgcolor: '#fee2e2',
-                            color: '#991b1b',
+                            bgcolor: "#fee2e2",
+                            color: "#991b1b",
                             fontWeight: 600,
                             fontSize: 11,
                           }}
@@ -415,8 +418,8 @@ export default function CustomersPage() {
                         label={customer._count.orders}
                         size="small"
                         sx={{
-                          bgcolor: '#f0f9ff',
-                          color: '#0369a1',
+                          bgcolor: "#f0f9ff",
+                          color: "#0369a1",
                           fontWeight: 600,
                           fontSize: 11,
                         }}
@@ -432,10 +435,10 @@ export default function CustomersPage() {
                           size="small"
                           onClick={() => handleEdit(customer.id)}
                           sx={{
-                            color: '#64748B',
-                            '&:hover': {
-                              backgroundColor: '#F1F5F9',
-                              color: '#0F172A',
+                            color: "#64748B",
+                            "&:hover": {
+                              backgroundColor: "#F1F5F9",
+                              color: "#0F172A",
                             },
                           }}
                         >
@@ -446,8 +449,8 @@ export default function CustomersPage() {
                       <Tooltip
                         title={
                           customer.userId
-                            ? 'Manage Portal'
-                            : 'Grant Portal Access'
+                            ? "Manage Portal"
+                            : "Grant Portal Access"
                         }
                       >
                         <IconButton
@@ -455,7 +458,7 @@ export default function CustomersPage() {
                           onClick={() =>
                             handlePortalAccess(customer.id, !!customer.userId)
                           }
-                          color={customer.userId ? 'primary' : 'default'}
+                          color={customer.userId ? "primary" : "default"}
                         >
                           {customer.userId ? (
                             <VpnKey fontSize="small" />
@@ -480,9 +483,9 @@ export default function CustomersPage() {
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
             sx={{
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              backgroundColor: '#F8FAFC',
+              borderTop: "1px solid",
+              borderColor: "divider",
+              backgroundColor: "#F8FAFC",
             }}
           />
         </Paper>

@@ -138,6 +138,10 @@ export async function POST(
               quantity: ili.quantity,
               unitPrice: ili.unitPrice,
               totalAmount: ili.unitPrice * ili.quantity,
+              quantityAllocated: ili.quantityAllocated,
+              quantityBackordered: ili.quantityBackordered,
+              backorderStatus: ili.backorderStatus,
+              backorderCreatedAt: ili.backorderCreatedAt,
             },
           });
         }
@@ -164,6 +168,18 @@ export async function POST(
           ...(paymentMethod && { paymentMethod }),
           ...(paymentReference && { paymentReference }),
           orderId: orderId, // Link order if newly created
+        },
+      });
+
+      // 3. Record Payment History
+      await tx.invoicePayment.create({
+        data: {
+          invoiceId: invoiceId,
+          amount: amount,
+          paymentMethod: paymentMethod || null,
+          reference: paymentReference || null,
+          notes: notes || null,
+          recordedById: session.user.id,
         },
       });
 

@@ -39,7 +39,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (department) {
-      where.department = department;
+      where.OR = [
+        { department: { contains: department, mode: 'insensitive' } },
+        { departmentId: department }
+      ];
     }
 
     if (isActive !== null && isActive !== undefined && isActive !== '') {
@@ -103,17 +106,17 @@ export async function POST(request: NextRequest) {
       email,
       phone,
       address,
-      department,
+      departmentId,
       position,
-      role,
+      appRoleId,
       password,
       notes,
     } = body;
 
     // Validation
-    if (!name || !email || !phone || !department || !role) {
+    if (!name || !email || !phone || !departmentId || !appRoleId) {
       return NextResponse.json(
-        { error: 'Name, email, phone, department, and role are required' },
+        { error: 'Name, email, phone, department, and system role are required' },
         { status: 400 },
       );
     }
@@ -141,6 +144,24 @@ export async function POST(request: NextRequest) {
       : 1;
     const employeeNumber = `EMP-${empCount.toString().padStart(4, '0')}`;
 
+    // Map to UserRole enum (for backwards compatibility)
+    const dbRole = await prisma.role.findUnique({ where: { id: appRoleId } });
+    if (!dbRole) {
+      return NextResponse.json({ error: 'Role not found' }, { status: 404 });
+    }
+
+    const dbDepartment = await prisma.department.findUnique({ where: { id: departmentId } });
+    if (!dbDepartment) {
+      return NextResponse.json({ error: 'Department not found' }, { status: 404 });
+    }
+
+    const roleMapping: Record<string, string> = {
+      'Admin': 'ADMIN',
+      'Accountant': 'ACCOUNTANT',
+      'Operation Manager': 'OPERATION_MANAGER'
+    };
+    const mappedRole = roleMapping[dbRole.name] || 'PRODUCTION_STAFF';
+
     // Generate default password if not provided
     const defaultPassword =
       password ||
@@ -155,7 +176,8 @@ export async function POST(request: NextRequest) {
           name,
           email,
           password: hashedPassword,
-          role,
+          role: mappedRole as any,
+          appRoleId: dbRole.id, // Link to the dynamic Role
           isActive: true,
           isVerified: true, // No email verification for staff
         },
@@ -168,7 +190,8 @@ export async function POST(request: NextRequest) {
           userId: user.id, // Link to User
           phone,
           address,
-          department,
+          department: dbDepartment.name,
+          departmentId: dbDepartment.id,
           position,
           mustChangePassword: true,
           createdBy: session.user.name || session.user.email || 'Admin',
@@ -200,8 +223,8 @@ export async function POST(request: NextRequest) {
           employeeId: result.employee.id,
           employeeNumber,
           name,
-          department,
-          role,
+          department: dbDepartment.name,
+          role: dbRole.name,
         },
       },
     });

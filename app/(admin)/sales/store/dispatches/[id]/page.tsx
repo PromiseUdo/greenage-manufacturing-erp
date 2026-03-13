@@ -23,6 +23,7 @@ import Grid from "@mui/material/GridLegacy";
 import {
   ArrowBack as BackIcon,
   LocalShipping as ShippingIcon,
+  CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -65,6 +66,7 @@ interface StoreDispatchDetail {
   deliveryAddress?: string;
   notes?: string;
   createdAt: string;
+  status: string;
 }
 
 const DELIVERY_COLORS: Record<string, { bg: string; color: string }> = {
@@ -106,6 +108,30 @@ export default function StoreDispatchDetailPage({
 
     fetchDispatch();
   }, [resolvedParams.id]);
+
+  const handleMarkDelivered = async () => {
+    try {
+      const res = await fetch(`/api/store/dispatches/${resolvedParams.id}/deliver`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to mark as delivered");
+      }
+      
+      // refresh dispatch data
+      const fetchDispatch = async () => {
+        setLoading(true);
+        const refetch = await fetch(`/api/store/dispatches/${resolvedParams.id}`);
+        const data = await refetch.json();
+        setDispatch(data);
+        setLoading(false);
+      };
+      fetchDispatch();
+    } catch (err: any) {
+      alert(err.message || "Failed to mark as delivered");
+    }
+  };
 
   if (loading) {
     return (
@@ -167,12 +193,22 @@ export default function StoreDispatchDetailPage({
                 {dispatch.dispatchNumber}
               </Typography>
               <Chip
-                label="Dispatched"
+                label={dispatch.status}
                 size="small"
                 sx={{
                   fontWeight: 600,
-                  bgcolor: "#e3f2fd",
-                  color: "#1565c0",
+                  bgcolor:
+                    dispatch.status === "DELIVERED"
+                      ? "#dcfce7"
+                      : dispatch.status === "REQUESTED"
+                        ? "#fef08a"
+                        : "#e3f2fd",
+                  color:
+                    dispatch.status === "DELIVERED"
+                      ? "#16a34a"
+                      : dispatch.status === "REQUESTED"
+                        ? "#854d0e"
+                        : "#1565c0",
                 }}
               />
             </Box>
@@ -182,6 +218,23 @@ export default function StoreDispatchDetailPage({
                 "MMMM dd, yyyy - hh:mm a",
               )}
             </Typography>
+          </Box>
+          
+          <Box>
+            {["PENDING", "IN_TRANSIT", "DISPATCHED"].includes(dispatch.status) && (
+              <Button
+                variant="contained"
+                startIcon={<CheckCircleIcon />}
+                onClick={handleMarkDelivered}
+                sx={{
+                  bgcolor: "#10B981",
+                  "&:hover": { bgcolor: "#059669" },
+                  fontWeight: 600
+                }}
+              >
+                Mark as Delivered
+              </Button>
+            )}
           </Box>
         </Box>
       </Box>

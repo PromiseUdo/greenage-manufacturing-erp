@@ -49,11 +49,22 @@ export async function GET(
             id: true,
             invoiceNumber: true,
             status: true,
+            paymentStatus: true,
             finalAmount: true,
             paidAmount: true,
             balanceAmount: true,
           },
           take: 1,
+        },
+        storeDispatches: {
+          select: {
+            id: true,
+            dispatchNumber: true,
+            status: true,
+            dispatchDate: true,
+            deliveryDate: true,
+            items: true,
+          },
         },
         units: {
           orderBy: { unitNumber: 'asc' },

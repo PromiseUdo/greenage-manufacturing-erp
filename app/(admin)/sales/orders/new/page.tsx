@@ -574,11 +574,11 @@
 //   );
 // }
 
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { styled } from '@mui/material/styles';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { styled } from "@mui/material/styles";
 import {
   Box,
   Typography,
@@ -597,9 +597,9 @@ import {
   Divider,
   Chip,
   Stack,
-} from '@mui/material';
+} from "@mui/material";
 
-import Grid from '@mui/material/GridLegacy';
+import Grid from "@mui/material/GridLegacy";
 
 import {
   ArrowBack,
@@ -611,7 +611,7 @@ import {
   InfoOutlined,
   CalendarMonth,
   Numbers,
-} from '@mui/icons-material';
+} from "@mui/icons-material";
 
 // --- Design Tokens ---
 const SectionHeader = styled(Typography)(({ theme }) => ({
@@ -629,20 +629,20 @@ const SectionHeader = styled(Typography)(({ theme }) => ({
 
   fontSize: 14,
   fontWeight: 700,
-  color: '#0F172A',
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
+  color: "#0F172A",
+  textTransform: "uppercase",
+  letterSpacing: "0.5px",
   marginBottom: theme.spacing(2),
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
 }));
 
 const FormCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   borderRadius: 12,
-  border: '1px solid #E2E8F0',
-  boxShadow: 'none',
+  border: "1px solid #E2E8F0",
+  boxShadow: "none",
   marginBottom: theme.spacing(3),
 }));
 
@@ -667,7 +667,7 @@ interface Product {
 export default function NewOrderPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [customersLoading, setCustomersLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
 
@@ -681,12 +681,12 @@ export default function NewOrderPage() {
 
   const [formData, setFormData] = useState({
     quantity: 1,
-    deliveryDate: '',
+    deliveryDate: "",
     unitPrice: 0,
-    taxRate: 7.5,
+    taxRate: 0,
     discountAmount: 0,
-    paymentTerms: '50% upfront, 50% on delivery',
-    priority: 'NORMAL',
+    paymentTerms: "50% upfront, 50% on delivery",
+    priority: "NORMAL",
   });
 
   useEffect(() => {
@@ -697,7 +697,7 @@ export default function NewOrderPage() {
   const fetchCustomers = async () => {
     try {
       setCustomersLoading(true);
-      const res = await fetch('/api/customers?limit=1000');
+      const res = await fetch("/api/customers?limit=1000");
       const data = await res.json();
       if (res.ok) setCustomers(data.customers || []);
     } catch (err) {
@@ -710,7 +710,7 @@ export default function NewOrderPage() {
   const fetchProducts = async () => {
     try {
       setProductsLoading(true);
-      const res = await fetch('/api/products?limit=1000&isActive=true');
+      const res = await fetch("/api/products?limit=1000&isActive=true");
       const data = await res.json();
       if (res.ok) setProducts(data.products || []);
     } catch (err) {
@@ -736,11 +736,11 @@ export default function NewOrderPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       if (!selectedCustomer || !selectedProduct)
-        throw new Error('Please select both customer and product');
+        throw new Error("Please select both customer and product");
 
       const payload = {
         customerId: selectedCustomer.id,
@@ -754,14 +754,14 @@ export default function NewOrderPage() {
         priority: formData.priority,
       };
 
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to create order');
+      if (!res.ok) throw new Error(data.error || "Failed to create order");
       router.push(`/sales/orders/${data.order.id}`);
     } catch (err: any) {
       setError(err.message);
@@ -771,27 +771,27 @@ export default function NewOrderPage() {
   };
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
+    new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
     }).format(amount);
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', pb: 5 }}>
+    <Box sx={{ maxWidth: 1200, mx: "auto", pb: 5 }}>
       {/* Page Header */}
       <Box
         sx={{
           mb: 4,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
         <Box>
           <Button
             startIcon={<ArrowBack />}
             onClick={() => router.back()}
-            sx={{ mb: 1, textTransform: 'none', color: 'text.secondary', p: 0 }}
+            sx={{ mb: 1, textTransform: "none", color: "text.secondary", p: 0 }}
           >
             Back to Orders
           </Button>
@@ -863,10 +863,10 @@ export default function NewOrderPage() {
                       <li key={key} {...rest}>
                         <Box
                           sx={{
-                            width: '100%',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
                             py: 1,
                           }}
                         >
@@ -919,16 +919,16 @@ export default function NewOrderPage() {
                     icon={<Inventory fontSize="inherit" />}
                     severity="info"
                     sx={{
-                      bgcolor: '#F8FAFC',
-                      color: '#334155',
-                      border: '1px solid #E2E8F0',
+                      bgcolor: "#F8FAFC",
+                      color: "#334155",
+                      border: "1px solid #E2E8F0",
                     }}
                   >
                     <Typography variant="body2" fontWeight={600}>
                       {selectedProduct.name}
                     </Typography>
                     <Typography variant="caption">
-                      Code: {selectedProduct.productCode} • Base Price:{' '}
+                      Code: {selectedProduct.productCode} • Base Price:{" "}
                       {formatCurrency(selectedProduct.basePrice)}
                     </Typography>
                   </Alert>
@@ -962,7 +962,7 @@ export default function NewOrderPage() {
                         <InputAdornment position="end">
                           <Numbers
                             fontSize="small"
-                            sx={{ color: 'text.secondary' }}
+                            sx={{ color: "text.secondary" }}
                           />
                         </InputAdornment>
                       ),
@@ -990,7 +990,7 @@ export default function NewOrderPage() {
                         <InputAdornment position="end">
                           <CalendarMonth
                             fontSize="small"
-                            sx={{ color: 'text.secondary' }}
+                            sx={{ color: "text.secondary" }}
                           />
                         </InputAdornment>
                       ),
@@ -1014,7 +1014,7 @@ export default function NewOrderPage() {
                     <MenuItem value="LOW">Low</MenuItem>
                     <MenuItem value="NORMAL">Normal</MenuItem>
                     <MenuItem value="HIGH">High</MenuItem>
-                    <MenuItem value="URGENT" sx={{ color: 'error.main' }}>
+                    <MenuItem value="URGENT" sx={{ color: "error.main" }}>
                       Urgent
                     </MenuItem>
                   </TextField>
@@ -1116,9 +1116,9 @@ export default function NewOrderPage() {
               sx={{
                 p: 3,
                 borderRadius: 3,
-                bgcolor: '#0F172A',
-                color: 'white',
-                position: 'sticky',
+                bgcolor: "#0F172A",
+                color: "white",
+                position: "sticky",
                 top: 80,
               }}
             >
@@ -1126,18 +1126,18 @@ export default function NewOrderPage() {
                 variant="h6"
                 fontWeight={700}
                 gutterBottom
-                sx={{ color: '#fff' }}
+                sx={{ color: "#fff" }}
               >
                 Order Summary
               </Typography>
-              <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', mb: 2 }} />
+              <Divider sx={{ borderColor: "rgba(255,255,255,0.1)", mb: 2 }} />
 
               <Table
                 size="small"
                 sx={{
-                  '& td': {
-                    borderBottom: 'none',
-                    color: 'rgba(255,255,255,0.7)',
+                  "& td": {
+                    borderBottom: "none",
+                    color: "rgba(255,255,255,0.7)",
                     px: 0,
                     py: 0.5,
                   },
@@ -1146,24 +1146,24 @@ export default function NewOrderPage() {
                 <TableBody>
                   <TableRow>
                     <TableCell>Subtotal</TableCell>
-                    <TableCell align="right" sx={{ color: '#fff' }}>
+                    <TableCell align="right" sx={{ color: "#fff" }}>
                       {formatCurrency(totalAmount)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell>Tax ({formData.taxRate}%)</TableCell>
-                    <TableCell align="right" sx={{ color: '#fff' }}>
+                    <TableCell align="right" sx={{ color: "#fff" }}>
                       {formatCurrency(taxAmount)}
                     </TableCell>
                   </TableRow>
                   {formData.discountAmount > 0 && (
                     <TableRow>
-                      <TableCell sx={{ color: '#FCA5A5 !important' }}>
+                      <TableCell sx={{ color: "#FCA5A5 !important" }}>
                         Discount
                       </TableCell>
                       <TableCell
                         align="right"
-                        sx={{ color: '#FCA5A5 !important' }}
+                        sx={{ color: "#FCA5A5 !important" }}
                       >
                         -{formatCurrency(formData.discountAmount)}
                       </TableCell>
@@ -1172,13 +1172,13 @@ export default function NewOrderPage() {
                 </TableBody>
               </Table>
 
-              <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', my: 2 }} />
+              <Divider sx={{ borderColor: "rgba(255,255,255,0.1)", my: 2 }} />
 
               <Box
                 sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   mb: 4,
                 }}
               >
@@ -1188,7 +1188,7 @@ export default function NewOrderPage() {
                 <Typography
                   variant="h5"
                   fontWeight={700}
-                  sx={{ color: '#4ADE80' }}
+                  sx={{ color: "#4ADE80" }}
                 >
                   {formatCurrency(finalAmount)}
                 </Typography>
@@ -1196,33 +1196,33 @@ export default function NewOrderPage() {
 
               <Box
                 sx={{
-                  bgcolor: 'rgba(255,255,255,0.05)',
+                  bgcolor: "rgba(255,255,255,0.05)",
                   p: 2,
                   borderRadius: 2,
                   mb: 3,
                 }}
               >
                 <Stack spacing={1}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Box sx={{ display: "flex", gap: 1 }}>
                     <InfoOutlined
                       fontSize="small"
-                      sx={{ color: 'rgba(255,255,255,0.5)', mt: 0.2 }}
+                      sx={{ color: "rgba(255,255,255,0.5)", mt: 0.2 }}
                     />
                     <Typography
                       variant="caption"
-                      sx={{ color: 'rgba(255,255,255,0.7)' }}
+                      sx={{ color: "rgba(255,255,255,0.7)" }}
                     >
                       Generating <strong>{formData.quantity} unit IDs</strong>
                     </Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Box sx={{ display: "flex", gap: 1 }}>
                     <InfoOutlined
                       fontSize="small"
-                      sx={{ color: 'rgba(255,255,255,0.5)', mt: 0.2 }}
+                      sx={{ color: "rgba(255,255,255,0.5)", mt: 0.2 }}
                     />
                     <Typography
                       variant="caption"
-                      sx={{ color: 'rgba(255,255,255,0.7)' }}
+                      sx={{ color: "rgba(255,255,255,0.7)" }}
                     >
                       Creating linked <strong>Quote & Invoice</strong>
                     </Typography>
@@ -1245,21 +1245,21 @@ export default function NewOrderPage() {
                 }
                 disabled={loading}
                 sx={{
-                  bgcolor: '#fff',
-                  color: '#0F172A',
+                  bgcolor: "#fff",
+                  color: "#0F172A",
                   fontWeight: 700,
-                  '&:hover': { bgcolor: '#F1F5F9' },
+                  "&:hover": { bgcolor: "#F1F5F9" },
                   mb: 2,
                 }}
               >
-                {loading ? 'Processing...' : 'Confirm Order'}
+                {loading ? "Processing..." : "Confirm Order"}
               </Button>
               <Button
                 fullWidth
                 onClick={() => router.back()}
                 sx={{
-                  color: 'rgba(255,255,255,0.5)',
-                  '&:hover': { color: '#fff' },
+                  color: "rgba(255,255,255,0.5)",
+                  "&:hover": { color: "#fff" },
                 }}
               >
                 Cancel

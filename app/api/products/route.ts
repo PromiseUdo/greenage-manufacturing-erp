@@ -181,6 +181,7 @@ export async function POST(request: NextRequest) {
           specifications,
           costPrice,
           model,
+          isActive: false,
           warranty,
           leadTime,
           images: images || [],

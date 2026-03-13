@@ -43,9 +43,12 @@ import {
   Description,
   Settings,
   Download,
+  Close as CloseIcon
 } from "@mui/icons-material";
 
 // Add these to your imports at the top
+import { Modal, Backdrop, Fade } from "@mui/material";
+import StoreDispatchForm from "@/components/store/store-dispatch-form";
 import {
   pdf,
   Document,
@@ -290,39 +293,52 @@ const statusColors: Record<string, { bg: string; text: string }> = {
 
 const ORDER_STEPS = [
   {
-    key: "PENDING_PLANNING",
-    label: "Planning",
+    key: "ORDER_RECEIVED",
+    label: "Order Received",
     icon: <Assignment fontSize="small" />,
+    isActive: (order: any) => true, // always on
   },
   {
-    key: "IN_PRODUCTION",
-    label: "Production",
-    icon: <Settings fontSize="small" />,
-  },
-  {
-    key: "QC_TESTING",
-    label: "Quality Control",
-    icon: <CheckCircle fontSize="small" />,
-  },
-  {
-    key: "PACKAGING",
-    label: "Packaging",
-    icon: <Inventory fontSize="small" />,
+    key: "PAYMENT_RECEIVED",
+    label: "Payment",
+    getLabel: (order: any) => {
+      if (order?.invoice?.paymentStatus === "PARTIALLY_PAID") return "Payment (Partial)";
+      if (order?.invoice?.paymentStatus === "PAID") return "Payment Received";
+      return "Payment Pending";
+    },
+    icon: <Description fontSize="small" />,
+    isActive: (order: any) =>
+      order?.invoice?.paymentStatus === "PARTIALLY_PAID" ||
+      order?.invoice?.paymentStatus === "PAID",
   },
   {
     key: "READY_FOR_DISPATCH",
     label: "Ready for Dispatch",
-    icon: <LocalShipping fontSize="small" />,
+    icon: <Inventory fontSize="small" />,
+    isActive: (order: any) => {
+      const statuses = [
+        "READY_FOR_DISPATCH",
+        "DISPATCHED",
+        "DELIVERED",
+      ];
+      return statuses.includes(order?.status);
+    },
   },
   {
     key: "DISPATCHED",
     label: "Dispatched",
     icon: <LocalShipping fontSize="small" />,
+    isActive: (order: any) =>
+      Array.isArray(order?.storeDispatches) &&
+      order.storeDispatches.some((d: any) => d.status !== "REQUESTED"),
   },
   {
     key: "DELIVERED",
     label: "Delivered",
     icon: <CheckCircle fontSize="small" />,
+    isActive: (order: any) =>
+      Array.isArray(order?.storeDispatches) &&
+      order.storeDispatches.some((d: any) => d.status !== "REQUESTED"),
   },
 ];
 
@@ -339,6 +355,7 @@ export default function OrderDetailPage({
   const [order, setOrder] = useState<any>(null);
   const [tabValue, setTabValue] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
 
   useEffect(() => {
     fetchOrder();
@@ -380,13 +397,34 @@ export default function OrderDetailPage({
   // --- Logic Helpers ---
   const getCurrentStepIndex = () => {
     if (!order) return 0;
-    return ORDER_STEPS.findIndex((step) => step.key === order.status);
+    // Find the last step that is active
+    let lastActiveIndex = 0;
+    for (let i = 0; i < ORDER_STEPS.length; i++) {
+      if (ORDER_STEPS[i].isActive(order)) {
+        lastActiveIndex = i;
+      } else {
+        break; // Stop if the chain of active states breaks
+      }
+    }
+
+    // If we've reached the DELIVERED step (the last step is active),
+    // and there is actually a "DELIVERED" dispatch, push index past the end
+    // so that the final step gets marked as completed (green checkmark).
+    if (
+      lastActiveIndex === ORDER_STEPS.length - 1 &&
+      Array.isArray(order?.storeDispatches) &&
+      order.storeDispatches.some((d: any) => d.status === "DELIVERED")
+    ) {
+      return ORDER_STEPS.length;
+    }
+
+    return lastActiveIndex;
   };
 
   const getProgressPercentage = () => {
-    const currentIndex = getCurrentStepIndex();
-    if (currentIndex === -1) return 0;
-    return Math.round(((currentIndex + 1) / ORDER_STEPS.length) * 100);
+    if (!order) return 0;
+    const activeSteps = ORDER_STEPS.filter((step) => step.isActive(order)).length;
+    return Math.round((activeSteps / ORDER_STEPS.length) * 100);
   };
 
   const copyToClipboard = (text: string) => {
@@ -402,6 +440,27 @@ export default function OrderDetailPage({
       day: "numeric",
     });
 
+  const handleDispatchSubmit = async (data: any) => {
+    try {
+      const payload = { ...data, status: "REQUESTED" };
+      const res = await fetch("/api/store/dispatches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to create dispatch");
+      }
+      setSuccess("Dispatch requested successfully");
+      setIsDispatchModalOpen(false);
+      fetchOrder(); // refresh data
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
+  };
+
   if (loading)
     return (
       <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
@@ -412,6 +471,52 @@ export default function OrderDetailPage({
 
   const currentStepIndex = getCurrentStepIndex();
   const progressPercent = getProgressPercentage();
+
+  // Compute logic for Dispatch buttons
+  const dispatchHistory = order?.storeDispatches || [];
+  const dispatchedQuantities: Record<string, number> = {};
+  dispatchHistory.forEach((d: any) => {
+    if (d.status !== "CANCELLED" && d.status !== "FAILED_DELIVERY") {
+      const items = Array.isArray(d.items) ? d.items : [];
+      items.forEach((di: any) => {
+        dispatchedQuantities[di.storeItemId] =
+          (dispatchedQuantities[di.storeItemId] || 0) + di.quantity;
+      });
+    }
+  });
+
+  const remainingLineItems = (order?.lineItems || []).map((li: any) => {
+    const storeItemId = li.storeItem?.id;
+    const dispatched = dispatchedQuantities[storeItemId] || 0;
+    const remaining = Math.max(0, li.quantity - dispatched);
+    return { ...li, dispatched, remaining };
+  });
+
+  const fullyDispatched =
+    remainingLineItems?.length > 0 &&
+    remainingLineItems.every((li: any) => li.remaining === 0);
+  const canDispatchMore = !fullyDispatched && remainingLineItems?.length > 0;
+  const hasDispatch = dispatchHistory.length > 0;
+
+  const activeDispatch = dispatchHistory.find((d: any) => 
+    d.status !== 'REQUESTED' && d.status !== 'DELIVERED'
+  );
+
+  const handleMarkDelivered = async (dispatchId: string) => {
+    try {
+      const res = await fetch(`/api/store/dispatches/${dispatchId}/deliver`, {
+        method: 'POST'
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to mark as delivered');
+      }
+      setSuccess('Order successfully marked as delivered');
+      fetchOrder(); // refresh data
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
 
   return (
     <Box sx={{ pb: 5 }}>
@@ -504,8 +609,7 @@ export default function OrderDetailPage({
             sx={{ p: 3, borderRadius: 3, border: "1px solid #E2E8F0", mb: 3 }}
           >
             <SectionHeader>
-              {/* <Assignment fontSize="small" /> Production Track */}
-              Production Track
+              Order Track
             </SectionHeader>
 
             {/* Progress Bar */}
@@ -535,8 +639,9 @@ export default function OrderDetailPage({
             {/* Dynamic Timeline Stepper */}
             <Stack spacing={0}>
               {ORDER_STEPS.map((step, index) => {
-                const isCompleted = index < currentStepIndex;
+                const isActive = step.isActive(order);
                 const isCurrent = index === currentStepIndex;
+                const isCompleted = isActive && !isCurrent;
                 const isLast = index === ORDER_STEPS.length - 1;
 
                 return (
@@ -604,7 +709,7 @@ export default function OrderDetailPage({
                               : "text.secondary"
                         }
                       >
-                        {step.label}
+                        {step.getLabel ? step.getLabel(order) : step.label}
                       </Typography>
                       {isCurrent && (
                         <Typography
@@ -619,6 +724,43 @@ export default function OrderDetailPage({
                   </Box>
                 );
               })}
+            </Stack>
+            
+            <Divider sx={{ my: 3 }} />
+            <Stack spacing={2}>
+              <Button
+                variant="outlined"
+                fullWidth
+                startIcon={<LocalShipping />}
+                onClick={() => setIsDispatchModalOpen(true)}
+                disabled={!canDispatchMore}
+                sx={{ fontWeight: 600 }}
+              >
+                {!canDispatchMore
+                  ? "Fully Dispatched"
+                  : hasDispatch
+                  ? "Request Partial Dispatch"
+                  : "Request Store Dispatch"}
+              </Button>
+
+              <Button
+                variant="contained"
+                fullWidth
+                startIcon={<CheckCircle />}
+                onClick={() => activeDispatch && handleMarkDelivered(activeDispatch.id)}
+                disabled={!activeDispatch}
+                sx={{ 
+                  fontWeight: 600,
+                  bgcolor: "#10B981",
+                  "&:hover": { bgcolor: "#059669" },
+                  "&.Mui-disabled": {
+                    bgcolor: "#e2e8f0",
+                    color: "#94a3b8"
+                  }
+                }}
+              >
+                Mark as Delivered
+              </Button>
             </Stack>
           </Paper>
 
@@ -672,14 +814,29 @@ export default function OrderDetailPage({
                   Invoice
                 </Typography>
                 {order?.invoice ? (
-                  <Button
-                    size="small"
-                    onClick={() =>
-                      router.push(`/sales/invoices/${order.invoice.id}`)
-                    }
-                  >
-                    {order.invoice.invoiceNumber}
-                  </Button>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    {order.invoice.status === "PARTIALLY_PAID" && (
+                      <Chip
+                        label="PARTIAL PAY"
+                        size="small"
+                        sx={{
+                          fontSize: 10,
+                          height: 20,
+                          bgcolor: "#ffedd5",
+                          color: "#ea580c",
+                          fontWeight: 700,
+                        }}
+                      />
+                    )}
+                    <Button
+                      size="small"
+                      onClick={() =>
+                        router.push(`/sales/invoices/${order.invoice.id}`)
+                      }
+                    >
+                      {order.invoice.invoiceNumber}
+                    </Button>
+                  </Box>
                 ) : (
                   <Typography variant="caption">Pending</Typography>
                 )}
@@ -809,7 +966,7 @@ export default function OrderDetailPage({
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {order?.lineItems?.map((li: any, i: number) => (
+                          {remainingLineItems?.map((li: any, i: number) => (
                             <TableRow key={i}>
                               <TableCell>
                                 <Typography variant="body2" fontWeight={600}>
@@ -828,11 +985,30 @@ export default function OrderDetailPage({
                                     ? ` • ${li.storeItem.category}`
                                     : ""}
                                 </Typography>
+                                {(li.quantityBackordered || 0) > 0 && (
+                                  <Chip
+                                    label={`${li.quantityBackordered} Backordered`}
+                                    size="small"
+                                    sx={{
+                                      mt: 1,
+                                      bgcolor: "#fef3c7",
+                                      color: "#92400e",
+                                      fontWeight: 600,
+                                      fontSize: 10,
+                                      height: 20,
+                                    }}
+                                  />
+                                )}
                               </TableCell>
                               <TableCell align="center">
                                 <Typography variant="body2" fontWeight={600}>
                                   {li.quantity}
                                 </Typography>
+                                {li.dispatched > 0 && (
+                                  <Typography variant="caption" color="success.main" display="block">
+                                    {li.dispatched} dispatched
+                                  </Typography>
+                                )}
                               </TableCell>
                               <TableCell align="right">
                                 <Typography variant="body2">
@@ -853,6 +1029,119 @@ export default function OrderDetailPage({
                         </TableBody>
                       </Table>
                     </TableContainer>
+                  {/* Dispatch History Table */}
+                  <Box sx={{ mt: 3 }}>
+                    <SectionHeader>Dispatch History</SectionHeader>
+                    {dispatchHistory.length > 0 ? (
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow sx={{ bgcolor: "action.hover" }}>
+                              <TableCell
+                                sx={{
+                                  fontWeight: 600,
+                                  color: "#64748B",
+                                  fontSize: 12,
+                                }}
+                              >
+                                DISPATCH #
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  fontWeight: 600,
+                                  color: "#64748B",
+                                  fontSize: 12,
+                                }}
+                              >
+                                DATE
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  fontWeight: 600,
+                                  color: "#64748B",
+                                  fontSize: 12,
+                                }}
+                              >
+                                STATUS
+                              </TableCell>
+                              <TableCell
+                                sx={{
+                                  fontWeight: 600,
+                                  color: "#64748B",
+                                  fontSize: 12,
+                                }}
+                              >
+                                DISPATCHED ITEMS
+                              </TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {dispatchHistory.map((d: any, i: number) => (
+                              <TableRow key={i}>
+                                <TableCell>
+                                  <Typography variant="body2" fontWeight={600}>
+                                    {d.dispatchNumber}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2">
+                                    {new Date(d.dispatchDate).toLocaleDateString()}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={d.status?.replace(/_/g, " ")}
+                                    size="small"
+                                    sx={{
+                                      fontSize: 10,
+                                      fontWeight: 700,
+                                      bgcolor:
+                                        d.status === "DELIVERED"
+                                          ? "#dcfce7"
+                                          : d.status === "REQUESTED"
+                                          ? "#f1f5f9"
+                                          : "#dbeafe",
+                                      color:
+                                        d.status === "DELIVERED"
+                                          ? "#166534"
+                                          : d.status === "REQUESTED"
+                                          ? "#475569"
+                                          : "#1e40af",
+                                    }}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  {(d.items || []).map((di: any, idx: number) => {
+                                    const matchingLineItem = order?.lineItems?.find(
+                                      (li: any) => li.storeItem?.id === di.storeItemId
+                                    );
+                                    const itemName =
+                                      matchingLineItem?.storeItem?.name ||
+                                      matchingLineItem?.product?.name ||
+                                      "Item";
+                                    return (
+                                      <Typography
+                                        key={idx}
+                                        variant="caption"
+                                        display="block"
+                                        color="text.secondary"
+                                      >
+                                        {di.quantity}x {itemName}
+                                      </Typography>
+                                    );
+                                  })}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        No dispatches have been created yet.
+                      </Typography>
+                    )}
+                  </Box>
                   </Box>
                 </Stack>
               )}
@@ -918,6 +1207,77 @@ export default function OrderDetailPage({
           </Paper>
         </Grid>
       </Grid>
+
+      {/* Dispatch Request Modal */}
+      <Modal
+        open={isDispatchModalOpen}
+        onClose={() => setIsDispatchModalOpen(false)}
+        closeAfterTransition
+        slots={{ backdrop: Backdrop }}
+        slotProps={{ backdrop: { timeout: 500 } }}
+      >
+        <Fade in={isDispatchModalOpen}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "100%",
+              maxWidth: 800,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              bgcolor: "background.paper",
+              boxShadow: 24,
+              borderRadius: 3,
+            }}
+          >
+            <Box
+              sx={{
+                p: 3,
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                position: "sticky",
+                top: 0,
+                bgcolor: "background.paper",
+                zIndex: 1,
+              }}
+            >
+              <Typography variant="h6" fontWeight={700}>
+                Create Dispatch Request
+              </Typography>
+              <IconButton onClick={() => setIsDispatchModalOpen(false)}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+            <Box sx={{ p: 4, pt: 2 }}>
+              {order && (
+                <StoreDispatchForm
+                  onSubmit={handleDispatchSubmit}
+                  onCancel={() => setIsDispatchModalOpen(false)}
+                  initialData={{
+                    orderId: order.id,
+                    customerId: order.customer.id,
+                    invoiceId: order.invoice?.id || "",
+                    deliveryAddress: order.customer.address || "",
+                    items: remainingLineItems
+                      .filter((li: any) => li.remaining > 0)
+                      .map((li: any) => ({
+                        storeItemId: li.storeItem?.id || "",
+                        quantity: li.remaining,
+                        maxAllowed: li.remaining,
+                        notes: "",
+                      })),
+                  }}
+                />
+              )}
+            </Box>
+          </Box>
+        </Fade>
+      </Modal>
     </Box>
   );
 }

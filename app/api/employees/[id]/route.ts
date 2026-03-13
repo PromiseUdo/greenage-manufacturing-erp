@@ -32,6 +32,7 @@ export async function GET(
             name: true,
             email: true,
             role: true,
+            appRoleId: true,
             isActive: true,
             createdAt: true,
           },
@@ -79,9 +80,9 @@ export async function PATCH(
       name,
       phone,
       address,
-      department,
+      departmentId,
       position,
-      role,
+      appRoleId,
       isActive,
       notes,
     } = body;
@@ -100,25 +101,50 @@ export async function PATCH(
 
     // Update Employee and User in transaction
     const updated = await prisma.$transaction(async (tx) => {
+      // Fetch department name if departmentId is provided
+      let departmentName = undefined;
+      if (departmentId) {
+        const dbDepartment = await tx.department.findUnique({ where: { id: departmentId } });
+        if (dbDepartment) {
+          departmentName = dbDepartment.name;
+        }
+      }
+
       // Update Employee record
       const updatedEmployee = await tx.employee.update({
         where: { id },
         data: {
           ...(phone && { phone }),
           ...(address !== undefined && { address }),
-          ...(department && { department }),
+          ...(departmentName && { department: departmentName }),
+          ...(departmentId && { departmentId }),
           ...(position !== undefined && { position }),
           ...(isActive !== undefined && { isActive }),
           ...(notes !== undefined && { notes }),
         },
       });
 
+      // Map appRoleId to UserRole enum if provided
+      let mappedRole = undefined;
+      if (appRoleId) {
+        const dbRole = await tx.role.findUnique({ where: { id: appRoleId } });
+        if (dbRole) {
+          const roleMapping: Record<string, string> = {
+            'Admin': 'ADMIN',
+            'Accountant': 'ACCOUNTANT',
+            'Operation Manager': 'OPERATION_MANAGER'
+          };
+          mappedRole = roleMapping[dbRole.name] || 'PRODUCTION_STAFF';
+        }
+      }
+
       // Update User record (name, role, isActive)
       await tx.user.update({
         where: { id: employee.userId },
         data: {
           ...(name && { name }),
-          ...(role && { role }),
+          ...(mappedRole && { role: mappedRole as any }),
+          ...(appRoleId && { appRoleId }),
           ...(isActive !== undefined && { isActive }),
         },
       });
@@ -133,6 +159,7 @@ export async function PATCH(
               name: true,
               email: true,
               role: true,
+              appRoleId: true,
               isActive: true,
             },
           },

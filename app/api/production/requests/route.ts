@@ -34,6 +34,11 @@ export async function GET(request: NextRequest) {
       where.status = status;
     }
 
+    const productId = searchParams.get('productId');
+    if (productId) {
+      where.storeItem = { productId };
+    }
+
     const [requests, total] = await Promise.all([
       prisma.productionRequest.findMany({
         where,

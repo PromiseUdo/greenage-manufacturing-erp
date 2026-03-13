@@ -637,9 +637,23 @@ export default function QuoteDetailPage({
                         <Typography variant="body2" fontWeight={600}>
                           {li.quantity} × {formatCurrency(li.unitPrice)}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                        >
                           {formatCurrency(li.unitPrice * li.quantity)}
                         </Typography>
+                        {li.quantityBackordered > 0 && (
+                          <Typography
+                            variant="caption"
+                            color="error.main"
+                            fontWeight={600}
+                            display="block"
+                          >
+                            {li.quantityBackordered} Backordered
+                          </Typography>
+                        )}
                       </Box>
                     </Box>
                   ))}

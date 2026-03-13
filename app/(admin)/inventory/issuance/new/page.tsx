@@ -14,20 +14,26 @@ export default function MaterialIssuancePage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (data: MaterialIssuanceFormData) => {
+  const handleSubmitMultiple = async (items: MaterialIssuanceFormData[]) => {
     setLoading(true);
     setError('');
 
     try {
-      const res = await fetch('/api/inventory/issuances', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      // Submit each material issuance sequentially
+      for (const item of items) {
+        const res = await fetch('/api/inventory/issuances', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item),
+        });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Failed to issue material');
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(
+            errorData.error ||
+              `Failed to issue material: ${item.materialId}`
+          );
+        }
       }
 
       setSuccess(true);
@@ -55,7 +61,8 @@ export default function MaterialIssuancePage() {
         color="text.secondary"
         sx={{ mb: 3, fontSize: '14px' }}
       >
-        Issue materials from inventory to production or other departments
+        Issue one or more materials from inventory to production or other
+        departments
       </Typography>
 
       {error && (
@@ -66,12 +73,12 @@ export default function MaterialIssuancePage() {
 
       {success && (
         <Alert severity="success" sx={{ mb: 3 }}>
-          Material issued successfully! Stock updated. Redirecting...
+          Materials issued successfully! Stock updated. Redirecting...
         </Alert>
       )}
 
       <MaterialIssuanceForm
-        onSubmit={handleSubmit}
+        onSubmitMultiple={handleSubmitMultiple}
         onCancel={handleCancel}
         isLoading={loading}
       />

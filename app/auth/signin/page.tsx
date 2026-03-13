@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { IconButton, InputAdornment } from '@mui/material';
-import Alert from '@mui/material/Alert';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import MuiCard from '@mui/material/Card';
-import Checkbox from '@mui/material/Checkbox';
-import CircularProgress from '@mui/material/CircularProgress';
-import CssBaseline from '@mui/material/CssBaseline';
-import FormControl from '@mui/material/FormControl';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormLabel from '@mui/material/FormLabel';
-import Link from '@mui/material/Link';
-import { styled } from '@mui/material/styles';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import * as React from 'react';
-import ForgotPassword from '../components/forgot-password';
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { IconButton, InputAdornment } from "@mui/material";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import MuiCard from "@mui/material/Card";
+import Checkbox from "@mui/material/Checkbox";
+import CircularProgress from "@mui/material/CircularProgress";
+import CssBaseline from "@mui/material/CssBaseline";
+import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormLabel from "@mui/material/FormLabel";
+import Link from "@mui/material/Link";
+import { styled } from "@mui/material/styles";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import ForgotPassword from "../components/forgot-password";
 
 type Particle = {
   delay: number;
@@ -29,52 +29,52 @@ type Particle = {
 };
 
 const SplitContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  minHeight: '100vh',
-  width: '100%',
-  [theme.breakpoints.down('md')]: {
-    flexDirection: 'column',
+  display: "flex",
+  minHeight: "100vh",
+  width: "100%",
+  [theme.breakpoints.down("md")]: {
+    flexDirection: "column",
   },
 }));
 
 const LeftPanel = styled(Box)(({ theme }) => ({
   flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  justifyContent: 'center',
-  alignItems: 'center',
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "center",
   padding: theme.spacing(4),
-  backgroundColor: '#ffffff',
-  position: 'relative',
+  backgroundColor: "#ffffff",
+  position: "relative",
   zIndex: 2,
-  [theme.breakpoints.up('md')]: {
-    maxWidth: '50%',
+  [theme.breakpoints.up("md")]: {
+    maxWidth: "50%",
   },
-  [theme.breakpoints.down('md')]: {
-    minHeight: '100vh',
+  [theme.breakpoints.down("md")]: {
+    minHeight: "100vh",
   },
 }));
 
 const RightPanel = styled(Box)(({ theme }) => ({
   flex: 1,
-  position: 'relative',
-  overflow: 'hidden',
-  backgroundColor: '#0a1929',
-  [theme.breakpoints.up('md')]: {
-    maxWidth: '50%',
+  position: "relative",
+  overflow: "hidden",
+  backgroundColor: "#0a1929",
+  [theme.breakpoints.up("md")]: {
+    maxWidth: "50%",
   },
-  [theme.breakpoints.down('md')]: {
-    display: 'none',
+  [theme.breakpoints.down("md")]: {
+    display: "none",
   },
 }));
 
-const VideoBackground = styled('video')({
-  position: 'absolute',
+const VideoBackground = styled("video")({
+  position: "absolute",
   top: 0,
   left: 0,
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover',
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
   opacity: 0.8,
 });
 
@@ -95,42 +95,42 @@ const VideoBackground = styled('video')({
 // }));
 
 const VideoOverlay = styled(Box)(() => ({
-  position: 'absolute',
+  position: "absolute",
   inset: 0,
-  pointerEvents: 'none',
+  pointerEvents: "none",
   background:
-    'linear-gradient(135deg, rgba(10,25,41,0.75) 0%, rgba(16,185,129,0.35) 100%)',
+    "linear-gradient(135deg, rgba(10,25,41,0.75) 0%, rgba(16,185,129,0.35) 100%)",
   zIndex: 2,
 }));
 
 const Card = styled(MuiCard)(({ theme }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  width: '100%',
-  maxWidth: '480px',
+  display: "flex",
+  flexDirection: "column",
+  width: "100%",
+  maxWidth: "480px",
   padding: theme.spacing(5),
   gap: theme.spacing(2.5),
-  border: 'none',
-  boxShadow: 'none',
+  border: "none",
+  boxShadow: "none",
 }));
 
 const LogoContainer = styled(Box)({
-  marginBottom: '24px',
+  marginBottom: "24px",
 });
 
 const AnimatedBackground = styled(Box)({
-  position: 'absolute',
+  position: "absolute",
   top: 0,
   left: 0,
-  width: '100%',
-  height: '100%',
-  background: 'linear-gradient(135deg, #0a1929 0%, #1e3a5f 50%, #10b981 100%)',
-  backgroundSize: '200% 200%',
-  animation: 'gradientShift 15s ease infinite',
-  '@keyframes gradientShift': {
-    '0%': { backgroundPosition: '0% 50%' },
-    '50%': { backgroundPosition: '100% 50%' },
-    '100%': { backgroundPosition: '0% 50%' },
+  width: "100%",
+  height: "100%",
+  background: "linear-gradient(135deg, #0a1929 0%, #1e3a5f 50%, #10b981 100%)",
+  backgroundSize: "200% 200%",
+  animation: "gradientShift 15s ease infinite",
+  "@keyframes gradientShift": {
+    "0%": { backgroundPosition: "0% 50%" },
+    "50%": { backgroundPosition: "100% 50%" },
+    "100%": { backgroundPosition: "0% 50%" },
   },
 });
 
@@ -160,34 +160,34 @@ const AnimatedBackground = styled(Box)({
 // );
 
 const FloatingParticle = styled(Box, {
-  shouldForwardProp: (prop) => prop !== '$delay' && prop !== '$duration',
+  shouldForwardProp: (prop) => prop !== "$delay" && prop !== "$duration",
 })<{ $delay?: number; $duration?: number }>(() => ({
-  position: 'absolute',
-  width: '5px',
-  height: '5px',
-  backgroundColor: 'rgba(16, 185, 129, 0.75)',
-  borderRadius: '50%',
-  filter: 'blur(0.3px)',
+  position: "absolute",
+  width: "5px",
+  height: "5px",
+  backgroundColor: "rgba(16, 185, 129, 0.75)",
+  borderRadius: "50%",
+  filter: "blur(0.3px)",
   animation: `float 18s ease-in-out infinite`,
 }));
 
 const ImageLayer = styled(Box, {
-  shouldForwardProp: (prop) => prop !== '$active',
+  shouldForwardProp: (prop) => prop !== "$active",
 })<{ $active?: boolean }>(({ $active }) => ({
-  position: 'absolute',
+  position: "absolute",
   inset: 0,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
+  backgroundSize: "cover",
+  backgroundPosition: "center",
   opacity: $active ? 1 : 0,
-  transform: $active ? 'scale(1.1)' : 'scale(1)',
-  transition: 'opacity 1.5s ease, transform 6s ease',
+  transform: $active ? "scale(1.1)" : "scale(1)",
+  transition: "opacity 1.5s ease, transform 6s ease",
 }));
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
   const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState('');
+  const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
   const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState('');
+  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
   const [serverError, setServerError] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isResending, setIsResending] = React.useState(false);
@@ -201,10 +201,10 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
   const handleClose = () => setOpen(false);
 
   const backgroundImages = [
-    '/auth-bg1.png',
+    "/auth-bg1.png",
     // '/auth-bg2.png',
-    '/auth-bg3.png',
-    '/auth-bg4.png',
+    "/auth-bg3.png",
+    "/auth-bg4.png",
   ];
 
   const [activeImage, setActiveImage] = React.useState(0);
@@ -233,20 +233,20 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
       setEmailError(true);
-      setEmailErrorMessage('Please enter a valid email address.');
+      setEmailErrorMessage("Please enter a valid email address.");
       isValid = false;
     } else {
       setEmailError(false);
-      setEmailErrorMessage('');
+      setEmailErrorMessage("");
     }
 
     if (!password || password.length < 6) {
       setPasswordError(true);
-      setPasswordErrorMessage('Password must be at least 6 characters long.');
+      setPasswordErrorMessage("Password must be at least 6 characters long.");
       isValid = false;
     } else {
       setPasswordError(false);
-      setPasswordErrorMessage('');
+      setPasswordErrorMessage("");
     }
 
     return isValid;
@@ -259,8 +259,8 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     setIsLoading(true);
 
     const data = new FormData(event.currentTarget);
-    const email = data.get('email') as string;
-    const password = data.get('password') as string;
+    const email = data.get("email") as string;
+    const password = data.get("password") as string;
 
     if (!validateInputs(email, password)) {
       setIsLoading(false);
@@ -268,34 +268,34 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     }
 
     try {
-      const res = await signIn('credentials', {
+      const res = await signIn("credentials", {
         redirect: false,
         email,
         password,
       });
 
       if (res?.ok) {
-        router.push('/dashboard');
+        router.push("/dashboard");
       } else {
-        if (res?.error === 'Email not verified') {
-          setServerError('Please verify your email before signing in.');
+        if (res?.error === "Email not verified") {
+          setServerError("Please verify your email before signing in.");
         } else {
-          setServerError(res?.error || 'Invalid email or password');
+          setServerError(res?.error || "Invalid email or password");
         }
       }
     } catch (error) {
-      setServerError('An unexpected error occurred');
+      setServerError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleResendVerification = async () => {
-    const emailInput = document.getElementById('email') as HTMLInputElement;
+    const emailInput = document.getElementById("email") as HTMLInputElement;
     const email = emailInput?.value?.trim();
 
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      setServerError('Please enter a valid email first');
+      setServerError("Please enter a valid email first");
       return;
     }
 
@@ -304,9 +304,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     setServerError(null);
 
     try {
-      const res = await fetch('/api/resend-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
@@ -315,10 +315,10 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
         setServerError(null);
       } else {
         const data = await res.json();
-        setServerError(data.error || 'Failed to resend verification email');
+        setServerError(data.error || "Failed to resend verification email");
       }
     } catch {
-      setServerError('Network error. Please try again later.');
+      setServerError("Network error. Please try again later.");
     } finally {
       setIsResending(false);
     }
@@ -332,11 +332,21 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
         <LeftPanel>
           <Card>
             <LogoContainer>
-              <img
+              {/* <img
                 src="/greenage_logo_black.png"
                 alt="GreenAge logo"
                 style={{ width: '160px', height: 'auto' }}
-              />
+              /> */}
+              <Typography
+                sx={{
+                  fontSize: "1.5rem",
+                  fontWeight: 700,
+                  color: "#fff",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                LOGO
+              </Typography>
             </LogoContainer>
 
             <Box sx={{ mb: 2 }}>
@@ -345,8 +355,8 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 variant="h3"
                 sx={{
                   fontWeight: 700,
-                  fontSize: 'clamp(2rem, 5vw, 2.5rem)',
-                  color: '#0a1929',
+                  fontSize: "clamp(2rem, 5vw, 2.5rem)",
+                  color: "#0a1929",
                   mb: 1,
                 }}
               >
@@ -354,7 +364,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               </Typography>
               <Typography
                 variant="body1"
-                sx={{ color: '#64748b', fontSize: '1rem' }}
+                sx={{ color: "#64748b", fontSize: "1rem" }}
               >
                 Sign in to access your account
               </Typography>
@@ -365,9 +375,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               onSubmit={handleSubmit}
               noValidate
               sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                width: '100%',
+                display: "flex",
+                flexDirection: "column",
+                width: "100%",
                 gap: 2.5,
               }}
             >
@@ -386,7 +396,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               <FormControl>
                 <FormLabel
                   htmlFor="email"
-                  sx={{ color: '#0a1929', mb: 1, fontSize: '14px' }}
+                  sx={{ color: "#0a1929", mb: 1, fontSize: "14px" }}
                 >
                   Email Address
                 </FormLabel>
@@ -402,11 +412,11 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                   required
                   fullWidth
                   variant="outlined"
-                  color={emailError ? 'error' : 'primary'}
+                  color={emailError ? "error" : "primary"}
                   sx={{
-                    '& .MuiOutlinedInput-root': {
+                    "& .MuiOutlinedInput-root": {
                       borderRadius: 2,
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: "#f8fafc",
                     },
                   }}
                 />
@@ -415,16 +425,16 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               <FormControl>
                 <FormLabel
                   htmlFor="password"
-                  sx={{ color: '#0a1929', mb: 1, fontSize: '14px' }}
+                  sx={{ color: "#0a1929", mb: 1, fontSize: "14px" }}
                 >
                   Password
                 </FormLabel>
                 <TextField
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   error={passwordError}
                   helperText={passwordErrorMessage}
-                  color={passwordError ? 'error' : 'primary'}
+                  color={passwordError ? "error" : "primary"}
                   variant="outlined"
                   name="password"
                   fullWidth
@@ -446,9 +456,9 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                   }}
                   placeholder="••••••••"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
+                    "& .MuiOutlinedInput-root": {
                       borderRadius: 2,
-                      backgroundColor: '#f8fafc',
+                      backgroundColor: "#f8fafc",
                     },
                   }}
                 />
@@ -456,17 +466,17 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
 
               <Box
                 sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
                 <FormControlLabel
                   control={<Checkbox value="remember" color="primary" />}
                   label="Remember me"
                   sx={{
-                    '& .MuiFormControlLabel-label': {
-                      fontSize: '14px',
+                    "& .MuiFormControlLabel-label": {
+                      fontSize: "14px",
                     },
                   }}
                 />
@@ -477,10 +487,10 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                   variant="body2"
                   sx={{
                     // color: '#10b981',
-                    fontSize: '14px',
-                    textDecoration: 'none',
-                    '&:hover': {
-                      textDecoration: 'underline',
+                    fontSize: "14px",
+                    textDecoration: "none",
+                    "&:hover": {
+                      textDecoration: "underline",
                     },
                   }}
                 >
@@ -499,8 +509,8 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                   mt: 1,
                   py: 1.5,
                   borderRadius: 2,
-                  textTransform: 'none',
-                  fontSize: '1rem',
+                  textTransform: "none",
+                  fontSize: "1rem",
                   fontWeight: 600,
                   // backgroundColor: '#10b981',
                   // '&:hover': {
@@ -508,10 +518,10 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                   // },
                 }}
               >
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading ? "Signing in..." : "Sign in"}
               </Button>
 
-              {serverError?.includes('verify your email') && (
+              {serverError?.includes("verify your email") && (
                 <Button
                   variant="outlined"
                   color="primary"
@@ -524,12 +534,12 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                   sx={{
                     py: 1.5,
                     borderRadius: 2,
-                    textTransform: 'none',
-                    fontSize: '1rem',
+                    textTransform: "none",
+                    fontSize: "1rem",
                     fontWeight: 600,
                   }}
                 >
-                  {isResending ? 'Sending...' : 'Resend Verification Email'}
+                  {isResending ? "Sending..." : "Resend Verification Email"}
                 </Button>
               )}
             </Box>

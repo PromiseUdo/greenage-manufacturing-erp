@@ -58,6 +58,16 @@ interface ProductionRequestDetail {
       email: string | null;
     };
   };
+  productionOrder?: {
+    id: string;
+    orderNumber: string;
+    status: string;
+    stages: {
+      id: string;
+      stageLabel: string;
+      status: string;
+    }[];
+  } | null;
 }
 
 const statusColors: Record<string, { bg: string; text: string }> = {
@@ -196,16 +206,31 @@ export default function ProductionRequestDetailPage({
               {new Date(request.dateRaised).toLocaleDateString()}
             </Typography>
           </Box>
-          <Chip
-            label={request.status.replace("_", " ")}
-            sx={{
-              bgcolor: statusColors[request.status]?.bg || "#F3F4F6",
-              color: statusColors[request.status]?.text || "#6B7280",
-              fontWeight: 700,
-              fontSize: 13,
-              px: 1.5,
-            }}
-          />
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+            {request.productionOrder &&
+              request.productionOrder.status !== "COMPLETED" && (
+                <Chip
+                  label="In Production"
+                  size="small"
+                  sx={{
+                    bgcolor: "#E0E7FF",
+                    color: "#4338CA",
+                    fontWeight: 600,
+                    fontSize: 12,
+                  }}
+                />
+              )}
+            <Chip
+              label={request.status.replace("_", " ")}
+              sx={{
+                bgcolor: statusColors[request.status]?.bg || "#F3F4F6",
+                color: statusColors[request.status]?.text || "#6B7280",
+                fontWeight: 700,
+                fontSize: 13,
+                px: 1.5,
+              }}
+            />
+          </Box>
         </Box>
       </Box>
 
@@ -421,6 +446,82 @@ export default function ProductionRequestDetailPage({
               </TableBody>
             </Table>
           </Paper>
+
+          {/* Fulfillment Production Order */}
+          {request.productionOrder && (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: "divider",
+                mt: 3,
+              }}
+            >
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}
+              >
+                <Typography variant="h6" fontWeight={600}>
+                  Fulfillment Production Order
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              <Table size="small">
+                <TableBody>
+                  <TableRow>
+                    <TableCell
+                      sx={{ fontWeight: 600, width: "40%", border: 0 }}
+                    >
+                      Order Number
+                    </TableCell>
+                    <TableCell sx={{ border: 0 }}>
+                      <Chip
+                        label={request.productionOrder.orderNumber}
+                        size="small"
+                        onClick={() =>
+                          router.push(
+                            `/production/orders/${request.productionOrder?.id}`,
+                          )
+                        }
+                        color="primary"
+                        variant="outlined"
+                        sx={{ cursor: "pointer", fontWeight: 600 }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600, border: 0 }}>
+                      Order Status
+                    </TableCell>
+                    <TableCell sx={{ border: 0 }}>
+                      <Typography variant="body2" fontWeight={600}>
+                        {request.productionOrder.status.replace("_", " ")}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                  {request.productionOrder.status === "IN_PROGRESS" && (
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600, border: 0 }}>
+                        Current Stage
+                      </TableCell>
+                      <TableCell sx={{ border: 0 }}>
+                        <Typography
+                          variant="body2"
+                          color="primary.main"
+                          fontWeight={600}
+                        >
+                          {request.productionOrder.stages.find(
+                            (s) => s.status === "IN_PROGRESS",
+                          )?.stageLabel || "Processing..."}
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </Paper>
+          )}
         </Grid>
 
         {/* Status Update Sidebar */}
@@ -454,66 +555,94 @@ export default function ProductionRequestDetailPage({
                     ].indexOf(request.status) > index;
 
                   return (
-                    <Box
-                      key={step}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1.5,
-                        mb: 1.5,
-                      }}
-                    >
+                    <Box key={step}>
                       <Box
                         sx={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: "50%",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          bgcolor: isPast
-                            ? "#DCFCE7"
-                            : isActive
-                              ? "#DBEAFE"
-                              : "#F3F4F6",
-                          border: "2px solid",
-                          borderColor: isPast
-                            ? "#166534"
-                            : isActive
-                              ? "#2563EB"
-                              : "#D1D5DB",
+                          gap: 1.5,
+                          mb: 1.5,
                         }}
                       >
-                        {isPast ? (
-                          <CheckCircle
-                            sx={{ fontSize: 16, color: "#166534" }}
-                          />
-                        ) : isActive ? (
-                          <Schedule sx={{ fontSize: 16, color: "#2563EB" }} />
-                        ) : (
+                        <Box
+                          sx={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            bgcolor: isPast
+                              ? "#DCFCE7"
+                              : isActive
+                                ? "#DBEAFE"
+                                : "#F3F4F6",
+                            border: "2px solid",
+                            borderColor: isPast
+                              ? "#166534"
+                              : isActive
+                                ? "#2563EB"
+                                : "#D1D5DB",
+                          }}
+                        >
+                          {isPast ? (
+                            <CheckCircle
+                              sx={{ fontSize: 16, color: "#166534" }}
+                            />
+                          ) : isActive ? (
+                            <Schedule sx={{ fontSize: 16, color: "#2563EB" }} />
+                          ) : (
+                            <Box
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: "50%",
+                                bgcolor: "#D1D5DB",
+                              }}
+                            />
+                          )}
+                        </Box>
+                        <Typography
+                          variant="body2"
+                          fontWeight={isActive || isPast ? 600 : 400}
+                          color={
+                            isPast
+                              ? "#166534"
+                              : isActive
+                                ? "#2563EB"
+                                : "text.secondary"
+                          }
+                        >
+                          {step.replace("_", " ")}
+                        </Typography>
+                      </Box>
+                      {isActive &&
+                        request.productionOrder &&
+                        request.productionOrder.status === "IN_PROGRESS" && (
                           <Box
                             sx={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: "50%",
-                              bgcolor: "#D1D5DB",
+                              ml: 4,
+                              mb: 2,
+                              pl: 2,
+                              borderLeft: "2px solid #E5E7EB",
                             }}
-                          />
+                          >
+                            <Typography
+                              variant="caption"
+                              color="primary.main"
+                              fontWeight={600}
+                              sx={{ display: "block", mb: 0.5 }}
+                            >
+                              Currently in Production
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Live Stage:{" "}
+                              {request.productionOrder.stages.find(
+                                (s) => s.status === "IN_PROGRESS",
+                              )?.stageLabel || "Processing..."}
+                            </Typography>
+                          </Box>
                         )}
-                      </Box>
-                      <Typography
-                        variant="body2"
-                        fontWeight={isActive || isPast ? 600 : 400}
-                        color={
-                          isPast
-                            ? "#166534"
-                            : isActive
-                              ? "#2563EB"
-                              : "text.secondary"
-                        }
-                      >
-                        {step.replace("_", " ")}
-                      </Typography>
                     </Box>
                   );
                 },

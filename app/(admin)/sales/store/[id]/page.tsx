@@ -17,6 +17,7 @@ import { Edit as EditIcon, ArrowBack as BackIcon } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { StoreItemWithRelations } from "@/types/store";
 import { format } from "date-fns";
+import StoreDispatchHistory from "./dispatch-history";
 
 export default function StoreItemDetailsPage({
   params,
@@ -155,8 +156,14 @@ export default function StoreItemDetailsPage({
       </Box>
 
       <Grid container spacing={3}>
-        {/* Basic Information */}
-        <Grid item xs={12} md={6}>
+        {/* Left Column - Details */}
+        <Grid
+          item
+          xs={12}
+          lg={4}
+          sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+        >
+          {/* Basic Information */}
           <Paper
             elevation={0}
             sx={{
@@ -205,10 +212,8 @@ export default function StoreItemDetailsPage({
               />
             </Box>
           </Paper>
-        </Grid>
 
-        {/* Stock & Pricing */}
-        <Grid item xs={12} md={6}>
+          {/* Stock & Pricing */}
           <Paper
             elevation={0}
             sx={{
@@ -260,10 +265,8 @@ export default function StoreItemDetailsPage({
               />
             </Box>
           </Paper>
-        </Grid>
 
-        {/* Additional Details */}
-        <Grid item xs={12} md={6}>
+          {/* Additional Details */}
           <Paper
             elevation={0}
             sx={{
@@ -317,10 +320,8 @@ export default function StoreItemDetailsPage({
               />
             </Box>
           </Paper>
-        </Grid>
 
-        {/* Notes */}
-        <Grid item xs={12} md={6}>
+          {/* Notes */}
           <Paper
             elevation={0}
             sx={{
@@ -355,6 +356,11 @@ export default function StoreItemDetailsPage({
               </Typography>
             )}
           </Paper>
+        </Grid>
+
+        {/* Right Column - Dispatch History */}
+        <Grid item xs={12} lg={8}>
+          <StoreDispatchHistory storeItemId={storeItem.id} />
         </Grid>
       </Grid>
     </Box>

@@ -296,7 +296,7 @@ export default function BackordersPage() {
                 <StyledTableCell>Customer</StyledTableCell>
                 <StyledTableCell>Item</StyledTableCell>
                 <StyledTableCell>Qty Requested</StyledTableCell>
-                <StyledTableCell>Qty Allocated</StyledTableCell>
+                <StyledTableCell>Qty Available</StyledTableCell>
                 <StyledTableCell>Qty Backordered</StyledTableCell>
                 <StyledTableCell>Backorder Status</StyledTableCell>
                 <StyledTableCell>Production Request</StyledTableCell>

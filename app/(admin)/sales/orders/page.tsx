@@ -45,7 +45,12 @@ import {
   Description,
   Receipt,
   QrCode2,
+  LocalShipping,
+  Close as CloseIcon,
 } from "@mui/icons-material";
+
+import { Modal, Backdrop, Fade, Divider } from "@mui/material";
+import StoreDispatchForm from "@/components/store/store-dispatch-form";
 
 // --- Replicated Styled Components ---
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -94,6 +99,8 @@ interface Order {
       itemNumber: string;
       category: string;
     } | null;
+    quantityBackordered?: number | null;
+    backorderStatus?: string;
     product: {
       id: string;
       name: string;
@@ -140,6 +147,10 @@ export default function OrdersPage() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+
   useEffect(() => {
     fetchOrders();
   }, [page, rowsPerPage, search, statusFilter]);
@@ -183,6 +194,27 @@ export default function OrdersPage() {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedOrder(null);
+  };
+
+  const handleDispatchSubmit = async (data: any) => {
+    try {
+      const payload = { ...data, status: "REQUESTED" };
+      const res = await fetch("/api/store/dispatches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Failed to create dispatch");
+      }
+      setSuccess("Dispatch requested successfully");
+      setIsDispatchModalOpen(false);
+      fetchOrders(); // refresh data
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    }
   };
 
   const formatDate = (date: string) => {
@@ -383,13 +415,31 @@ export default function OrdersPage() {
                     onClick={() => router.push(`/sales/orders/${order.id}`)}
                   >
                     <StyledTableCell>
-                      <Typography
-                        variant="body2"
-                        fontWeight={600}
-                        sx={{ color: "#0F172A" }}
-                      >
-                        {order.orderNumber}
-                      </Typography>
+                      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          sx={{ color: "#0F172A" }}
+                        >
+                          {order.orderNumber}
+                        </Typography>
+                        {order.lineItems?.some(
+                          (li) => (li.quantityBackordered || 0) > 0,
+                        ) && (
+                          <Chip
+                            label={`${order.lineItems.reduce((sum, li) => sum + (li.quantityBackordered || 0), 0)} on Backorder`}
+                            size="small"
+                            sx={{
+                              bgcolor: "#fef3c7",
+                              color: "#92400e",
+                              fontWeight: 600,
+                              fontSize: 10,
+                              height: 20,
+                              alignSelf: "flex-start",
+                            }}
+                          />
+                        )}
+                      </Box>
                     </StyledTableCell>
                     <StyledTableCell>
                       <Box>
@@ -452,6 +502,23 @@ export default function OrdersPage() {
                           </Tooltip>
                         )}
                       </Box>
+                      {order.lineItems?.some(
+                        (li) => (li.quantityBackordered || 0) > 0,
+                      ) && (
+                        <Typography
+                          variant="caption"
+                          color="error.main"
+                          fontWeight={600}
+                          display="block"
+                          sx={{ mt: 0.5 }}
+                        >
+                          {order.lineItems.reduce(
+                            (sum, li) => sum + (li.quantityBackordered || 0),
+                            0,
+                          )}{" "}
+                          Backordered
+                        </Typography>
+                      )}
                     </StyledTableCell>
                     <StyledTableCell>
                       <Chip
@@ -480,7 +547,7 @@ export default function OrdersPage() {
                       />
                     </StyledTableCell>
                     <StyledTableCell>
-                      <Box sx={{ display: "flex", gap: 0.5 }}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                         {order.quote && (
                           <Tooltip title={`Quote: ${order.quote.quoteNumber}`}>
                             <IconButton
@@ -508,6 +575,20 @@ export default function OrdersPage() {
                               <Receipt sx={{ fontSize: 16 }} />
                             </IconButton>
                           </Tooltip>
+                        )}
+                        {order.invoice?.status === 'PARTIALLY_PAID' && (
+                          <Chip
+                            label="PARTIAL PAY"
+                            size="small"
+                            sx={{
+                              fontSize: 9,
+                              height: 18,
+                              bgcolor: "#ffedd5",
+                              color: "#ea580c",
+                              fontWeight: 700,
+                              ml: 0.5
+                            }}
+                          />
                         )}
                       </Box>
                     </StyledTableCell>
@@ -584,7 +665,90 @@ export default function OrdersPage() {
             primaryTypographyProps={{ variant: "body2" }}
           />
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setIsDispatchModalOpen(true);
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon>
+            <LocalShipping fontSize="small" />
+          </ListItemIcon>
+          <ListItemText
+            primary="Request Store Dispatch"
+            primaryTypographyProps={{ variant: "body2" }}
+          />
+        </MenuItem>
       </Menu>
+
+      {/* Dispatch Request Modal */}
+      <Modal
+        open={isDispatchModalOpen}
+        onClose={() => setIsDispatchModalOpen(false)}
+        closeAfterTransition
+        slots={{ backdrop: Backdrop }}
+        slotProps={{ backdrop: { timeout: 500 } }}
+      >
+        <Fade in={isDispatchModalOpen}>
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "100%",
+              maxWidth: 800,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              bgcolor: "background.paper",
+              boxShadow: 24,
+              borderRadius: 3,
+            }}
+          >
+            <Box
+              sx={{
+                p: 3,
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                position: "sticky",
+                top: 0,
+                bgcolor: "background.paper",
+                zIndex: 1,
+              }}
+            >
+              <Typography variant="h6" fontWeight={700}>
+                Create Dispatch Request
+              </Typography>
+              <IconButton onClick={() => setIsDispatchModalOpen(false)}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
+            <Box sx={{ p: 4, pt: 2 }}>
+              {selectedOrder && (
+                <StoreDispatchForm
+                  onSubmit={handleDispatchSubmit}
+                  onCancel={() => setIsDispatchModalOpen(false)}
+                  initialData={{
+                    orderId: selectedOrder.id,
+                    customerId: selectedOrder.customer.id,
+                    invoiceId: selectedOrder.invoice?.id || "",
+                    deliveryAddress: "",
+                    items: selectedOrder.lineItems.map((li: any) => ({
+                      storeItemId: li.storeItem?.id || "",
+                      quantity: li.quantity,
+                      notes: "",
+                    })),
+                  }}
+                />
+              )}
+            </Box>
+          </Box>
+        </Fade>
+      </Modal>
+
     </Box>
   );
 }

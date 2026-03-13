@@ -25,6 +25,9 @@ export async function GET(request: NextRequest) {
       backorderStatus: {
         in: ['PENDING', 'IN_PRODUCTION'],
       },
+      quote: {
+        isAccepted: true,
+      },
     };
 
     if (search) {

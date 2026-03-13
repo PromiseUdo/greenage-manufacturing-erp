@@ -82,13 +82,7 @@ interface Employee {
   };
 }
 
-const DEPARTMENTS = [
-  { value: '', label: 'All Departments' },
-  { value: 'OPERATIONS', label: 'Operations' },
-  { value: 'PRODUCTION', label: 'Production' },
-  { value: 'STORE', label: 'Store' },
-  { value: 'MANAGEMENT', label: 'Management' },
-];
+// DEPARTMENTS are now fetched from the database
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All Status' },
@@ -107,6 +101,22 @@ export default function EmployeesPage() {
   const [department, setDepartment] = useState('');
   const [status, setStatus] = useState('');
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [dbDepartments, setDbDepartments] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchDepts = async () => {
+      try {
+        const res = await fetch("/api/settings/departments");
+        if (res.ok) {
+          const data = await res.json();
+          setDbDepartments(data);
+        }
+      } catch (e) {
+        console.error("Failed to load departments", e);
+      }
+    };
+    fetchDepts();
+  }, []);
 
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
@@ -153,7 +163,9 @@ export default function EmployeesPage() {
       STORE: '#f59e0b',
       MANAGEMENT: '#8b5cf6',
     };
-    return colors[dept] || '#64748b';
+    // Normalize to uppercase for lookup
+    const upperDept = dept?.toUpperCase();
+    return colors[upperDept] || '#64748b';
   };
 
   return (
@@ -254,9 +266,10 @@ export default function EmployeesPage() {
                 },
               }}
             >
-              {DEPARTMENTS.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
+              <MenuItem value="">All Departments</MenuItem>
+              {dbDepartments.map((option) => (
+                <MenuItem key={option.id} value={option.id}>
+                  {option.name}
                 </MenuItem>
               ))}
             </TextField>

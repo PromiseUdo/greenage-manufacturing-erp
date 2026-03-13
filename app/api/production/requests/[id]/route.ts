@@ -55,6 +55,20 @@ export async function GET(
             },
           },
         },
+        productionOrder: {
+          select: {
+            id: true,
+            orderNumber: true,
+            status: true,
+            stages: {
+              select: {
+                id: true,
+                stageLabel: true,
+                status: true,
+              },
+            },
+          },
+        },
       },
     });
 

@@ -97,6 +97,15 @@ export async function POST(
         },
       });
 
+      // Track production request counter for this transaction
+      const createdProductionRequests = [];
+      const prYear = new Date().getFullYear();
+      const lastPR = await tx.productionRequest.findFirst({
+        where: { requestNumber: { contains: `PR-${prYear}` } },
+        orderBy: { createdAt: 'desc' },
+      });
+      let lastPRNum = lastPR ? parseInt(lastPR.requestNumber.split('-')[2]) : 0;
+
       // ✅ Create InvoiceLineItems from ALL QuoteLineItems at full quantity
       for (const qli of quote.lineItems) {
         await tx.invoiceLineItem.create({
@@ -107,11 +116,35 @@ export async function POST(
             quantity: qli.quantity,
             unitPrice: qli.unitPrice,
             totalAmount: qli.unitPrice * qli.quantity,
+            quantityAllocated: qli.quantityAllocated,
+            quantityBackordered: qli.quantityBackordered,
+            backorderStatus: qli.backorderStatus,
+            backorderCreatedAt: qli.backorderCreatedAt,
           },
         });
+
+        // Auto-generate production request if backordered
+        if (qli.quantityBackordered && qli.quantityBackordered > 0) {
+          lastPRNum++;
+          const requestNumber = `PR-${prYear}-${String(lastPRNum).padStart(3, '0')}`;
+
+          const productionRequest = await tx.productionRequest.create({
+            data: {
+              requestNumber,
+              storeItemId: qli.storeItemId,
+              quoteId: quote.id,
+              quoteLineItemId: qli.id,
+              quantityNeeded: qli.quantityBackordered,
+              status: 'PENDING',
+              dateRaised: new Date(),
+            },
+          });
+
+          createdProductionRequests.push(productionRequest);
+        }
       }
 
-      return { quote: updatedQuote, invoice };
+      return { quote: updatedQuote, invoice, productionRequests: createdProductionRequests };
     });
 
     // Log activity
