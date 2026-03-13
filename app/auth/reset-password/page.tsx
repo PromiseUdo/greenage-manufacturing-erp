@@ -204,12 +204,12 @@ function ResetPasswordForm() {
 
       <StyledCard sx={{ position: "relative", zIndex: 1 }}>
         <Box sx={{ mb: 4, textAlign: "center" }}>
-          {/* <img
+          <img
             src="/greenage_logo_black.png"
             alt="GreenAge"
-            style={{ width: '140px', height: 'auto', marginBottom: '24px' }}
-          /> */}
-          <Typography
+            style={{ width: "140px", height: "auto", marginBottom: "24px" }}
+          />
+          {/* <Typography
             sx={{
               fontSize: "1.5rem",
               fontWeight: 700,
@@ -218,7 +218,7 @@ function ResetPasswordForm() {
             }}
           >
             LOGO
-          </Typography>
+          </Typography> */}
           <Typography
             variant="h4"
             fontWeight={700}

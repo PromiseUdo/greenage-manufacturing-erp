@@ -332,12 +332,12 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
         <LeftPanel>
           <Card>
             <LogoContainer>
-              {/* <img
+              <img
                 src="/greenage_logo_black.png"
                 alt="GreenAge logo"
-                style={{ width: '160px', height: 'auto' }}
-              /> */}
-              <Typography
+                style={{ width: "160px", height: "auto" }}
+              />
+              {/* <Typography
                 sx={{
                   fontSize: "1.5rem",
                   fontWeight: 700,
@@ -346,7 +346,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
                 }}
               >
                 LOGO
-              </Typography>
+              </Typography> */}
             </LogoContainer>
 
             <Box sx={{ mb: 2 }}>
