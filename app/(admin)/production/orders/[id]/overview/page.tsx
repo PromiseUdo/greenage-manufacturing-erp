@@ -1,8 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { useOrderContext } from "../layout";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from 'react';
+import { useOrderContext } from '../layout';
 import {
   Box,
   Grid,
@@ -16,24 +15,23 @@ import {
   LinearProgress,
   Button,
   useMediaQuery,
-} from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import FactoryIcon from "@mui/icons-material/Factory";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CancelIcon from "@mui/icons-material/Cancel";
-import AllInclusiveIcon from "@mui/icons-material/AllInclusive";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import { Gantt, Task, ViewMode } from "gantt-task-react";
-import "gantt-task-react/dist/index.css";
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import FactoryIcon from '@mui/icons-material/Factory';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import AllInclusiveIcon from '@mui/icons-material/AllInclusive';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { Gantt, Task, ViewMode } from 'gantt-task-react';
+import 'gantt-task-react/dist/index.css';
 
 const formatDate = (d: string | null) => {
   if (!d) return null;
-  return new Date(d).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
+  return new Date(d).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
   });
 };
 
@@ -46,19 +44,21 @@ const diffDays = (a: string | null, b: string | null) => {
 
 const stageStatusColor = (status: string) => {
   switch (status) {
-    case "COMPLETED":
-      return "#16A34A";
-    case "IN_PROGRESS":
-      return "#2563EB";
+    case 'COMPLETED':
+      return '#16A34A';
+    case 'IN_PROGRESS':
+      return '#2563EB';
     default:
-      return "#9CA3AF";
+      return '#9CA3AF';
   }
 };
 
 const toFrappeDate = (d: Date) => {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
 
+// Progress values are pre-computed on the server (stage.progressPercent, action.progressPercent).
+// No unit tracking data needed in the frontend — the units param is intentionally removed.
 const buildGanttTasks = (stages: any[], orderStart: string): Task[] => {
   const tasks: Task[] = [];
 
@@ -73,22 +73,13 @@ const buildGanttTasks = (stages: any[], orderStart: string): Task[] => {
       sEnd.setDate(sEnd.getDate() + 1);
     }
 
-    // Calculate stage progress based on completed actions
-    const totalActions = stage.actionItems?.length || 0;
-    const completedActions =
-      stage.actionItems?.filter(
-        (a: any) => a.status === "COMPLETED" || a.status === "SKIPPED",
-      ).length || 0;
-    const progress =
-      totalActions > 0 ? (completedActions / totalActions) * 100 : 0;
-
     tasks.push({
       id: stageId,
-      name: `Stage ${stage.sortOrder}: ${stage.stageLabel.split(" (")[0]}`,
+      name: `Stage ${stage.sortOrder}: ${stage.stageLabel.split(' (')[0]}`,
       start: sStart,
       end: sEnd,
-      progress,
-      type: "project",
+      progress: stage.progressPercent ?? 0,
+      type: 'project',
       hideChildren: false,
       styles: {
         progressColor: stageStatusColor(stage.status),
@@ -106,10 +97,7 @@ const buildGanttTasks = (stages: any[], orderStart: string): Task[] => {
         aEnd.setDate(aEnd.getDate() + 1);
       }
 
-      let aProgress = 0;
-      if (action.status === "COMPLETED" || action.status === "SKIPPED")
-        aProgress = 100;
-      else if (action.status === "IN_PROGRESS") aProgress = 50;
+      const aProgress = action.progressPercent ?? 0;
 
       const actionTaskId = `action_${action.id}`;
       // Define dependency on the previous action item within the stage
@@ -119,15 +107,15 @@ const buildGanttTasks = (stages: any[], orderStart: string): Task[] => {
       const assignedTo =
         action.responsible?.name ||
         action.defaultResponsibility ||
-        "Unassigned";
+        'Unassigned';
 
       tasks.push({
         id: actionTaskId,
-        name: (action.actionName || "").replace(" (Custom)", ""),
+        name: (action.actionName || '').replace(' (Custom)', ''),
         start: aStart,
         end: aEnd,
         progress: aProgress,
-        type: "task",
+        type: 'task',
         project: stageId,
         dependencies,
         styles: {
@@ -147,18 +135,18 @@ const CustomTooltip = ({ task, fontSize, fontFamily }: any) => {
   return (
     <Box
       sx={{
-        bgcolor: "background.paper",
+        bgcolor: 'background.paper',
         p: 2,
         borderRadius: 1,
         boxShadow:
-          "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+          '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
         fontFamily,
-        fontSize: "13px",
-        border: "1px solid",
-        borderColor: "divider",
+        fontSize: '13px',
+        border: '1px solid',
+        borderColor: 'divider',
         minWidth: 200,
         zIndex: 9999,
-        position: "relative",
+        position: 'relative',
       }}
     >
       <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1 }}>
@@ -189,16 +177,16 @@ const CustomTaskListHeader = ({ headerHeight, fontFamily, fontSize }: any) => {
   return (
     <Box
       sx={{
-        display: "flex",
-        alignItems: "center",
+        display: 'flex',
+        alignItems: 'center',
         height: headerHeight,
         fontFamily: fontFamily,
         fontSize: fontSize,
         fontWeight: 700,
-        paddingLeft: "1rem",
-        borderBottom: "1px solid",
-        borderColor: "divider",
-        bgcolor: "#ffffff",
+        paddingLeft: '1rem',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+        bgcolor: '#ffffff',
       }}
     >
       Task Name
@@ -217,45 +205,45 @@ const CustomTaskListTable = ({
   return (
     <Box
       sx={{
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         fontFamily,
         fontSize,
         width: rowWidth,
-        bgcolor: "#ffffff",
+        bgcolor: '#ffffff',
       }}
     >
       {tasks.map((t: any, i: number) => {
-        let expanderSymbol = "";
+        let expanderSymbol = '';
         if (t.hideChildren === false) {
-          expanderSymbol = "▼";
+          expanderSymbol = '▼';
         } else if (t.hideChildren === true) {
-          expanderSymbol = "▶";
+          expanderSymbol = '▶';
         }
         return (
           <Box
             key={`${t.id}row`}
             sx={{
               height: rowHeight,
-              display: "flex",
-              alignItems: "center",
-              paddingLeft: t.type === "project" ? "0.5rem" : "1.5rem",
-              borderBottom: "1px solid",
-              borderColor: "divider",
+              display: 'flex',
+              alignItems: 'center',
+              paddingLeft: t.type === 'project' ? '0.5rem' : '1.5rem',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
             }}
           >
             <Box
               onClick={() => onExpanderClick(t)}
               sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "1.2rem",
-                marginRight: "0.25rem",
-                textAlign: "center",
-                cursor: "pointer",
-                color: "text.secondary",
-                fontSize: "10px",
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '1.2rem',
+                marginRight: '0.25rem',
+                textAlign: 'center',
+                cursor: 'pointer',
+                color: 'text.secondary',
+                fontSize: '10px',
               }}
             >
               {expanderSymbol}
@@ -263,11 +251,11 @@ const CustomTaskListTable = ({
             <Typography
               variant="body2"
               sx={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-                fontSize: "13px",
-                fontWeight: t.type === "project" ? 600 : 400,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                fontSize: '13px',
+                fontWeight: t.type === 'project' ? 600 : 400,
               }}
             >
               {t.name}
@@ -281,9 +269,8 @@ const CustomTaskListTable = ({
 
 export default function ProductionOrderOverviewPage() {
   const { order, loading } = useOrderContext();
-  const router = useRouter();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Day);
 
   if (loading) {
@@ -309,80 +296,79 @@ export default function ProductionOrderOverviewPage() {
   const packaged = order.quantityPackaged;
   const yieldRate = order.yieldRate;
   const shortfall = (order as any).shortfallQuantity ?? 0;
-  const topUpRuns: any[] = (order as any).topUpRuns ?? [];
   const hasShortfall = shortfall > 0;
 
   const kpis = [
     {
-      label: "Units Planned",
+      label: 'Units Planned',
       value: qty,
-      sub: "quantity ordered",
-      color: "#6366F1",
-      bg: "#EEF2FF",
+      sub: 'quantity ordered',
+      color: '#6366F1',
+      bg: '#EEF2FF',
       icon: <FactoryIcon />,
     },
     {
-      label: "Units Passed QC",
-      value: passed ?? "—",
-      sub: passed !== null ? `of ${qty}` : "no QC recorded",
-      color: "#16A34A",
-      bg: "#DCFCE7",
+      label: 'Units Passed QC',
+      value: passed ?? '—',
+      sub: passed !== null ? `of ${qty}` : 'no QC recorded',
+      color: '#16A34A',
+      bg: '#DCFCE7',
       icon: <CheckCircleIcon />,
     },
     {
-      label: "Units Rejected",
-      value: rejected ?? "—",
-      sub: rejected !== null ? "scrapped" : "no rejection recorded",
-      color: "#DC2626",
-      bg: "#FEE2E2",
+      label: 'Units Rejected',
+      value: rejected ?? '—',
+      sub: rejected !== null ? 'scrapped' : 'no rejection recorded',
+      color: '#DC2626',
+      bg: '#FEE2E2',
       icon: <CancelIcon />,
     },
     {
-      label: "Units Packaged",
-      value: packaged ?? "—",
-      sub: packaged !== null ? "ready for store" : "not yet packaged",
-      color: "#D97706",
-      bg: "#FEF3C7",
+      label: 'Units Packaged',
+      value: packaged ?? '—',
+      sub: packaged !== null ? 'ready for store' : 'not yet packaged',
+      color: '#D97706',
+      bg: '#FEF3C7',
       icon: <AllInclusiveIcon />,
     },
     {
-      label: "Yield Rate",
-      value: yieldRate !== null ? `${yieldRate}%` : "—",
+      label: 'Yield Rate',
+      value: yieldRate !== null ? `${yieldRate}%` : '—',
       sub:
         yieldRate !== null
           ? yieldRate >= 90
-            ? "Excellent"
+            ? 'Excellent'
             : yieldRate >= 75
-              ? "Acceptable"
-              : "Below Target"
-          : "pending QC",
+              ? 'Acceptable'
+              : 'Below Target'
+          : 'pending QC',
       color:
         yieldRate === null
-          ? "#6B7280"
+          ? '#6B7280'
           : yieldRate >= 90
-            ? "#16A34A"
+            ? '#16A34A'
             : yieldRate >= 75
-              ? "#D97706"
-              : "#DC2626",
+              ? '#D97706'
+              : '#DC2626',
       bg:
         yieldRate === null
-          ? "#F3F4F6"
+          ? '#F3F4F6'
           : yieldRate >= 90
-            ? "#DCFCE7"
+            ? '#DCFCE7'
             : yieldRate >= 75
-              ? "#FEF3C7"
-              : "#FEE2E2",
+              ? '#FEF3C7'
+              : '#FEE2E2',
       icon: <TrendingUpIcon />,
     },
     // Shortfall card — only shown when packaged < quantity
     ...(hasShortfall
       ? [
           {
-            label: "Shortfall",
+            label: 'Shortfall',
             value: shortfall,
             sub: `units still needed`,
-            color: "#B45309",
-            bg: "#FEF3C7",
+            color: '#B45309',
+            bg: '#FEF3C7',
             icon: <WarningAmberIcon />,
           },
         ]
@@ -394,9 +380,9 @@ export default function ProductionOrderOverviewPage() {
   return (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: "minmax(0, 1fr)",
-        width: "100%",
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1fr)',
+        width: '100%',
       }}
     >
       {/* KPI Cards */}
@@ -406,18 +392,18 @@ export default function ProductionOrderOverviewPage() {
             <Card
               elevation={0}
               sx={{
-                border: "1px solid",
-                borderColor: "divider",
+                border: '1px solid',
+                borderColor: 'divider',
                 borderRadius: 2,
               }}
             >
               <CardContent
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 2,
                   py: 2,
-                  "&:last-child": { pb: 2 },
+                  '&:last-child': { pb: 2 },
                 }}
               >
                 <Box
@@ -425,9 +411,9 @@ export default function ProductionOrderOverviewPage() {
                     width: 44,
                     height: 44,
                     borderRadius: 2,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     bgcolor: kpi.bg,
                     color: kpi.color,
                     flexShrink: 0,
@@ -463,10 +449,10 @@ export default function ProductionOrderOverviewPage() {
           <Card
             elevation={0}
             sx={{
-              border: "1px solid",
-              borderColor: "divider",
+              border: '1px solid',
+              borderColor: 'divider',
               borderRadius: 2,
-              height: "100%",
+              height: '100%',
             }}
           >
             <CardContent>
@@ -476,27 +462,27 @@ export default function ProductionOrderOverviewPage() {
               <Grid container spacing={1.5}>
                 {[
                   {
-                    label: "Planned Start",
+                    label: 'Planned Start',
                     value: formatDate(order.scheduledStart),
                   },
                   {
-                    label: "Planned End",
+                    label: 'Planned End',
                     value: formatDate(order.scheduledEnd),
                   },
                   {
-                    label: "Actual Start",
-                    value: formatDate(order.actualStart) || "Not started",
+                    label: 'Actual Start',
+                    value: formatDate(order.actualStart) || 'Not started',
                   },
                   {
-                    label: "Actual End",
-                    value: formatDate(order.actualEnd) || "Ongoing",
+                    label: 'Actual End',
+                    value: formatDate(order.actualEnd) || 'Ongoing',
                   },
                   {
-                    label: "Planned Duration",
+                    label: 'Planned Duration',
                     value: `${diffDays(order.scheduledStart, order.scheduledEnd)} days`,
                   },
                   {
-                    label: "Priority",
+                    label: 'Priority',
                     value: order.priority,
                   },
                 ].map((item) => (
@@ -517,10 +503,10 @@ export default function ProductionOrderOverviewPage() {
           <Card
             elevation={0}
             sx={{
-              border: "1px solid",
-              borderColor: "divider",
+              border: '1px solid',
+              borderColor: 'divider',
               borderRadius: 2,
-              height: "100%",
+              height: '100%',
             }}
           >
             <CardContent>
@@ -528,51 +514,61 @@ export default function ProductionOrderOverviewPage() {
                 Stage Summary
               </Typography>
               {order.stages.map((stage: any) => {
-                const total = stage.actionItems?.length ?? 0;
-                const done =
-                  stage.actionItems?.filter(
-                    (a: any) =>
-                      a.status === "COMPLETED" || a.status === "SKIPPED",
-                  ).length ?? 0;
+                const total =
+                  (stage.actionItems?.length ?? 0) * (order.units?.length || 1);
+                let done = 0;
+                stage.actionItems?.forEach((a: any) => {
+                  order.units?.forEach((u: any) => {
+                    const t = u.stepTrackings?.find(
+                      (tr: any) => tr.actionItemId === a.id,
+                    );
+                    if (
+                      t &&
+                      (t.status === 'COMPLETED' || t.status === 'SKIPPED')
+                    ) {
+                      done++;
+                    }
+                  });
+                });
                 const pct = total > 0 ? Math.round((done / total) * 100) : 0;
                 return (
                   <Box key={stage.id} sx={{ mb: 1.5 }}>
                     <Box
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        justifyContent: 'space-between',
                         mb: 0.5,
                       }}
                     >
                       <Typography variant="body2" fontWeight={500}>
-                        Stage {stage.sortOrder}:{" "}
-                        {stage.stageLabel.split(" (")[0]}
+                        Stage {stage.sortOrder}:{' '}
+                        {stage.stageLabel.split(' (')[0]}
                       </Typography>
                       <Box
-                        sx={{ display: "flex", gap: 1, alignItems: "center" }}
+                        sx={{ display: 'flex', gap: 1, alignItems: 'center' }}
                       >
                         <Typography variant="caption" color="text.secondary">
                           {done}/{total}
                         </Typography>
                         <Chip
-                          label={stage.status.replace(/_/g, " ")}
+                          label={stage.status.replace(/_/g, ' ')}
                           size="small"
                           sx={{
                             height: 18,
-                            fontSize: "0.6rem",
+                            fontSize: '0.6rem',
                             fontWeight: 600,
                             bgcolor:
-                              stage.status === "COMPLETED"
-                                ? "#DCFCE7"
-                                : stage.status === "IN_PROGRESS"
-                                  ? "#DBEAFE"
-                                  : "#F3F4F6",
+                              stage.status === 'COMPLETED'
+                                ? '#DCFCE7'
+                                : stage.status === 'IN_PROGRESS'
+                                  ? '#DBEAFE'
+                                  : '#F3F4F6',
                             color:
-                              stage.status === "COMPLETED"
-                                ? "#166534"
-                                : stage.status === "IN_PROGRESS"
-                                  ? "#1E40AF"
-                                  : "#6B7280",
+                              stage.status === 'COMPLETED'
+                                ? '#166534'
+                                : stage.status === 'IN_PROGRESS'
+                                  ? '#1E40AF'
+                                  : '#6B7280',
                           }}
                         />
                       </Box>
@@ -583,8 +579,8 @@ export default function ProductionOrderOverviewPage() {
                       sx={{
                         height: 6,
                         borderRadius: 3,
-                        bgcolor: "#E5E7EB",
-                        "& .MuiLinearProgress-bar": {
+                        bgcolor: '#E5E7EB',
+                        '& .MuiLinearProgress-bar': {
                           borderRadius: 3,
                           bgcolor: stageStatusColor(stage.status),
                         },
@@ -599,7 +595,7 @@ export default function ProductionOrderOverviewPage() {
       </Grid>
 
       {/* Gantt Chart */}
-      <Box
+      {/* <Box
         sx={{
           display: "grid",
           gridTemplateColumns: "minmax(0, 1fr)",
@@ -720,98 +716,8 @@ export default function ProductionOrderOverviewPage() {
             )}
           </CardContent>
         </Card>
-      </Box>
+      </Box> */}
 
-      {/* ── Top-Up Runs section ── */}
-      {topUpRuns.length > 0 && (
-        <Card
-          elevation={0}
-          sx={{
-            border: "1px solid #C7D2FE",
-            borderRadius: 2,
-            mt: 3,
-            bgcolor: "#F9FAFE",
-          }}
-        >
-          <CardContent>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-              <AddCircleOutlineIcon sx={{ color: "#4338CA" }} />
-              <Typography variant="subtitle1" fontWeight={700} color="#4338CA">
-                Top-Up Runs ({topUpRuns.length})
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                — child orders created to cover the shortfall
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-              {topUpRuns.map((run: any) => {
-                const statusColors: Record<string, { bg: string; text: string }> = {
-                  DRAFT: { bg: "#F3F4F6", text: "#6B7280" },
-                  IN_PROGRESS: { bg: "#DBEAFE", text: "#1E40AF" },
-                  ON_HOLD: { bg: "#FEF3C7", text: "#B45309" },
-                  PARTIALLY_COMPLETED: { bg: "#FEF3C7", text: "#B45309" },
-                  COMPLETED: { bg: "#DCFCE7", text: "#166534" },
-                  CANCELLED: { bg: "#FEE2E2", text: "#991B1B" },
-                };
-                const sc = statusColors[run.status] ?? statusColors.DRAFT;
-                return (
-                  <Box
-                    key={run.id}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,
-                      p: 1.5,
-                      bgcolor: "background.paper",
-                      border: "1px solid #E5E7EB",
-                      borderRadius: 2,
-                      cursor: "pointer",
-                      transition: "box-shadow 0.2s",
-                      "&:hover": { boxShadow: "0 2px 12px rgba(0,0,0,0.08)" },
-                    }}
-                    onClick={() =>
-                      router.push(`/production/orders/${run.id}/overview`)
-                    }
-                  >
-                    <AddCircleOutlineIcon sx={{ color: "#6366F1", flexShrink: 0 }} />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="body2" fontWeight={700} noWrap>
-                        {run.orderNumber}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {run.quantity} units planned
-                        {run.quantityPackaged !== null
-                          ? ` · ${run.quantityPackaged} packaged`
-                          : ""}
-                        {run.scheduledStart
-                          ? ` · ${new Date(run.scheduledStart).toLocaleDateString("en-GB", {
-                              day: "2-digit",
-                              month: "short",
-                              year: "numeric",
-                            })}`
-                          : ""}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label={run.status.replace(/_/g, " ")}
-                      size="small"
-                      sx={{
-                        bgcolor: sc.bg,
-                        color: sc.text,
-                        fontWeight: 700,
-                        fontSize: "0.65rem",
-                        height: 20,
-                        flexShrink: 0,
-                      }}
-                    />
-                  </Box>
-                );
-              })}
-            </Box>
-          </CardContent>
-        </Card>
-      )}
     </Box>
   );
 }
-

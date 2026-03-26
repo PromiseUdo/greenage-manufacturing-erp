@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { computeProgressPercent, computeScheduleStatus, computeShortfall } from '@/lib/production-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,25 +63,18 @@ export async function GET(request: NextRequest) {
           stages: {
             include: {
               actionItems: {
-                select: {
-                  id: true,
-                  status: true,
-                },
+                select: { id: true },
               },
             },
             orderBy: { sortOrder: 'asc' },
           },
-          topUpRuns: {
+          // Only fetch unit IDs + total tracking count — no individual tracking records
+          units: {
             select: {
               id: true,
-              orderNumber: true,
               status: true,
-              quantity: true,
-              quantityPackaged: true,
-              scheduledStart: true,
-              scheduledEnd: true,
+              _count: { select: { stepTrackings: true } },
             },
-            orderBy: { createdAt: 'asc' },
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -90,54 +84,30 @@ export async function GET(request: NextRequest) {
       prisma.productionOrder.count({ where }),
     ]);
 
+    // Fetch completed tracking counts for all units in one aggregation query
+    const unitIds = orders.flatMap((o) => o.units.map((u) => u.id));
+    const completedCounts = unitIds.length > 0
+      ? await prisma.unitStepTracking.groupBy({
+          by: ['unitId'],
+          where: { unitId: { in: unitIds }, status: { in: ['COMPLETED', 'SKIPPED'] } },
+          _count: { _all: true },
+        })
+      : [];
+    const completedByUnit = new Map(completedCounts.map((c) => [c.unitId, c._count._all]));
+
     // Calculate progress for each order
     const ordersWithProgress = orders.map((order) => {
-      const totalActions = order.stages.reduce(
-        (acc, stage) => acc + stage.actionItems.length,
-        0
-      );
-      const completedActions = order.stages.reduce(
-        (acc, stage) =>
-          acc +
-          stage.actionItems.filter(
-            (a) => a.status === 'COMPLETED' || a.status === 'SKIPPED'
-          ).length,
-        0
-      );
-      const progressPercent =
-        totalActions > 0 ? Math.round((completedActions / totalActions) * 100) : 0;
+      let totalActions = 0;
+      let completedActions = 0;
 
-      // Determine schedule status
-      const now = new Date();
-      let scheduleStatus = 'ON_TRACK';
-      if (order.status === 'COMPLETED') {
-        if (order.actualEnd && order.actualEnd <= order.scheduledEnd) {
-          scheduleStatus = 'AHEAD';
-        } else if (order.actualEnd && order.actualEnd > order.scheduledEnd) {
-          scheduleStatus = 'DELAYED';
-        }
-      } else if (order.status === 'IN_PROGRESS') {
-        if (now > order.scheduledEnd) {
-          scheduleStatus = 'DELAYED';
-        } else {
-          // Check if progress is proportional to time elapsed
-          const totalDuration =
-            order.scheduledEnd.getTime() - order.scheduledStart.getTime();
-          const elapsed = now.getTime() - order.scheduledStart.getTime();
-          const expectedProgress =
-            totalDuration > 0 ? (elapsed / totalDuration) * 100 : 0;
-          if (progressPercent > expectedProgress + 10) {
-            scheduleStatus = 'AHEAD';
-          } else if (progressPercent < expectedProgress - 15) {
-            scheduleStatus = 'DELAYED';
-          }
-        }
-      }
+      order.units.forEach((unit) => {
+        totalActions += unit._count.stepTrackings;
+        completedActions += completedByUnit.get(unit.id) ?? 0;
+      });
 
-      const shortfallQuantity =
-        order.quantityPackaged !== null && order.quantityPackaged < order.quantity
-          ? order.quantity - order.quantityPackaged
-          : 0;
+      const progressPercent = computeProgressPercent(completedActions, totalActions);
+      const scheduleStatus = computeScheduleStatus(order, progressPercent);
+      const shortfallQuantity = computeShortfall(order.quantityPackaged, order.quantity);
 
       return {
         ...order,
@@ -234,9 +204,20 @@ export async function POST(request: NextRequest) {
     }
     const orderNumber = `PRD-${year}-${orderCount.toString().padStart(4, '0')}`;
 
-    // Create production order with stages and action items in a transaction
-    // Increase timeout because creating many action items can be slow on MongoDB
-    const productionOrder = await prisma.$transaction(async (tx) => {
+    // Create production order with stages and action items in a transaction.
+    // Stages are created in parallel, and action items within each stage are
+    // created in parallel to minimise round-trips on MongoDB Atlas.
+    // The final findUnique is intentionally outside the transaction so it does
+    // not count against the transaction timeout.
+    const orderId = await prisma.$transaction(async (tx) => {
+      // 1. Reserve sequential unit numbers on the product atomically
+      const updatedProduct = await tx.product.update({
+        where: { id: productId },
+        data: { lastUnitNumber: { increment: quantity } },
+      });
+      const startUnitNumber = updatedProduct.lastUnitNumber - quantity;
+
+      // 2. Create the order record
       const order = await tx.productionOrder.create({
         data: {
           orderNumber,
@@ -251,92 +232,105 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Create stages and their action items
-      for (const stage of stages) {
-        const stageEntry = await tx.productionStageEntry.create({
-          data: {
-            productionOrderId: order.id,
-            stageName: stage.stageName,
-            stageLabel: stage.stageLabel,
-            sortOrder: stage.sortOrder,
-            scheduledStart: stage.scheduledStart
-              ? new Date(stage.scheduledStart)
-              : null,
-            scheduledEnd: stage.scheduledEnd
-              ? new Date(stage.scheduledEnd)
-              : null,
-            responsibleId: stage.responsibleId || null,
-            status: 'NOT_STARTED',
-          },
-        });
+      // 3. Create all stages and their action items in parallel
+      const actionItemIdArrays = await Promise.all(
+        stages.map(async (stage: any) => {
+          const stageEntry = await tx.productionStageEntry.create({
+            data: {
+              productionOrderId: order.id,
+              stageName: stage.stageName,
+              stageLabel: stage.stageLabel,
+              sortOrder: stage.sortOrder,
+              scheduledStart: stage.scheduledStart ? new Date(stage.scheduledStart) : null,
+              scheduledEnd: stage.scheduledEnd ? new Date(stage.scheduledEnd) : null,
+              responsibleId: stage.responsibleId || null,
+              status: 'NOT_STARTED',
+            },
+          });
 
-        // Create action items for this stage
-        if (stage.actionItems?.length) {
-          for (const action of stage.actionItems) {
-            await tx.productionActionItem.create({
-              data: {
-                stageEntryId: stageEntry.id,
-                stepId: action.stepId,
-                actionName: action.actionName,
-                defaultResponsibility: action.defaultResponsibility,
-                outputNextStep: action.outputNextStep,
-                focusGoal: action.focusGoal || null,
-                sortOrder: action.sortOrder,
-                responsibleId: action.responsibleId || null,
-                status: 'PENDING',
-                scheduledStart: action.scheduledStart ? new Date(action.scheduledStart) : null,
-                scheduledEnd: action.scheduledEnd ? new Date(action.scheduledEnd) : null,
-              },
-            });
-          }
+          if (!stage.actionItems?.length) return [];
+
+          const createdActions = await Promise.all(
+            stage.actionItems.map((action: any) =>
+              tx.productionActionItem.create({
+                data: {
+                  stageEntryId: stageEntry.id,
+                  stepId: action.stepId,
+                  actionName: action.actionName,
+                  defaultResponsibility: action.defaultResponsibility,
+                  outputNextStep: action.outputNextStep,
+                  focusGoal: action.focusGoal || null,
+                  sortOrder: action.sortOrder,
+                  isDecisionPoint: action.isDecisionPoint || false,
+                  responsibleId: action.responsibleId || null,
+                  scheduledStart: action.scheduledStart ? new Date(action.scheduledStart) : null,
+                  scheduledEnd: action.scheduledEnd ? new Date(action.scheduledEnd) : null,
+                },
+              })
+            )
+          );
+          return createdActions.map((a) => a.id);
+        })
+      );
+      const actionItemIds = actionItemIdArrays.flat();
+
+      // 4. Create all units in one bulk write
+      const unitData = Array.from({ length: quantity }, (_, i) => ({
+        productionOrderId: order.id,
+        unitNumber: i + 1,
+        unitId: `${updatedProduct.productCode}${(startUnitNumber + i + 1).toString().padStart(5, '0')}`,
+        currentStage: 'SMD_PRODUCTION' as const,
+        status: 'IN_PROGRESS' as const,
+      }));
+      await tx.productionUnit.createMany({ data: unitData });
+
+      // 5. Fetch created unit IDs
+      const createdUnits = await tx.productionUnit.findMany({
+        where: { productionOrderId: order.id },
+        select: { id: true },
+      });
+
+      // 6. Create all step-tracking records in one bulk write
+      const trackingData: any[] = [];
+      for (const cu of createdUnits) {
+        for (const aiId of actionItemIds) {
+          trackingData.push({ unitId: cu.id, actionItemId: aiId, status: 'PENDING' });
         }
       }
+      if (trackingData.length > 0) {
+        await tx.unitStepTracking.createMany({ data: trackingData });
+      }
 
-      // Link and acknowledge production requests
-      if (productionRequestIds && Array.isArray(productionRequestIds) && productionRequestIds.length > 0) {
+      // 7. Link and acknowledge production requests
+      if (productionRequestIds?.length) {
         await tx.productionRequest.updateMany({
           where: { id: { in: productionRequestIds } },
-          data: {
-            productionOrderId: order.id,
-            status: 'ACKNOWLEDGED',
-          },
+          data: { productionOrderId: order.id, status: 'ACKNOWLEDGED' },
         });
       }
 
-      // Return the created order with all relations
-      return tx.productionOrder.findUnique({
-        where: { id: order.id },
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              productNumber: true,
-              category: true,
+      return order.id;
+    }, { timeout: 60000 });
+
+    // Fetch the full order outside the transaction (no timeout pressure)
+    const productionOrder = await prisma.productionOrder.findUnique({
+      where: { id: orderId },
+      include: {
+        product: { select: { id: true, name: true, productNumber: true, category: true } },
+        manager: { select: { id: true, name: true, email: true } },
+        stages: {
+          include: {
+            responsible: { select: { id: true, name: true } },
+            actionItems: {
+              include: { responsible: { select: { id: true, name: true } } },
+              orderBy: { sortOrder: 'asc' },
             },
           },
-          manager: {
-            select: { id: true, name: true, email: true },
-          },
-          stages: {
-            include: {
-              responsible: {
-                select: { id: true, name: true },
-              },
-              actionItems: {
-                include: {
-                  responsible: {
-                    select: { id: true, name: true },
-                  },
-                },
-                orderBy: { sortOrder: 'asc' },
-              },
-            },
-            orderBy: { sortOrder: 'asc' },
-          },
+          orderBy: { sortOrder: 'asc' },
         },
-      });
-    }, { timeout: 30000 });
+        units: { select: { id: true, unitId: true, unitNumber: true } },
+      },
+    });
 
     // Log activity
     await prisma.activityLog.create({

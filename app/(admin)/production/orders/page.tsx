@@ -13,7 +13,6 @@ import {
   Skeleton,
   IconButton,
   Tooltip,
-  Collapse,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
@@ -23,19 +22,6 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import FilterListIcon from "@mui/icons-material/FilterList";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import AccountTreeIcon from "@mui/icons-material/AccountTree";
-
-interface TopUpRunSummary {
-  id: string;
-  orderNumber: string;
-  status: string;
-  quantity: number;
-  quantityPackaged: number | null;
-  scheduledStart: string;
-  scheduledEnd: string;
-}
 
 interface ProductionOrder {
   id: string;
@@ -54,9 +40,6 @@ interface ProductionOrder {
   completedActions: number;
   scheduleStatus: string;
   stageCount: number;
-  isTopUpRun: boolean;
-  parentOrderId: string | null;
-  topUpRuns: TopUpRunSummary[];
   product: {
     id: string;
     name: string;
@@ -140,13 +123,9 @@ function ProgressRing({ pct }: { pct: number }) {
 function OrderCard({
   order,
   onClick,
-  grouped = false,
-  totalRuns = 1,
 }: {
   order: ProductionOrder;
   onClick: () => void;
-  grouped?: boolean;
-  totalRuns?: number;
 }) {
   const sc = STATUS_COLORS[order.status] ?? STATUS_COLORS.DRAFT;
   const pc = PRIORITY_COLORS[order.priority] ?? PRIORITY_COLORS.NORMAL;
@@ -197,32 +176,6 @@ function OrderCard({
               >
                 {order.orderNumber}
               </Typography>
-              {order.isTopUpRun && (
-                <Chip
-                  label="Top-Up"
-                  size="small"
-                  sx={{
-                    bgcolor: "#EEF2FF",
-                    color: "#4338CA",
-                    fontWeight: 700,
-                    fontSize: "0.6rem",
-                    height: 18,
-                  }}
-                />
-              )}
-              {grouped && totalRuns > 1 && (
-                <Chip
-                  label={`Run 1 / ${totalRuns}`}
-                  size="small"
-                  sx={{
-                    bgcolor: "#F5F3FF",
-                    color: "#6D28D9",
-                    fontWeight: 700,
-                    fontSize: "0.6rem",
-                    height: 18,
-                  }}
-                />
-              )}
             </Box>
             <Typography
               fontWeight={800}
@@ -316,97 +269,13 @@ function OrderCard({
   );
 }
 
-// ── Compact run row for child top-up runs ─────────────────────────────────
-function TopUpRunRow({
-  run,
-  runIndex,
-  onClick,
-}: {
-  run: TopUpRunSummary;
-  runIndex: number;
-  onClick: () => void;
-}) {
-  const sc = STATUS_COLORS[run.status] ?? STATUS_COLORS.DRAFT;
-  return (
-    <Box
-      onClick={onClick}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1.5,
-        px: 2,
-        py: 1.2,
-        cursor: "pointer",
-        borderTop: "1px dashed #E5E7EB",
-        bgcolor: "#FAFAFA",
-        "&:hover": { bgcolor: "#F0F4FF" },
-        transition: "background 0.15s",
-      }}
-    >
-      {/* Run index indicator */}
-      <Box
-        sx={{
-          minWidth: 28,
-          height: 28,
-          borderRadius: "50%",
-          bgcolor: "#E0E7FF",
-          color: "#4338CA",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 800,
-          fontSize: "0.7rem",
-          flexShrink: 0,
-        }}
-      >
-        R{runIndex}
-      </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="caption" fontWeight={700} noWrap>
-          {run.orderNumber}
-        </Typography>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: "block" }}
-        >
-          {run.quantity} units · {formatDate(run.scheduledStart)} →{" "}
-          {formatDate(run.scheduledEnd)}
-          {run.quantityPackaged !== null
-            ? ` · Packaged: ${run.quantityPackaged}`
-            : ""}
-        </Typography>
-      </Box>
-      <Chip
-        label={run.status.replace(/_/g, " ")}
-        size="small"
-        sx={{
-          bgcolor: sc.bg,
-          color: sc.text,
-          fontWeight: 700,
-          fontSize: "0.6rem",
-          height: 18,
-          flexShrink: 0,
-        }}
-      />
-    </Box>
-  );
-}
-
-// ── Grouped wrapper card with parent + expandable run rows ────────────────
 function GroupedOrderCard({
   order,
   onClick,
-  onRunClick,
 }: {
   order: ProductionOrder;
   onClick: () => void;
-  onRunClick: (id: string) => void;
 }) {
-  const hasRuns = order.topUpRuns.length > 0;
-  const [runsOpen, setRunsOpen] = useState(true);
-  const totalRuns = 1 + order.topUpRuns.length;
-
   return (
     <Box
       sx={{
@@ -416,7 +285,6 @@ function GroupedOrderCard({
         bgcolor: "background.paper",
       }}
     >
-      {/* Parent order card — clickable */}
       <Box
         onClick={onClick}
         sx={{
@@ -426,59 +294,8 @@ function GroupedOrderCard({
           "&:active": { bgcolor: "#F3F4F6" },
         }}
       >
-        <OrderCard
-          order={order}
-          onClick={onClick}
-          grouped
-          totalRuns={totalRuns}
-        />
+        <OrderCard order={order} onClick={onClick} />
       </Box>
-
-      {/* Expand/collapse toggle for runs */}
-      {hasRuns && (
-        <>
-          <Box
-            onClick={() => setRunsOpen((o) => !o)}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.8,
-              px: 2,
-              py: 0.8,
-              bgcolor: "#F3F4F6",
-              cursor: "pointer",
-              borderTop: "1px solid #E5E7EB",
-              "&:hover": { bgcolor: "#EEF2FF" },
-              transition: "background 0.15s",
-            }}
-          >
-            <AccountTreeIcon sx={{ fontSize: 14, color: "#6366F1" }} />
-            <Typography
-              variant="caption"
-              fontWeight={700}
-              sx={{ color: "#4338CA", flex: 1 }}
-            >
-              {order.topUpRuns.length} Top-Up Run
-              {order.topUpRuns.length !== 1 ? "s" : ""}
-            </Typography>
-            {runsOpen ? (
-              <KeyboardArrowUpIcon sx={{ fontSize: 16, color: "#9CA3AF" }} />
-            ) : (
-              <KeyboardArrowDownIcon sx={{ fontSize: 16, color: "#9CA3AF" }} />
-            )}
-          </Box>
-          <Collapse in={runsOpen}>
-            {order.topUpRuns.map((run, idx) => (
-              <TopUpRunRow
-                key={run.id}
-                run={run}
-                runIndex={idx + 2}
-                onClick={() => onRunClick(run.id)}
-              />
-            ))}
-          </Collapse>
-        </>
-      )}
     </Box>
   );
 }
@@ -795,17 +612,12 @@ export default function ProductionOrdersPage() {
         </Box>
       ) : (
         <Grid container spacing={2}>
-          {orders
-            .filter((o) => o.parentOrderId === null)
-            .map((order) => (
+          {orders.map((order) => (
               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={order.id}>
                 <GroupedOrderCard
                   order={order}
                   onClick={() =>
                     router.push(`/production/orders/${order.id}/overview`)
-                  }
-                  onRunClick={(id) =>
-                    router.push(`/production/orders/${id}/overview`)
                   }
                 />
               </Grid>

@@ -1,11 +1,11 @@
 import { prisma } from '@/lib/prisma';
-import ReturnsClient from '../../returns/components/returns-client';
+import ReturnsClient from '../../inventory/returns/components/returns-client';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
 export default async function ProductionReturnsPage() {
   const session = await auth();
-  
+
   if (!session) {
     redirect('/login');
   }

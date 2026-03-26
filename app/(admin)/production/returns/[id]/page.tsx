@@ -1,11 +1,15 @@
 import { prisma } from '@/lib/prisma';
-import ReturnDetailClient from '../../../returns/[id]/components/return-detail-client';
+import ProductionReturnDetailClient from './components/return-detail-client';
 import { auth } from '@/lib/auth';
 import { redirect, notFound } from 'next/navigation';
 
-export default async function ProductionReturnDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProductionReturnDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const session = await auth();
-  
+
   if (!session) {
     redirect('/login');
   }
@@ -17,23 +21,49 @@ export default async function ProductionReturnDetailPage({ params }: { params: P
     include: {
       customer: true,
       product: true,
-      receivedBy: true,
-      handledBy: true,
-      recommendedBy: true,
+      receivedBy: { select: { id: true, name: true } },
+      handledBy: { select: { id: true, name: true } },
+      recommendedBy: { select: { id: true, name: true } },
       order: true,
-      materialRequisitions: {
-          include: {
-            items: {
-              include: {
-                material: {
-                  select: { name: true, unit: true, partNumber: true, currentStock: true }
-                }
-              }
-            }
+      // Legacy repair tasks (return-level, no unit)
+      repairTasks: {
+        where: { returnUnitId: null },
+        include: {
+          assignedTo: { select: { id: true, name: true } },
+          completedBy: { select: { id: true, name: true } },
+        },
+        orderBy: { sortOrder: 'asc' },
+      },
+      // Per-unit tracking
+      returnUnits: {
+        include: {
+          inspectedBy: { select: { id: true, name: true } },
+          approvedBy: { select: { id: true, name: true } },
+          repairTasks: {
+            include: {
+              assignedTo: { select: { id: true, name: true } },
+              completedBy: { select: { id: true, name: true } },
+            },
+            orderBy: { sortOrder: 'asc' },
           },
-          orderBy: { createdAt: 'desc' }
-      }
-    }
+        },
+        orderBy: { unitNumber: 'asc' },
+      },
+      materialRequisitions: {
+        include: {
+          requestedBy: { select: { id: true, name: true } },
+          fulfilledBy: { select: { id: true, name: true } },
+          items: {
+            include: {
+              material: {
+                select: { id: true, name: true, partNumber: true, unit: true, currentStock: true },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
   });
 
   if (!returnItem) {
@@ -42,7 +72,10 @@ export default async function ProductionReturnDetailPage({ params }: { params: P
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
-      <ReturnDetailClient initialData={returnItem} currentUser={session.user} isProductionView />
+      <ProductionReturnDetailClient
+        initialData={returnItem}
+        currentUser={session.user}
+      />
     </div>
   );
 }

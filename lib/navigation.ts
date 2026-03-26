@@ -66,8 +66,6 @@ export const navigation: { section: string; items: NavItem[] }[] = [
           { label: 'Invoices', path: '/sales/invoices', icon: ReceiptIcon },
                     { label: 'Orders', path: '/sales/orders', icon: DescriptionIcon },
           { label: 'Backorders', path: '/sales/backorders', icon: WarningAmberIcon },
-          { label: 'Returns', path: '/returns', icon: AssignmentReturnIcon },
-
         ],
       },
       {
@@ -125,6 +123,7 @@ export const navigation: { section: string; items: NavItem[] }[] = [
             path: '/inventory/production-requests',
             icon: PrecisionManufacturingIcon,
           },
+          { label: 'Returns', path: '/inventory/returns', icon: AssignmentReturnIcon },
         ],
       },
     ],

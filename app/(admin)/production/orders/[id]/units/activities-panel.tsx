@@ -19,21 +19,30 @@ interface Activity {
 
 interface Props {
   orderId: string;
-  stageId: string;
-  actionId: string;
+  unitId: string;
+  trackingId: string;
   stepId: string;
   onActivityAdded?: () => void;
 }
+
+const formatTimestamp = (iso: string) => {
+  const d = new Date(iso);
+  return d.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 const relativeTime = (iso: string) => {
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
   if (diff < 60) return "just now";
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return new Date(iso).toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-  });
+  const days = Math.floor(diff / 86400);
+  return `${days}d ago`;
 };
 
 const initials = (name: string) =>
@@ -68,8 +77,8 @@ const formatFileSize = (bytes: number) => {
 
 export default function ActivitiesPanel({
   orderId,
-  stageId,
-  actionId,
+  unitId,
+  trackingId,
   stepId,
   onActivityAdded,
 }: Props) {
@@ -86,7 +95,7 @@ export default function ActivitiesPanel({
   const fetchActivities = useCallback(async () => {
     try {
       const res = await fetch(
-        `/api/production/orders/${orderId}/stages/${stageId}/actions/${actionId}/activities`,
+        `/api/production/orders/${orderId}/units/${unitId}/tracking/${trackingId}/activities`,
       );
       const data = await res.json();
       setActivities(data.activities || []);
@@ -95,7 +104,7 @@ export default function ActivitiesPanel({
     } finally {
       setLoading(false);
     }
-  }, [orderId, stageId, actionId]);
+  }, [orderId, trackingId]);
 
   useEffect(() => {
     fetchActivities();
@@ -130,7 +139,7 @@ export default function ActivitiesPanel({
     setSubmitting(true);
     try {
       const res = await fetch(
-        `/api/production/orders/${orderId}/stages/${stageId}/actions/${actionId}/activities`,
+        `/api/production/orders/${orderId}/units/${unitId}/tracking/${trackingId}/activities`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -239,8 +248,16 @@ export default function ActivitiesPanel({
                   >
                     {act.author.name}
                   </span>
-                  <span style={{ fontSize: 11, color: "#9CA3AF" }}>
-                    {relativeTime(act.createdAt)}
+                  <span
+                    title={relativeTime(act.createdAt)}
+                    style={{
+                      fontSize: 11,
+                      color: "#9CA3AF",
+                      cursor: "default",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {formatTimestamp(act.createdAt)}
                   </span>
                 </div>
 

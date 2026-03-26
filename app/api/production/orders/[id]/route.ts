@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { computeProgressPercent, computeScheduleStatus, computeShortfall } from '@/lib/production-utils';
 
 export async function GET(
   request: NextRequest,
@@ -16,61 +17,86 @@ export async function GET(
     }
 
     const { id } = await params;
+    // ?view=units → full tracking+rework data (used by the Units tab)
+    // default (summary) → lightweight metadata + per-action progress (used by layout + all other tabs)
+    const view = new URL(request.url).searchParams.get('view') ?? 'summary';
 
-    const order = await prisma.productionOrder.findUnique({
-      where: { id },
-      include: {
-        product: {
-          select: {
-            id: true,
-            name: true,
-            productNumber: true,
-            category: true,
-            primaryImage: true,
-            description: true,
+    // Shared includes across both views
+    const sharedInclude = {
+      product: {
+        select: { id: true, name: true, productNumber: true, category: true, primaryImage: true, description: true },
+      },
+      manager: { select: { id: true, name: true, email: true } },
+      stages: {
+        include: {
+          responsible: { select: { id: true, name: true, email: true } },
+          actionItems: {
+            include: { responsible: { select: { id: true, name: true, email: true } } },
+            orderBy: { sortOrder: 'asc' as const },
           },
         },
-        manager: {
-          select: { id: true, name: true, email: true },
-        },
-        stages: {
-          include: {
-            responsible: {
-              select: { id: true, name: true, email: true },
-            },
-            actionItems: {
-              include: {
-                responsible: {
-                  select: { id: true, name: true, email: true },
-                },
-                _count: {
-                  select: { activities: true },
+        orderBy: { sortOrder: 'asc' as const },
+      },
+      materialRequisitions: {
+        select: { id: true, status: true, productionUnitId: true },
+        orderBy: { createdAt: 'desc' as const },
+      },
+    };
+
+    let order: any;
+
+    if (view === 'units') {
+      // Full unit data: stepTrackings + reworks (rework task attachments included for photo display)
+      order = await prisma.productionOrder.findUnique({
+        where: { id },
+        include: {
+          ...sharedInclude,
+          units: {
+            include: {
+              stepTrackings: {
+                select: {
+                  id: true,
+                  actionItemId: true,
+                  status: true,
+                  startedAt: true,
+                  completedAt: true,
+                  decisionOutcome: true,
+                  rejectionReason: true,
+                  _count: { select: { activities: true } },
                 },
               },
-              orderBy: { sortOrder: 'asc' },
+              reworks: {
+                include: {
+                  createdBy: { select: { id: true, name: true } },
+                  completedBy: { select: { id: true, name: true } },
+                  tasks: {
+                    select: {
+                      id: true, name: true, status: true, notes: true,
+                      completedAt: true, sortOrder: true, attachments: true,
+                    },
+                    orderBy: { sortOrder: 'asc' as const },
+                  },
+                },
+                orderBy: { createdAt: 'desc' as const },
+              },
             },
+            orderBy: { unitNumber: 'asc' as const },
           },
-          orderBy: { sortOrder: 'asc' },
         },
-        // Top-up run linkage
-        parentOrder: {
-          select: { id: true, orderNumber: true, status: true, quantity: true },
-        },
-        topUpRuns: {
-          select: {
-            id: true,
-            orderNumber: true,
-            status: true,
-            quantity: true,
-            quantityPackaged: true,
-            scheduledStart: true,
-            scheduledEnd: true,
-            createdAt: true,
+      });
+    } else {
+      // Summary: minimal unit list only (no tracking records, no reworks)
+      order = await prisma.productionOrder.findUnique({
+        where: { id },
+        include: {
+          ...sharedInclude,
+          units: {
+            select: { id: true, unitId: true, unitNumber: true, status: true },
+            orderBy: { unitNumber: 'asc' as const },
           },
-          orderBy: { createdAt: 'asc' },
         },
-      },
-    });
+      });
+    }
 
     if (!order) {
       return NextResponse.json(
@@ -79,58 +105,66 @@ export async function GET(
       );
     }
 
-    // Calculate progress
-    const totalActions = order.stages.reduce(
-      (acc, stage) => acc + stage.actionItems.length,
-      0
-    );
-    const completedActions = order.stages.reduce(
-      (acc, stage) =>
-        acc +
-        stage.actionItems.filter(
-          (a) => a.status === 'COMPLETED' || a.status === 'SKIPPED'
-        ).length,
-      0
-    );
-    const progressPercent =
-      totalActions > 0
-        ? Math.round((completedActions / totalActions) * 100)
-        : 0;
+    // ── Progress calculation ──────────────────────────────────────────────────
+    let totalActions: number;
+    let completedActions: number;
+    let stagesWithProgress: any[];
 
-    // Determine schedule status
-    const now = new Date();
-    let scheduleStatus = 'ON_TRACK';
-    if (order.status === 'COMPLETED' || order.status === 'PARTIALLY_COMPLETED') {
-      if (order.actualEnd && order.actualEnd <= order.scheduledEnd) {
-        scheduleStatus = 'AHEAD';
-      } else if (order.actualEnd && order.actualEnd > order.scheduledEnd) {
-        scheduleStatus = 'DELAYED';
-      }
-    } else if (order.status === 'IN_PROGRESS') {
-      if (now > order.scheduledEnd) {
-        scheduleStatus = 'DELAYED';
-      } else {
-        const totalDuration =
-          order.scheduledEnd.getTime() - order.scheduledStart.getTime();
-        const elapsed = now.getTime() - order.scheduledStart.getTime();
-        const expectedProgress =
-          totalDuration > 0 ? (elapsed / totalDuration) * 100 : 0;
-        if (progressPercent > expectedProgress + 10) {
-          scheduleStatus = 'AHEAD';
-        } else if (progressPercent < expectedProgress - 15) {
-          scheduleStatus = 'DELAYED';
-        }
-      }
+    if (view === 'units') {
+      // Compute from loaded data (already in memory)
+      totalActions = 0;
+      completedActions = 0;
+      order.units.forEach((unit: any) => {
+        totalActions += unit.stepTrackings.length;
+        completedActions += unit.stepTrackings.filter(
+          (t: any) => t.status === 'COMPLETED' || t.status === 'SKIPPED',
+        ).length;
+      });
+      stagesWithProgress = order.stages;
+    } else {
+      // Summary view: use aggregation queries — no tracking records loaded
+      const [total, completed, completedByAction] = await Promise.all([
+        prisma.unitStepTracking.count({ where: { unit: { productionOrderId: id } } }),
+        prisma.unitStepTracking.count({ where: { unit: { productionOrderId: id }, status: { in: ['COMPLETED', 'SKIPPED'] } } }),
+        prisma.unitStepTracking.groupBy({
+          by: ['actionItemId'],
+          where: { unit: { productionOrderId: id }, status: { in: ['COMPLETED', 'SKIPPED'] } },
+          _count: { _all: true },
+        }),
+      ]);
+      totalActions = total;
+      completedActions = completed;
+
+      const totalUnits = order.units.length;
+      const completedByActionMap = new Map(completedByAction.map((c: any) => [c.actionItemId, c._count._all]));
+
+      // Enrich stages and action items with pre-computed progressPercent for the Gantt
+      stagesWithProgress = order.stages.map((stage: any) => {
+        const actionItemsWithProgress = stage.actionItems.map((action: any) => ({
+          ...action,
+          progressPercent: totalUnits > 0
+            ? Math.round(((completedByActionMap.get(action.id) ?? 0) / totalUnits) * 100)
+            : 0,
+        }));
+        const stageCompleted = actionItemsWithProgress.reduce(
+          (sum: number, a: any) => sum + (completedByActionMap.get(a.id) ?? 0), 0,
+        );
+        const stageTotal = actionItemsWithProgress.length * totalUnits;
+        return {
+          ...stage,
+          actionItems: actionItemsWithProgress,
+          progressPercent: stageTotal > 0 ? Math.round((stageCompleted / stageTotal) * 100) : 0,
+        };
+      });
     }
 
-    // Compute shortfall for convenience
-    const shortfallQuantity =
-      order.quantityPackaged !== null && order.quantityPackaged < order.quantity
-        ? order.quantity - order.quantityPackaged
-        : 0;
+    const progressPercent = computeProgressPercent(completedActions, totalActions);
+    const scheduleStatus = computeScheduleStatus(order, progressPercent);
+    const shortfallQuantity = computeShortfall(order.quantityPackaged, order.quantity);
 
     return NextResponse.json({
       ...order,
+      stages: stagesWithProgress,
       progressPercent,
       totalActions,
       completedActions,
@@ -247,15 +281,6 @@ export async function PATCH(
         manager: {
           select: { id: true, name: true, email: true },
         },
-        topUpRuns: {
-          select: {
-            id: true,
-            orderNumber: true,
-            status: true,
-            quantity: true,
-            quantityPackaged: true,
-          },
-        },
       },
     });
 
@@ -275,61 +300,6 @@ export async function PATCH(
         },
       });
     }
-    // PARTIALLY_COMPLETED keeps requests as SCHEDULED until top-up completes
-
-    // ── If this is a top-up run completing, check if parent is now fully covered ──
-    if (updateData.status === 'COMPLETED' && existingOrder.isTopUpRun && existingOrder.parentOrderId) {
-      const parentOrder = await prisma.productionOrder.findUnique({
-        where: { id: existingOrder.parentOrderId },
-        include: {
-          topUpRuns: {
-            select: { quantityPackaged: true, status: true },
-          },
-        },
-      });
-
-      if (parentOrder && parentOrder.status === 'PARTIALLY_COMPLETED') {
-        // Sum all produced: parent packaged + all top-up runs' packaged qty
-        const parentProduced = parentOrder.quantityPackaged ?? 0;
-        const topUpProduced = parentOrder.topUpRuns.reduce(
-          (acc, run) => acc + (run.quantityPackaged ?? 0),
-          0
-        );
-        const totalProduced = parentProduced + topUpProduced;
-
-        if (totalProduced >= parentOrder.quantity) {
-          // Shortfall fully covered — mark parent as COMPLETED
-          await prisma.productionOrder.update({
-            where: { id: existingOrder.parentOrderId },
-            data: { status: 'COMPLETED', actualEnd: new Date() },
-          });
-
-          // Complete linked production requests for the parent
-          await prisma.productionRequest.updateMany({
-            where: { productionOrderId: existingOrder.parentOrderId },
-            data: { status: 'COMPLETED', dateCompleted: new Date() },
-          });
-
-          // Log the auto-completion
-          await prisma.activityLog.create({
-            data: {
-              userId: session.user.id,
-              action: 'Auto-Completed Parent Order (Shortfall Covered by Top-Up Runs)',
-              module: 'Production',
-              details: {
-                parentOrderId: existingOrder.parentOrderId,
-                parentOrderNumber: parentOrder.orderNumber,
-                totalProduced,
-                plannedQuantity: parentOrder.quantity,
-                triggeredByTopUpOrderId: id,
-                triggeredByTopUpOrderNumber: existingOrder.orderNumber,
-              },
-            },
-          });
-        }
-      }
-    }
-
     // Log activity
     await prisma.activityLog.create({
       data: {

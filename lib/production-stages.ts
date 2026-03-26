@@ -19,7 +19,7 @@ export interface StageTemplate {
   actionItems: ActionItemTemplate[];
 }
 
-export const DECISION_POINT_STEPS = ["P-3", "A-2.6", "QC-2", "QC-6"];
+export const DECISION_POINT_STEPS = ["P-3", "A-2.6", "QC-1", "QC-3"];
 
 export const REJECTION_CATEGORIES = [
   { value: "COMPONENT_DEFECT", label: "Component Defect" },
@@ -186,73 +186,39 @@ export const PRODUCTION_STAGES: StageTemplate[] = [
         stepId: "QC-1",
         actionName: "Comprehensive QC Check",
         defaultResponsibility: "QC Technician",
-        outputNextStep: "QC Report",
+        outputNextStep: "PASS → QC-2 Ageing. FAIL → Rework Process.",
         focusGoal:
-          "Check output voltage/current, safety features, grounding, and general fit and finish.",
+          "Check output voltage/current, safety features, grounding, and general fit and finish. Select PASS or FAIL — FAIL triggers a managed rework process before re-assessment.",
         sortOrder: 1,
-      },
-      {
-        stepId: "QC-2",
-        actionName: "QC PASS? (Decision Point)",
-        defaultResponsibility: "QC Technician",
-        outputNextStep: "FAIL: Go to QC-3. PASS: Go to QC-4.",
-        focusGoal: "FAIL: Go to QC-3. PASS: Go to QC-4.",
-        sortOrder: 2,
         isDecisionPoint: true,
       },
       {
-        stepId: "QC-3",
-        actionName: "Rework & Repair",
-        defaultResponsibility: "QC Technician / Assembly",
-        outputNextStep: "Return to Assembly (A-3/A-4)",
-        focusGoal:
-          "Based on fault diagnosis, send back to the relevant assembly step for correction.",
-        sortOrder: 3,
-      },
-      {
-        stepId: "QC-4",
+        stepId: "QC-2",
         actionName: "Ageing Process Commencement",
         defaultResponsibility: "QC Technician",
         outputNextStep: "Stress-Tested Unit",
         focusGoal:
           "Transfer unit to the Ageing Cabinet for specified duration and stress testing (load/charge cycles).",
-        sortOrder: 4,
+        sortOrder: 2,
       },
       {
-        stepId: "QC-5",
+        stepId: "QC-3",
         actionName: "Final Inspection Post-Ageing",
         defaultResponsibility: "QC Technician",
-        outputNextStep: "Final Approval/Rejection",
+        outputNextStep: "PASS → QC-4 Packaging. FAIL → Repairable: Rework. Non-repairable: Scrap.",
         focusGoal:
-          "Check for performance stability, thermal drift, and any failures induced by the Ageing process.",
-        sortOrder: 5,
-      },
-      {
-        stepId: "QC-6",
-        actionName: "FINAL PASS? (Decision Point)",
-        defaultResponsibility: "QC Technician",
-        outputNextStep: "FAIL: Go to QC-7. PASS: Go to QC-8.",
-        focusGoal: "FAIL: Go to QC-7. PASS: Go to QC-8.",
-        sortOrder: 6,
+          "Check for performance stability, thermal drift, and any failures induced by the Ageing process. PASS proceeds to Packaging. FAIL requires selecting failure type: Repairable (triggers rework) or Non-repairable (unit is scrapped and QC-4 is skipped).",
+        sortOrder: 3,
         isDecisionPoint: true,
       },
       {
-        stepId: "QC-7",
-        actionName: "Rejection & Documentation",
-        defaultResponsibility: "QC Technician",
-        outputNextStep: "Scrap / Failure Log",
-        focusGoal:
-          "If failure is non-repairable, document the failure details in the scrap log.",
-        sortOrder: 7,
-      },
-      {
-        stepId: "QC-8",
+        stepId: "QC-4",
         actionName: "Packaging and Shipping",
         defaultResponsibility: "Packaging Team",
         outputNextStep: "Finished Goods Inventory",
         focusGoal:
           "Final handover of the completed, tested, and approved NEWGEN Ultra Solar Generator.",
-        sortOrder: 8,
+        sortOrder: 4,
       },
     ],
   },

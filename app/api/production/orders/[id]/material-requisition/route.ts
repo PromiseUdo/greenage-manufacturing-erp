@@ -48,6 +48,10 @@ export async function GET(
             },
           },
         },
+        units: {
+          select: { id: true, unitId: true, unitNumber: true, status: true },
+          orderBy: { unitNumber: 'asc' },
+        },
         materialRequisitions: {
           include: {
             requestedBy: { select: { id: true, name: true, email: true } },
@@ -78,7 +82,7 @@ export async function GET(
       return NextResponse.json({ error: 'Production order not found' }, { status: 404 });
     }
 
-    // Build BOM summary with required quantities scaled to production qty
+    // Build BOM summary — quantities are per single unit
     const bom = order.product.materials.map((pm) => ({
       materialId: pm.materialId,
       material: pm.material,
@@ -88,14 +92,23 @@ export async function GET(
       shortfall: Math.max(0, pm.quantity * order.quantity - pm.material.currentStock),
     }));
 
+    // Group requisitions by unit (sorted newest first by the Prisma query already)
+    const unitData = order.units.map((unit) => ({
+      id: unit.id,
+      unitId: unit.unitId,
+      status: unit.status,
+      requisitions: order.materialRequisitions.filter(
+        (r) => r.productionUnitId === unit.id
+      ),
+    }));
+
     return NextResponse.json({
       orderId: id,
       orderNumber: order.orderNumber,
       quantity: order.quantity,
       product: order.product,
       bom,
-      requisitions: order.materialRequisitions,
-      latestRequisition: order.materialRequisitions[0] || null,
+      units: unitData,
     });
   } catch (error) {
     console.error('Error fetching material requisition:', error);
@@ -119,7 +132,14 @@ export async function POST(
     const body = await request.json();
     // `items` overrides the auto-BOM: [{ materialId, quantityRequired }]
     // `type` labels the requisition: 'BOM_SIGNOUT' (P-1) | 'REPLACEMENT' (P-4)
-    const { notes, items: customItems, type: reqType } = body;
+    const { notes, items: customItems, type: reqType, productionUnitId } = body;
+
+    if (!productionUnitId) {
+      return NextResponse.json(
+        { error: 'productionUnitId is required. All material requisitions must be scoped to a specific production unit.' },
+        { status: 400 }
+      );
+    }
 
     const order = await prisma.productionOrder.findUnique({
       where: { id },
@@ -142,22 +162,13 @@ export async function POST(
           },
         },
         materialRequisitions: {
-          where: { status: { in: ['PENDING', 'PARTIALLY_FULFILLED'] } },
-          select: { id: true, status: true },
+          select: { id: true, status: true, productionUnitId: true },
         },
       },
     });
 
     if (!order) {
       return NextResponse.json({ error: 'Production order not found' }, { status: 404 });
-    }
-
-    // Block if there's already an open requisition
-    if (order.materialRequisitions.length > 0) {
-      return NextResponse.json(
-        { error: 'There is already an open material requisition for this order. Fulfill or cancel it first.' },
-        { status: 400 }
-      );
     }
 
     // Generate requisition number
@@ -200,7 +211,7 @@ export async function POST(
       }
       itemsToCreate = order.product.materials.map((pm) => ({
         materialId: pm.materialId,
-        quantityRequired: pm.quantity * order.quantity,
+        quantityRequired: pm.quantity * (productionUnitId ? 1 : order.quantity),
         stockAtRequest: pm.material.currentStock,
         status: 'PENDING',
       }));
@@ -218,6 +229,7 @@ export async function POST(
       data: {
         requisitionNumber,
         productionOrderId: id,
+        productionUnitId: productionUnitId || null,
         requestedById: session.user.id,
         notes: finalNotes,
         items: {
@@ -239,23 +251,6 @@ export async function POST(
       },
     });
 
-    // Find the P-1 action item and update its status to IN_PROGRESS
-    const p1Action = await prisma.productionActionItem.findFirst({
-      where: {
-        stageEntry: { productionOrderId: id },
-        stepId: 'P-1',
-      },
-    });
-    if (p1Action) {
-      await prisma.productionActionItem.update({
-        where: { id: p1Action.id },
-        data: {
-          status: 'IN_PROGRESS',
-          startedAt: new Date(),
-        },
-      });
-    }
-
     // Log activity
     await prisma.activityLog.create({
       data: {
@@ -267,6 +262,7 @@ export async function POST(
           orderNumber: order.orderNumber,
           requisitionNumber,
           itemCount: order.product.materials.length,
+          productionUnitId: productionUnitId || null,
         },
       },
     });

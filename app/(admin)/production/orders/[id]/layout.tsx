@@ -28,7 +28,6 @@ import {
   Alert,
   AlertTitle,
   TextField,
-  Divider,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useSession } from "next-auth/react";
@@ -37,30 +36,39 @@ import FactoryIcon from "@mui/icons-material/Factory";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
-import VerifiedIcon from "@mui/icons-material/Verified";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DeleteIcon from "@mui/icons-material/Delete";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CircularProgress from "@mui/material/CircularProgress";
 
-interface TopUpRun {
+interface ActionItemSummary {
   id: string;
-  orderNumber: string;
+  stepId: string;
+  actionName: string;
+  sortOrder: number;
+  isDecisionPoint: boolean;
+  scheduledStart: string | null;
+  scheduledEnd: string | null;
   status: string;
-  quantity: number;
-  quantityPackaged: number | null;
+  progressPercent: number;
+  responsible: { id: string; name: string; email: string } | null;
 }
 
-interface ParentOrderRef {
+interface StageSummary {
   id: string;
-  orderNumber: string;
+  stageName: string;
+  stageLabel: string;
+  sortOrder: number;
   status: string;
-  quantity: number;
+  scheduledStart: string | null;
+  scheduledEnd: string | null;
+  progressPercent: number;
+  responsible: { id: string; name: string; email: string } | null;
+  actionItems: ActionItemSummary[];
 }
 
 interface ProductionOrderSummary {
@@ -84,30 +92,26 @@ interface ProductionOrderSummary {
   totalActions: number;
   completedActions: number;
   scheduleStatus: string;
-  isTopUpRun: boolean;
-  parentOrderId: string | null;
-  parentOrder: ParentOrderRef | null;
-  topUpRuns: TopUpRun[];
-  product: {
-    id: string;
-    name: string;
-    productNumber: string;
-    category: string;
-  };
+  // Minimal unit list — no tracking data. The Units tab fetches its own full unit data.
+  units: { id: string; unitId: string; unitNumber: number; status: string }[];
+  materialRequisitions: { id: string; status: string; productionUnitId: string | null }[];
+  product: { id: string; name: string; productNumber: string; category: string };
   manager: { id: string; name: string; email: string };
-  stages: any[];
+  stages: StageSummary[];
 }
 
 interface OrderContextType {
   order: ProductionOrderSummary | null;
   loading: boolean;
   refresh: () => void;
+  patchOrder: (patch: Partial<ProductionOrderSummary>) => void;
 }
 
 const OrderContext = createContext<OrderContextType>({
   order: null,
   loading: true,
   refresh: () => {},
+  patchOrder: () => {},
 });
 export const useOrderContext = () => useContext(OrderContext);
 
@@ -131,8 +135,7 @@ const SCHEDULE_COLORS: Record<string, { bg: string; text: string }> = {
 
 const TABS = [
   { label: "Overview", path: "overview", icon: <DashboardIcon /> },
-  { label: "Process", path: "tracking", icon: <TrackChangesIcon /> },
-  { label: "QC Log", path: "quality", icon: <VerifiedIcon /> },
+  { label: "Units", path: "units", icon: <TrackChangesIcon /> },
   { label: "Materials", path: "materials", icon: <Inventory2Icon /> },
   { label: "Timeline", path: "timeline", icon: <TimelineIcon /> },
 ];
@@ -185,9 +188,7 @@ function CompleteOrderDialog({
             <AlertTitle sx={{ fontWeight: 700 }}>Shortfall Detected</AlertTitle>
             {shortfall} unit{shortfall !== 1 ? "s" : ""} short of the {order.quantity}{" "}
             planned. This order will be marked{" "}
-            <strong>Partially Completed</strong>. You can create a{" "}
-            <strong>Top-Up Run</strong> afterward to produce the remaining{" "}
-            {shortfall} unit{shortfall !== 1 ? "s" : ""}.
+            <strong>Partially Completed</strong>.
           </Alert>
         )}
         {!hasShortfall && qty > 0 && (
@@ -229,121 +230,6 @@ function CompleteOrderDialog({
   );
 }
 
-// ── Top-Up Run dialog ─────────────────────────────────────────────────────
-function TopUpRunDialog({
-  open,
-  order,
-  onClose,
-  onConfirm,
-  loading,
-}: {
-  open: boolean;
-  order: ProductionOrderSummary;
-  onClose: () => void;
-  onConfirm: (qty: number, start: string, end: string, notes: string) => void;
-  loading: boolean;
-}) {
-  const shortfall = order.shortfallQuantity;
-  const [qty, setQty] = useState<string>(String(shortfall));
-  const [startDate, setStartDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
-  const [endDate, setEndDate] = useState<string>("");
-  const [notes, setNotes] = useState<string>("");
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
-        <AddCircleOutlineIcon sx={{ color: "#2563EB" }} />
-        Create Top-Up Run
-      </DialogTitle>
-      <Divider />
-      <DialogContent sx={{ pt: 2 }}>
-        <Alert severity="info" sx={{ mb: 2 }}>
-          <AlertTitle sx={{ fontWeight: 700 }}>
-            Shortfall: {shortfall} unit{shortfall !== 1 ? "s" : ""}
-          </AlertTitle>
-          <strong>{order.orderNumber}</strong> produced {order.quantityPackaged ?? 0} of{" "}
-          {order.quantity} planned units. A new DRAFT production order will be created
-          to manufacture the remaining units.
-        </Alert>
-
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <TextField
-            label="Quantity to Produce"
-            type="number"
-            value={qty}
-            onChange={(e) => setQty(e.target.value)}
-            inputProps={{ min: 1, max: shortfall }}
-            size="small"
-            fullWidth
-            helperText={`Maximum: ${shortfall} unit${shortfall !== 1 ? "s" : ""}`}
-          />
-          <Box sx={{ display: "flex", gap: 1.5 }}>
-            <TextField
-              label="Scheduled Start"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              size="small"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              label="Scheduled End"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              size="small"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-          </Box>
-          <TextField
-            label="Notes (optional)"
-            multiline
-            rows={2}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            size="small"
-            fullWidth
-            placeholder={`Top-up run for ${order.orderNumber}…`}
-          />
-        </Box>
-      </DialogContent>
-      <Divider />
-      <DialogActions sx={{ p: 2, gap: 1 }}>
-        <Button
-          onClick={onClose}
-          color="inherit"
-          sx={{ textTransform: "none", borderRadius: 2 }}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={() =>
-            onConfirm(parseInt(qty) || shortfall, startDate, endDate, notes)
-          }
-          variant="contained"
-          disabled={loading || !startDate || !endDate || parseInt(qty) < 1}
-          sx={{
-            bgcolor: "#2563EB",
-            "&:hover": { bgcolor: "#1D4ED8" },
-            textTransform: "none",
-            fontWeight: 700,
-            borderRadius: 2,
-          }}
-        >
-          {loading ? (
-            <CircularProgress size={14} color="inherit" sx={{ mr: 0.5 }} />
-          ) : null}
-          Create Top-Up Run
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
 export default function ProductionOrderLayout({
   children,
 }: {
@@ -362,7 +248,6 @@ export default function ProductionOrderLayout({
   const [actionLoading, setActionLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
-  const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -376,6 +261,10 @@ export default function ProductionOrderLayout({
       setLoading(false);
     }
   }, [orderId]);
+
+  const patchOrder = useCallback((patch: Partial<ProductionOrderSummary>) => {
+    setOrder((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
 
   useEffect(() => {
     fetchOrder();
@@ -422,35 +311,6 @@ export default function ProductionOrderLayout({
     }
   };
 
-  // Create top-up run
-  const handleTopUpConfirm = async (
-    qty: number,
-    scheduledStart: string,
-    scheduledEnd: string,
-    notes: string
-  ) => {
-    setActionLoading(true);
-    try {
-      const res = await fetch(`/api/production/orders/${orderId}/top-up`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quantity: qty, scheduledStart, scheduledEnd, notes }),
-      });
-      if (res.ok) {
-        const newOrder = await res.json();
-        setTopUpDialogOpen(false);
-        await fetchOrder();
-        // Navigate to the newly created top-up order
-        router.push(`/production/orders/${newOrder.id}/overview`);
-      } else {
-        const err = await res.json();
-        alert(err.error || "Failed to create top-up run");
-      }
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const handleDelete = () => {
     setDeleteDialogOpen(true);
   };
@@ -492,9 +352,6 @@ export default function ProductionOrderLayout({
   const shc =
     SCHEDULE_COLORS[order?.scheduleStatus ?? "ON_TRACK"] ??
     SCHEDULE_COLORS.ON_TRACK;
-
-  const hasShortfall =
-    order?.status === "PARTIALLY_COMPLETED" && (order?.shortfallQuantity ?? 0) > 0;
 
   // Shared action buttons renderer
   const renderActionButtons = (mobile = false) => {
@@ -587,24 +444,6 @@ export default function ProductionOrderLayout({
             Resume
           </Button>
         )}
-        {hasShortfall && isManager && (
-          <Button
-            size={btnSize}
-            variant="contained"
-            startIcon={<AddCircleOutlineIcon />}
-            onClick={() => setTopUpDialogOpen(true)}
-            disabled={actionLoading}
-            sx={{
-              bgcolor: "#D97706",
-              "&:hover": { bgcolor: "#B45309" },
-              textTransform: "none",
-              fontWeight: 700,
-              borderRadius: 2,
-            }}
-          >
-            Top-Up Run
-          </Button>
-        )}
         <Tooltip title="Refresh">
           <IconButton size="small" onClick={fetchOrder}>
             <RefreshIcon fontSize="small" />
@@ -615,7 +454,7 @@ export default function ProductionOrderLayout({
   };
 
   return (
-    <OrderContext.Provider value={{ order, loading, refresh: fetchOrder }}>
+    <OrderContext.Provider value={{ order, loading, refresh: fetchOrder, patchOrder }}>
       {/* ── Mobile: Sticky header ── */}
       {isMobile && (
         <Box
@@ -656,19 +495,6 @@ export default function ProductionOrderLayout({
                       height: 18,
                     }}
                   />
-                  {order?.isTopUpRun && (
-                    <Chip
-                      label="Top-Up"
-                      size="small"
-                      sx={{
-                        bgcolor: "#EEF2FF",
-                        color: "#4338CA",
-                        fontWeight: 700,
-                        fontSize: "0.6rem",
-                        height: 18,
-                      }}
-                    />
-                  )}
                 </Box>
               )}
               {!loading && (
@@ -743,70 +569,7 @@ export default function ProductionOrderLayout({
             <Typography variant="body2" fontWeight={600}>
               {loading ? <Skeleton width={120} /> : order?.orderNumber}
             </Typography>
-            {!loading && order?.isTopUpRun && (
-              <Chip
-                label="Top-Up Run"
-                size="small"
-                sx={{
-                  bgcolor: "#EEF2FF",
-                  color: "#4338CA",
-                  fontWeight: 700,
-                  fontSize: "0.7rem",
-                }}
-              />
-            )}
           </Box>
-
-          {/* Parent order back-link for top-up runs */}
-          {!loading && order?.parentOrder && (
-            <Box
-              sx={{
-                mb: 1.5,
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                px: 2,
-                py: 0.8,
-                bgcolor: "#EEF2FF",
-                borderRadius: 2,
-                border: "1px solid #C7D2FE",
-              }}
-            >
-              <Typography variant="caption" color="#4338CA" fontWeight={600}>
-                🔗 Top-up run for parent order:
-              </Typography>
-              <Button
-                size="small"
-                variant="text"
-                onClick={() =>
-                  router.push(
-                    `/production/orders/${order.parentOrder!.id}/overview`
-                  )
-                }
-                sx={{
-                  textTransform: "none",
-                  fontWeight: 700,
-                  color: "#4338CA",
-                  p: 0,
-                  minWidth: 0,
-                  "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
-                }}
-              >
-                {order.parentOrder.orderNumber}
-              </Button>
-              <Chip
-                label={order.parentOrder.status.replace(/_/g, " ")}
-                size="small"
-                sx={{
-                  height: 18,
-                  fontSize: "0.6rem",
-                  fontWeight: 600,
-                  bgcolor: STATUS_COLORS[order.parentOrder.status]?.bg ?? "#E5E7EB",
-                  color: STATUS_COLORS[order.parentOrder.status]?.text ?? "#374151",
-                }}
-              />
-            </Box>
-          )}
 
           {/* Order header card */}
           <Box
@@ -945,52 +708,6 @@ export default function ProductionOrderLayout({
             </Box>
           </Box>
 
-          {/* ── Shortfall alert banner ── */}
-          {!loading && hasShortfall && (
-            <Alert
-              severity="warning"
-              icon={<WarningAmberIcon />}
-              sx={{
-                borderRadius: 0,
-                borderLeft: "1px solid",
-                borderRight: "1px solid",
-                borderBottom: "none",
-                borderColor: "#F59E0B",
-                "& .MuiAlert-message": { width: "100%" },
-              }}
-              action={
-                isManager ? (
-                  <Button
-                    size="small"
-                    variant="contained"
-                    startIcon={<AddCircleOutlineIcon />}
-                    onClick={() => setTopUpDialogOpen(true)}
-                    sx={{
-                      bgcolor: "#D97706",
-                      "&:hover": { bgcolor: "#B45309" },
-                      textTransform: "none",
-                      fontWeight: 700,
-                      borderRadius: 2,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    Create Top-Up Run
-                  </Button>
-                ) : undefined
-              }
-            >
-              <AlertTitle sx={{ fontWeight: 700 }}>
-                Shortfall: {order?.shortfallQuantity} unit{order?.shortfallQuantity !== 1 ? "s" : ""} remaining
-              </AlertTitle>
-              This order was closed with{" "}
-              <strong>{order?.quantityPackaged ?? 0}</strong> of{" "}
-              <strong>{order?.quantity}</strong> planned units packaged. Create a
-              top-up run to produce the remaining{" "}
-              <strong>{order?.shortfallQuantity}</strong> unit
-              {order?.shortfallQuantity !== 1 ? "s" : ""}.
-            </Alert>
-          )}
-
           {/* Desktop Tab Bar */}
           <Box
             sx={{
@@ -999,7 +716,7 @@ export default function ProductionOrderLayout({
               borderRight: "1px solid",
               borderBottom: "1px solid",
               borderColor: "divider",
-              borderRadius: hasShortfall ? "0 0 12px 12px" : "0 0 12px 12px",
+              borderRadius: "0 0 12px 12px",
               overflowX: "auto",
             }}
           >
@@ -1047,34 +764,6 @@ export default function ProductionOrderLayout({
       {/* Mobile content area */}
       {isMobile && (
         <Box sx={{ px: 1.5, pt: 2, pb: 10 }}>
-          {/* Mobile shortfall banner */}
-          {!loading && hasShortfall && (
-            <Alert severity="warning" icon={<WarningAmberIcon />} sx={{ mb: 2, borderRadius: 2 }}>
-              <AlertTitle sx={{ fontWeight: 700 }}>
-                Shortfall: {order?.shortfallQuantity} units
-              </AlertTitle>
-              {order?.quantityPackaged ?? 0} of {order?.quantity} units packaged.
-              {isManager && (
-                <Button
-                  size="small"
-                  variant="contained"
-                  startIcon={<AddCircleOutlineIcon />}
-                  onClick={() => setTopUpDialogOpen(true)}
-                  sx={{
-                    mt: 1,
-                    display: "flex",
-                    bgcolor: "#D97706",
-                    "&:hover": { bgcolor: "#B45309" },
-                    textTransform: "none",
-                    fontWeight: 700,
-                    borderRadius: 2,
-                  }}
-                >
-                  Create Top-Up Run
-                </Button>
-              )}
-            </Alert>
-          )}
           {children}
         </Box>
       )}
@@ -1165,16 +854,6 @@ export default function ProductionOrderLayout({
         />
       )}
 
-      {/* Top-Up Run dialog */}
-      {order && hasShortfall && (
-        <TopUpRunDialog
-          open={topUpDialogOpen}
-          order={order}
-          onClose={() => setTopUpDialogOpen(false)}
-          onConfirm={handleTopUpConfirm}
-          loading={actionLoading}
-        />
-      )}
     </OrderContext.Provider>
   );
 }

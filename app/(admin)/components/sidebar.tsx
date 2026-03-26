@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Box,
   Drawer,
@@ -14,13 +14,13 @@ import {
   Collapse,
   alpha,
   Typography,
-} from "@mui/material";
-import ExpandLessRoundedIcon from "@mui/icons-material/ExpandLessRounded";
-import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded";
-import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
-import MenuOpenRoundedIcon from "@mui/icons-material/MenuOpenRounded";
-import { navigation, NavItem } from "@/lib/navigation";
-import { useSession, signOut } from "next-auth/react";
+} from '@mui/material';
+import ExpandLessRoundedIcon from '@mui/icons-material/ExpandLessRounded';
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
+import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import MenuOpenRoundedIcon from '@mui/icons-material/MenuOpenRounded';
+import { navigation, NavItem } from '@/lib/navigation';
+import { useSession, signOut } from 'next-auth/react';
 
 const DRAWER_WIDTH = 280; // Slightly wider for modern feel
 const MINI_WIDTH = 80;
@@ -31,15 +31,15 @@ export default function Sidebar() {
 
   const { data: session, status } = useSession();
 
-  const userName = session?.user?.name || "User";
-  const userEmail = session?.user?.email || "";
-  const userImage = session?.user?.image || "/avatar.png";
+  const userName = session?.user?.name || 'User';
+  const userEmail = session?.user?.email || '';
+  const userImage = session?.user?.image || '/avatar.png';
 
-  const isLoading = status === "loading";
+  const isLoading = status === 'loading';
 
   const [collapsed, setCollapsed] = useState(() =>
-    typeof window !== "undefined"
-      ? localStorage.getItem("sidebar-collapsed") === "true"
+    typeof window !== 'undefined'
+      ? localStorage.getItem('sidebar-collapsed') === 'true'
       : false,
   );
 
@@ -48,7 +48,7 @@ export default function Sidebar() {
   });
 
   useEffect(() => {
-    localStorage.setItem("sidebar-collapsed", String(collapsed));
+    localStorage.setItem('sidebar-collapsed', String(collapsed));
   }, [collapsed]);
 
   const toggleSection = (label: string) => {
@@ -90,7 +90,7 @@ export default function Sidebar() {
         return (
           <Box key={item.label} sx={{ mb: 0.5 }}>
             <Tooltip
-              title={collapsed ? item.label : ""}
+              title={collapsed ? item.label : ''}
               placement="right"
               arrow
             >
@@ -98,42 +98,42 @@ export default function Sidebar() {
                 onClick={() => handleParentClick(item)}
                 sx={{
                   minHeight: 48,
-                  borderRadius: "12px",
+                  borderRadius: '12px',
                   px: collapsed ? 0 : 2,
-                  justifyContent: collapsed ? "center" : "flex-start",
+                  justifyContent: collapsed ? 'center' : 'flex-start',
                   // Modern Color Logic
                   color: exactActive
-                    ? "#fff"
+                    ? '#fff'
                     : activeChild
-                      ? "#60A5FA"
-                      : "#94A3B8",
+                      ? '#60A5FA'
+                      : '#94A3B8',
                   bgcolor: exactActive
-                    ? alpha("#3B82F6", 0.8) // Solid primary when active
+                    ? alpha('#3B82F6', 0.8) // Solid primary when active
                     : activeChild
-                      ? alpha("#3B82F6", 0.1)
-                      : "transparent",
+                      ? alpha('#3B82F6', 0.1)
+                      : 'transparent',
 
                   // Glossy glow for active item
                   // boxShadow: exactActive
                   //   ? `0 4px 12px ${alpha('#3B82F6', 0.4)}`
                   //   : 'none',
 
-                  "&:hover": {
-                    bgcolor: exactActive ? "#3B82F6" : alpha("#ffffff", 0.05),
-                    color: "#fff",
+                  '&:hover': {
+                    bgcolor: exactActive ? '#3B82F6' : alpha('#ffffff', 0.05),
+                    color: '#fff',
                   },
-                  transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
                 <ListItemIcon
                   sx={{
                     minWidth: collapsed ? 0 : 38,
-                    color: "inherit",
-                    display: "flex",
-                    justifyContent: "center",
+                    color: 'inherit',
+                    display: 'flex',
+                    justifyContent: 'center',
                   }}
                 >
-                  <Icon sx={{ fontSize: "1.3rem" }} />
+                  <Icon sx={{ fontSize: '1.3rem' }} />
                 </ListItemIcon>
 
                 {!collapsed && (
@@ -141,21 +141,21 @@ export default function Sidebar() {
                     <ListItemText
                       primary={item.label}
                       primaryTypographyProps={{
-                        fontSize: "0.875rem",
+                        fontSize: '0.875rem',
                         fontWeight: exactActive ? 400 : 500,
-                        letterSpacing: "0.01em",
+                        letterSpacing: '0.01em',
                       }}
                     />
                     {hasChildren && (
                       <Box
                         sx={{
-                          display: "flex",
-                          transform: isOpen ? "rotate(0deg)" : "rotate(-90deg)",
-                          transition: "0.2s",
+                          display: 'flex',
+                          transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+                          transition: '0.2s',
                           opacity: 0.5,
                         }}
                       >
-                        <ExpandMoreRoundedIcon sx={{ fontSize: "1.1rem" }} />
+                        <ExpandMoreRoundedIcon sx={{ fontSize: '1.1rem' }} />
                       </Box>
                     )}
                   </>
@@ -170,7 +170,7 @@ export default function Sidebar() {
                   sx={{
                     mt: 0.5,
                     ml: 1.5,
-                    borderLeft: `1px solid ${alpha("#ffffff", 0.05)}`,
+                    borderLeft: `1px solid ${alpha('#ffffff', 0.05)}`,
                   }}
                 >
                   {renderNavItems(item.children!, level + 1)}
@@ -189,59 +189,59 @@ export default function Sidebar() {
       sx={{
         width: collapsed ? MINI_WIDTH : DRAWER_WIDTH,
         flexShrink: 0,
-        "& .MuiDrawer-paper": {
+        '& .MuiDrawer-paper': {
           width: collapsed ? MINI_WIDTH : DRAWER_WIDTH,
-          bgcolor: "#020617", // Deeper slate black
-          borderRight: `1px solid ${alpha("#ffffff", 0.05)}`,
-          transition: "width 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-          overflowX: "hidden",
+          bgcolor: '#020617', // Deeper slate black
+          borderRight: `1px solid ${alpha('#ffffff', 0.05)}`,
+          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          overflowX: 'hidden',
           backgroundImage:
-            "linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, transparent 100%)",
+            'linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, transparent 100%)',
         },
       }}
     >
       <Box
         sx={{
           height: 80,
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           px: 3,
-          justifyContent: collapsed ? "center" : "space-between",
+          justifyContent: collapsed ? 'center' : 'space-between',
         }}
       >
         {!collapsed && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            {/* <Box
               component="img"
               src="/greenage_logo.png"
               alt="GreenAge"
               sx={{ height: 28, width: "auto" }}
-            />
-            {/* <Typography
+            /> */}
+            <Typography
               sx={{
-                fontSize: "1.5rem",
+                fontSize: '1.5rem',
                 fontWeight: 700,
-                color: "#fff",
-                letterSpacing: "0.02em",
+                color: '#fff',
+                letterSpacing: '0.02em',
               }}
             >
               LOGO
-            </Typography> */}
+            </Typography>
           </Box>
         )}
         <IconButton
           onClick={() => setCollapsed(!collapsed)}
           sx={{
-            bgcolor: alpha("#ffffff", 0.03),
-            color: "#94A3B8",
-            "&:hover": { bgcolor: alpha("#ffffff", 0.08), color: "#fff" },
+            bgcolor: alpha('#ffffff', 0.03),
+            color: '#94A3B8',
+            '&:hover': { bgcolor: alpha('#ffffff', 0.08), color: '#fff' },
           }}
         >
           {collapsed ? <MenuRoundedIcon /> : <MenuOpenRoundedIcon />}
         </IconButton>
       </Box>
 
-      <Box sx={{ flex: 1, overflowY: "auto", mt: 1 }}>
+      <Box sx={{ flex: 1, overflowY: 'auto', mt: 1 }}>
         {navigation.map((group) => (
           <Box key={group.section} sx={{ mb: 4 }}>
             {!collapsed && (
@@ -249,11 +249,11 @@ export default function Sidebar() {
                 sx={{
                   px: 4,
                   mb: 2,
-                  fontSize: "0.7rem",
+                  fontSize: '0.7rem',
                   fontWeight: 700,
-                  color: "#475569",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.15em",
+                  color: '#475569',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.15em',
                 }}
               >
                 {group.section}
@@ -266,18 +266,18 @@ export default function Sidebar() {
 
       {/* Optional User Profile Section at bottom */}
       {!collapsed && (
-        <Box sx={{ p: 2, mt: "auto" }}>
+        <Box sx={{ p: 2, mt: 'auto' }}>
           <Box
             sx={{
               p: collapsed ? 1 : 1.5,
-              bgcolor: alpha("#ffffff", 0.03),
-              borderRadius: "16px",
-              display: "flex",
-              alignItems: "center",
+              bgcolor: alpha('#ffffff', 0.03),
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
               gap: collapsed ? 0 : 1.5,
-              justifyContent: collapsed ? "center" : "flex-start",
-              transition: "all 0.3s ease",
-              border: `1px solid ${alpha("#ffffff", 0.05)}`,
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              transition: 'all 0.3s ease',
+              border: `1px solid ${alpha('#ffffff', 0.05)}`,
             }}
           >
             {/* User Avatar / Initials */}
@@ -285,24 +285,24 @@ export default function Sidebar() {
               sx={{
                 width: 36,
                 height: 36,
-                borderRadius: "10px",
-                bgcolor: "#3B82F6",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "0.85rem",
+                borderRadius: '10px',
+                bgcolor: '#3B82F6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.85rem',
                 fontWeight: 700,
-                color: "#fff",
+                color: '#fff',
                 flexShrink: 0,
-                overflow: "hidden",
-                boxShadow: "0 4px 12px rgba(59, 130, 246, 0.25)",
+                overflow: 'hidden',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
               }}
             >
               {session?.user?.image ? (
                 <Box
                   component="img"
                   src={session.user.image}
-                  sx={{ width: "100%", height: "100%" }}
+                  sx={{ width: '100%', height: '100%' }}
                 />
               ) : (
                 userName.substring(0, 2).toUpperCase()
@@ -314,27 +314,27 @@ export default function Sidebar() {
                 <Typography
                   noWrap
                   sx={{
-                    color: "#fff",
-                    fontSize: "0.825rem",
+                    color: '#fff',
+                    fontSize: '0.825rem',
                     fontWeight: 400,
                     lineHeight: 1.2,
                   }}
                 >
-                  {isLoading ? "Loading..." : userName}
+                  {isLoading ? 'Loading...' : userName}
                 </Typography>
                 <Typography
-                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  onClick={() => signOut({ callbackUrl: '/login' })}
                   sx={{
-                    color: "#64748B",
-                    fontSize: "0.725rem",
-                    cursor: "pointer",
+                    color: '#64748B',
+                    fontSize: '0.725rem',
+                    cursor: 'pointer',
                     mt: 0.5,
-                    display: "inline-block",
-                    "&:hover": {
-                      color: "#EF4444", // Red on hover for logout
-                      textDecoration: "underline",
+                    display: 'inline-block',
+                    '&:hover': {
+                      color: '#EF4444', // Red on hover for logout
+                      textDecoration: 'underline',
                     },
-                    transition: "color 0.2s",
+                    transition: 'color 0.2s',
                   }}
                 >
                   Sign out

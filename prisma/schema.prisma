@@ -54,11 +54,19 @@ model User {
   raisedRequisitions       ProductionMaterialRequisition[] @relation("MRQRequester")
   fulfilledRequisitions    ProductionMaterialRequisition[] @relation("MRQFulfiller")
   stepActivities           ProductionStepActivity[] @relation("StepActivityAuthor")
+  completedStepTrackings   UnitStepTracking[]      @relation("StepTrackingCompleter")
+  reworksCreated           UnitRework[]            @relation("ReworkCreator")
+  reworksCompleted         UnitRework[]            @relation("ReworkCompleter")
+  reworkTasksCompleted     UnitReworkTask[]        @relation("ReworkTaskCompleter")
 
   // Return relations
   receivedReturns          ProductReturn[]         @relation("ReturnReceiver")
   handledReturns           ProductReturn[]         @relation("ReturnHandler")
   recommendedReturns       ProductReturn[]         @relation("ReturnRecommender")
+  completedRepairTasks     ReturnRepairTask[]      @relation("ReturnRepairTaskCompleter")
+  assignedRepairTasks      ReturnRepairTask[]      @relation("ReturnRepairTaskAssignee")
+  inspectedReturnUnits     ReturnUnit[]            @relation("ReturnUnitInspector")
+  approvedReturnUnits      ReturnUnit[]            @relation("ReturnUnitApprover")
 
   @@map("users")
 }
@@ -234,8 +242,11 @@ model ProductMaterial {
 
 model ProductionUnit {
   id              String    @id @default(auto()) @map("_id") @db.ObjectId
-  orderId         String    @db.ObjectId
-  order           Order     @relation(fields: [orderId], references: [id])
+  orderId         String?   @db.ObjectId
+  order           Order?    @relation(fields: [orderId], references: [id])
+  
+  productionOrderId String?   @db.ObjectId
+  productionOrder   ProductionOrder? @relation(fields: [productionOrderId], references: [id])
   
   unitNumber      Int       // 1, 2, 3... within an order
   
@@ -245,7 +256,7 @@ model ProductionUnit {
   // Examples: "INV50001", "UPS30015", "BAT20123"
   unitId          String    @unique  // The 8-character ID
   
-  serialNumber    String?   @unique  // Optional: Manufacturer serial (if different)
+  serialNumber    String?             // Optional: Manufacturer serial (if different)
   qrCode          String?              // QR code data (can be same as unitId)
   
   currentStage    ProductionStage @default(SMD_PRODUCTION)
@@ -269,6 +280,14 @@ model ProductionUnit {
   productionLogs  ProductionLog[]
   qcTests         QualityControl[]
   
+  stepTrackings   UnitStepTracking[]
+  materialRequisitions ProductionMaterialRequisition[]
+  qcEntries       ProductionQCEntry[]
+  reworks         UnitRework[]
+
+  // Store integration — set true once this unit has been received into store inventory
+  storeReceiptCreated Boolean @default(false)
+
   @@map("production_units")
 }
 
@@ -1482,19 +1501,11 @@ model ProductionOrder {
   qcEntries           ProductionQCEntry[]
   materialRequisitions ProductionMaterialRequisition[]
   productionRequests  ProductionRequest[]
+  units               ProductionUnit[]
 
   // Store integration
   storeReceiptCreated Boolean   @default(false)
 
-  // ── Top-Up Run (Shortfall) Support ──────────────────────────────────────
-  // When a production order closes with fewer units than planned, it moves
-  // to PARTIALLY_COMPLETED.  A new linked "top-up run" child order can then
-  // be created to produce the remaining quantity.
-  isTopUpRun          Boolean   @default(false)  // true for child top-up orders
-  parentOrderId       String?   @db.ObjectId      // set on top-up runs
-  parentOrder         ProductionOrder?  @relation("TopUpRuns", fields: [parentOrderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  topUpRuns           ProductionOrder[] @relation("TopUpRuns")
-  
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   
@@ -1546,55 +1557,75 @@ model ProductionActionItem {
   focusGoal           String?             // Quality gate / notes
   sortOrder           Int
   
-  // Decision-point fields (for steps like QC-2, QC-6, P-3, A-2.6)
+  // Decision-point blueprint fields
   isDecisionPoint     Boolean   @default(false)
-  decisionOutcome     String?             // "PASS" | "FAIL" | "REWORK"
-  quantityAffected    Int?                // how many units this decision covers
-  rejectionReason     String?             // documented reason if outcome is FAIL/REWORK
-  rejectionCategory   String?             // "COMPONENT_DEFECT" | "ASSEMBLY_FAULT" | "WIRING_ERROR" | "QC_FAILURE" | "OTHER"
-  
-  status              ActionItemStatus    @default(PENDING)
   
   scheduledStart      DateTime?
   scheduledEnd        DateTime?
   
-  // Person responsible for this action
+  // Person assigned to this action blueprint
   responsibleId       String?   @db.ObjectId
   responsible         User?     @relation("ActionItemResponsible", fields: [responsibleId], references: [id])
-  
-  startedAt           DateTime?
-  completedAt         DateTime?
-  completedById       String?   @db.ObjectId
-  
-  notes               String?
-
-  activities          ProductionStepActivity[]
   
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   
+  unitTrackings       UnitStepTracking[]
+  
   @@map("production_action_items")
+}
+
+model UnitStepTracking {
+  id                String               @id @default(auto()) @map("_id") @db.ObjectId
+  
+  unitId            String               @db.ObjectId
+  unit              ProductionUnit       @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  
+  actionItemId      String               @db.ObjectId
+  actionItem        ProductionActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  
+  status            ActionItemStatus     @default(PENDING)
+  
+  decisionOutcome   String?              // "PASS" | "FAIL" | "REWORK"
+  rejectionReason   String?
+  rejectionCategory String?
+  
+  startedAt         DateTime?
+  completedAt       DateTime?
+  
+  completedById     String?              @db.ObjectId
+  completedBy       User?                @relation("StepTrackingCompleter", fields: [completedById], references: [id])
+  
+  notes             String?
+  
+  activities        ProductionStepActivity[]
+  
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  
+  @@unique([unitId, actionItemId])
+  @@map("unit_step_trackings")
 }
 
 // Per-step comments and file attachments — used by all production workers
 model ProductionStepActivity {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
 
-  actionItemId  String    @db.ObjectId
-  actionItem    ProductionActionItem @relation(fields: [actionItemId], references: [id], onDelete: Cascade)
+  unitStepTrackingId String    @db.ObjectId
+  unitStepTracking   UnitStepTracking @relation(fields: [unitStepTrackingId], references: [id], onDelete: Cascade)
 
-  authorId      String    @db.ObjectId
-  author        User      @relation("StepActivityAuthor", fields: [authorId], references: [id])
+  authorId          String    @db.ObjectId
+  author            User      @relation("StepActivityAuthor", fields: [authorId], references: [id])
 
   // "COMMENT" | "ATTACHMENT" | "STATUS_CHANGE"
-  type          String    @default("COMMENT")
+  type              String    @default("COMMENT")
 
-  comment       String?
+  comment           String?
 
   // [{name, mimeType, base64, sizeBytes}] — stored for images/PDFs uploaded from phones
-  attachments   Json?
+  attachments       Json?
 
-  createdAt     DateTime  @default(now())
+  createdAt         DateTime  @default(now())
 
   @@map("production_step_activities")
 }
@@ -1606,13 +1637,11 @@ model ProductionQCEntry {
   productionOrderId   String    @db.ObjectId
   productionOrder     ProductionOrder @relation(fields: [productionOrderId], references: [id], onDelete: Cascade)
   
+  productionUnitId    String?   @db.ObjectId
+  productionUnit      ProductionUnit? @relation(fields: [productionUnitId], references: [id], onDelete: Cascade)
+  
   checkpointStepId    String              // "P-3", "A-2.6", "QC-2", "QC-6"
   checkpointName      String              // human-readable label
-  
-  quantityInspected   Int
-  quantityPassed      Int
-  quantityFailed      Int
-  quantityReworked    Int       @default(0)
   
   outcome             String              // "PASS" | "FAIL" | "PARTIAL" | "REWORK"
   failureCategory     String?             // "COMPONENT_DEFECT" | "ASSEMBLY_FAULT" | "WIRING_ERROR" | "QC_FAILURE" | "OTHER"
@@ -1647,6 +1676,9 @@ model ProductionMaterialRequisition {
 
   productionOrderId   String?   @db.ObjectId
   productionOrder     ProductionOrder? @relation(fields: [productionOrderId], references: [id], onDelete: Cascade)
+
+  productionUnitId    String?   @db.ObjectId
+  productionUnit      ProductionUnit? @relation(fields: [productionUnitId], references: [id], onDelete: Cascade)
 
   productReturnId     String?   @db.ObjectId
   productReturn       ProductReturn?   @relation(fields: [productReturnId], references: [id], onDelete: Cascade)
@@ -1759,7 +1791,126 @@ model ProductReturn {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
+  storeReceiptCreated Boolean      @default(false)
+
   materialRequisitions ProductionMaterialRequisition[]
+  repairTasks          ReturnRepairTask[]
+  returnUnits          ReturnUnit[]
 
   @@map("product_returns")
+}
+
+model ReturnUnit {
+  id              String        @id @default(auto()) @map("_id") @db.ObjectId
+
+  returnId        String        @db.ObjectId
+  return          ProductReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+
+  unitNumber      Int           // 1, 2, 3… per return
+  serialNumber    String?
+
+  status          ReturnStatus  @default(RECEIVED)
+
+  // Stage 2: Inspection
+  evaluationNotes       String?
+  evaluationAttachments Json?   // AttachmentFile[]
+  inspectedById         String?   @db.ObjectId
+  inspectedBy           User?     @relation("ReturnUnitInspector", fields: [inspectedById], references: [id])
+  inspectedAt           DateTime?
+
+  // Stage 3: Manager Approval
+  recommendedAction     String?
+  approvalAttachments   Json?   // AttachmentFile[]
+  approvedById          String?   @db.ObjectId
+  approvedBy            User?     @relation("ReturnUnitApprover", fields: [approvedById], references: [id])
+  approvedAt            DateTime?
+
+  repairTasks     ReturnRepairTask[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("return_units")
+}
+
+model ReturnRepairTask {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+
+  returnId    String        @db.ObjectId
+  return      ProductReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+
+  returnUnitId  String?     @db.ObjectId
+  returnUnit    ReturnUnit? @relation(fields: [returnUnitId], references: [id], onDelete: Cascade)
+
+  name        String
+  sortOrder   Int           @default(0)
+  status      String        @default("PENDING") // PENDING | COMPLETED
+
+  assignedToId  String?     @db.ObjectId
+  assignedTo    User?       @relation("ReturnRepairTaskAssignee", fields: [assignedToId], references: [id])
+
+  completedAt   DateTime?
+  completedById String?     @db.ObjectId
+  completedBy   User?       @relation("ReturnRepairTaskCompleter", fields: [completedById], references: [id])
+  notes         String?
+  attachments   Json?
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("return_repair_tasks")
+}
+
+// ============================================
+// UNIT REWORK
+// ============================================
+
+model UnitRework {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+
+  productionUnitId  String    @db.ObjectId
+  productionUnit    ProductionUnit @relation(fields: [productionUnitId], references: [id], onDelete: Cascade)
+
+  round             Int       @default(1)   // 1st rework, 2nd rework, etc.
+  status            String    @default("IN_PROGRESS") // IN_PROGRESS | COMPLETED | CANCELLED
+  triggeredByStepId String?   // QC step that initiated this rework, e.g. "QC-1" or "QC-3"
+  faultDescription  String?
+  notes             String?
+
+  createdById       String    @db.ObjectId
+  createdBy         User      @relation("ReworkCreator", fields: [createdById], references: [id])
+
+  completedAt       DateTime?
+  completedById     String?   @db.ObjectId
+  completedBy       User?     @relation("ReworkCompleter", fields: [completedById], references: [id])
+
+  tasks             UnitReworkTask[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("unit_reworks")
+}
+
+model UnitReworkTask {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+
+  reworkId      String     @db.ObjectId
+  rework        UnitRework @relation(fields: [reworkId], references: [id], onDelete: Cascade)
+
+  name          String
+  description   String?
+  sortOrder     Int        @default(0)
+  status        String     @default("PENDING") // PENDING | COMPLETED | SKIPPED
+
+  completedAt   DateTime?
+  completedById String?    @db.ObjectId
+  completedBy   User?      @relation("ReworkTaskCompleter", fields: [completedById], references: [id])
+  notes         String?
+  attachments   Json?      // [{ name, mimeType, base64, sizeBytes }]
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@map("unit_rework_tasks")
 }

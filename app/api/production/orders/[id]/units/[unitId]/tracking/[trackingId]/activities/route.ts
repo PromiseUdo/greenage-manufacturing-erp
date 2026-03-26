@@ -3,32 +3,27 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 interface RouteParams {
-  params: Promise<{ id: string; stageId: string; actionId: string }>;
+  params: Promise<{ id: string; unitId: string; trackingId: string }>;
 }
 
-// GET /api/production/orders/[id]/stages/[stageId]/actions/[actionId]/activities
+// GET /api/production/orders/[id]/units/[unitId]/tracking/[trackingId]/activities
 export async function GET(_req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { id: orderId, stageId, actionId } = await params;
+    const { id: orderId, unitId, trackingId } = await params;
 
-    // Verify the action item belongs to this order/stage
-    const actionItem = await prisma.productionActionItem.findFirst({
-      where: {
-        id: actionId,
-        stageEntryId: stageId,
-        stageEntry: { productionOrderId: orderId },
-      },
+    const tracking = await prisma.unitStepTracking.findUnique({
+      where: { id: trackingId, unitId },
     });
 
-    if (!actionItem) {
-      return NextResponse.json({ error: "Action item not found" }, { status: 404 });
+    if (!tracking) {
+      return NextResponse.json({ error: "Tracking not found" }, { status: 404 });
     }
 
     const activities = await prisma.productionStepActivity.findMany({
-      where: { actionItemId: actionId },
+      where: { unitStepTrackingId: trackingId },
       include: {
         author: { select: { id: true, name: true, email: true } },
       },
@@ -42,13 +37,13 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
   }
 }
 
-// POST /api/production/orders/[id]/stages/[stageId]/actions/[actionId]/activities
+// POST /api/production/orders/[id]/units/[unitId]/tracking/[trackingId]/activities
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { id: orderId, stageId, actionId } = await params;
+    const { id: orderId, unitId, trackingId } = await params;
     const body = await req.json();
     const { comment, attachments, type = "COMMENT" } = body;
 
@@ -59,22 +54,17 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Verify the action item belongs to this order/stage
-    const actionItem = await prisma.productionActionItem.findFirst({
-      where: {
-        id: actionId,
-        stageEntryId: stageId,
-        stageEntry: { productionOrderId: orderId },
-      },
+    const tracking = await prisma.unitStepTracking.findUnique({
+      where: { id: trackingId, unitId },
     });
 
-    if (!actionItem) {
-      return NextResponse.json({ error: "Action item not found" }, { status: 404 });
+    if (!tracking) {
+      return NextResponse.json({ error: "Tracking not found" }, { status: 404 });
     }
 
     const activity = await prisma.productionStepActivity.create({
       data: {
-        actionItemId: actionId,
+        unitStepTrackingId: trackingId,
         authorId: session.user.id,
         type: attachments && attachments.length > 0 && !comment ? "ATTACHMENT" : type,
         comment: comment || null,

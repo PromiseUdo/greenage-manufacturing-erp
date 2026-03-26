@@ -1,9 +1,9 @@
 // src/app/auth/reset-password/page.tsx
 
-"use client";
+'use client';
 
-import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Box,
   Card,
@@ -15,42 +15,42 @@ import {
   InputAdornment,
   IconButton,
   Paper,
-} from "@mui/material";
-import { Visibility, VisibilityOff, CheckCircle } from "@mui/icons-material";
-import { styled } from "@mui/material/styles";
+} from '@mui/material';
+import { Visibility, VisibilityOff, CheckCircle } from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
 
 const StyledCard = styled(Card)(({ theme }) => ({
-  maxWidth: "480px",
-  width: "100%",
+  maxWidth: '480px',
+  width: '100%',
   padding: theme.spacing(5),
   borderRadius: theme.spacing(2),
-  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
 }));
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams.get('token');
 
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const validatePassword = () => {
     if (!password) {
-      setError("Password is required");
+      setError('Password is required');
       return false;
     }
     if (password.length < 6) {
-      setError("Password must be at least 6 characters long");
+      setError('Password must be at least 6 characters long');
       return false;
     }
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError('Passwords do not match');
       return false;
     }
     return true;
@@ -58,10 +58,10 @@ function ResetPasswordForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
 
     if (!token) {
-      setError("Invalid reset link. Please request a new password reset.");
+      setError('Invalid reset link. Please request a new password reset.');
       return;
     }
 
@@ -72,9 +72,9 @@ function ResetPasswordForm() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, password }),
       });
 
@@ -84,13 +84,13 @@ function ResetPasswordForm() {
         setSuccess(true);
         // Redirect to sign in after 3 seconds
         setTimeout(() => {
-          router.push("/auth/signin?reset=success");
+          router.push('/auth/signin?reset=success');
         }, 3000);
       } else {
-        setError(data.error || "Failed to reset password");
+        setError(data.error || 'Failed to reset password');
       }
     } catch (err) {
-      setError("Network error. Please try again later.");
+      setError('Network error. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -100,11 +100,11 @@ function ResetPasswordForm() {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#f8fafc",
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f8fafc',
           padding: 2,
         }}
       >
@@ -116,8 +116,8 @@ function ResetPasswordForm() {
           <Button
             fullWidth
             variant="contained"
-            onClick={() => router.push("/auth/signin")}
-            sx={{ mt: 3, textTransform: "none", fontWeight: 600 }}
+            onClick={() => router.push('/auth/signin')}
+            sx={{ mt: 3, textTransform: 'none', fontWeight: 600 }}
           >
             Back to Sign In
           </Button>
@@ -130,20 +130,20 @@ function ResetPasswordForm() {
     return (
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#f8fafc",
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#f8fafc',
           padding: 2,
         }}
       >
         <StyledCard>
-          <Box sx={{ textAlign: "center" }}>
+          <Box sx={{ textAlign: 'center' }}>
             <CheckCircle
               sx={{
                 fontSize: 64,
-                color: "#10b981",
+                color: '#10b981',
                 mb: 2,
               }}
             />
@@ -154,7 +154,7 @@ function ResetPasswordForm() {
               Your password has been successfully reset. Redirecting you to sign
               in...
             </Typography>
-            <CircularProgress size={32} sx={{ color: "#10b981" }} />
+            <CircularProgress size={32} sx={{ color: '#10b981' }} />
           </Box>
         </StyledCard>
       </Box>
@@ -164,65 +164,65 @@ function ResetPasswordForm() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#f8fafc",
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f8fafc',
         padding: 2,
-        position: "relative",
-        overflow: "hidden",
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
       {/* Background decoration */}
       <Box
         sx={{
-          position: "absolute",
+          position: 'absolute',
           top: -100,
           right: -100,
           width: 300,
           height: 300,
-          borderRadius: "50%",
-          background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
           opacity: 0.1,
-          filter: "blur(60px)",
+          filter: 'blur(60px)',
         }}
       />
       <Box
         sx={{
-          position: "absolute",
+          position: 'absolute',
           bottom: -100,
           left: -100,
           width: 300,
           height: 300,
-          borderRadius: "50%",
-          background: "linear-gradient(135deg, #0a1929 0%, #1e3a5f 100%)",
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #0a1929 0%, #1e3a5f 100%)',
           opacity: 0.1,
-          filter: "blur(60px)",
+          filter: 'blur(60px)',
         }}
       />
 
-      <StyledCard sx={{ position: "relative", zIndex: 1 }}>
-        <Box sx={{ mb: 4, textAlign: "center" }}>
-          <img
+      <StyledCard sx={{ position: 'relative', zIndex: 1 }}>
+        <Box sx={{ mb: 4, textAlign: 'center' }}>
+          {/* <img
             src="/greenage_logo_black.png"
             alt="GreenAge"
             style={{ width: "140px", height: "auto", marginBottom: "24px" }}
-          />
-          {/* <Typography
+          /> */}
+          <Typography
             sx={{
-              fontSize: "1.5rem",
+              fontSize: '1.5rem',
               fontWeight: 700,
-              color: "#fff",
-              letterSpacing: "0.02em",
+              color: '#fff',
+              letterSpacing: '0.02em',
             }}
           >
             LOGO
-          </Typography> */}
+          </Typography>
           <Typography
             variant="h4"
             fontWeight={700}
-            sx={{ color: "#0a1929", mb: 1 }}
+            sx={{ color: '#0a1929', mb: 1 }}
           >
             Create New Password
           </Typography>
@@ -240,12 +240,12 @@ function ResetPasswordForm() {
         <Box
           component="form"
           onSubmit={handleSubmit}
-          sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}
         >
           <TextField
             fullWidth
             label="New Password"
-            type={showPassword ? "text" : "password"}
+            type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
@@ -265,7 +265,7 @@ function ResetPasswordForm() {
               ),
             }}
             sx={{
-              "& .MuiOutlinedInput-root": {
+              '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
               },
             }}
@@ -274,7 +274,7 @@ function ResetPasswordForm() {
           <TextField
             fullWidth
             label="Confirm New Password"
-            type={showConfirmPassword ? "text" : "password"}
+            type={showConfirmPassword ? 'text' : 'password'}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             disabled={loading}
@@ -294,7 +294,7 @@ function ResetPasswordForm() {
               ),
             }}
             sx={{
-              "& .MuiOutlinedInput-root": {
+              '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
               },
             }}
@@ -304,29 +304,29 @@ function ResetPasswordForm() {
             elevation={0}
             sx={{
               p: 2,
-              bgcolor: "#f8fafc",
-              border: "1px solid #e2e8f0",
+              bgcolor: '#f8fafc',
+              border: '1px solid #e2e8f0',
               borderRadius: 2,
             }}
           >
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ display: "block", mb: 0.5 }}
+              sx={{ display: 'block', mb: 0.5 }}
             >
               Password requirements:
             </Typography>
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ display: "block" }}
+              sx={{ display: 'block' }}
             >
               • At least 6 characters long
             </Typography>
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ display: "block" }}
+              sx={{ display: 'block' }}
             >
               • Both passwords must match
             </Typography>
@@ -342,23 +342,23 @@ function ResetPasswordForm() {
               mt: 1,
               py: 1.5,
               borderRadius: 2,
-              textTransform: "none",
-              fontSize: "1rem",
+              textTransform: 'none',
+              fontSize: '1rem',
               fontWeight: 600,
             }}
           >
-            {loading ? "Resetting Password..." : "Reset Password"}
+            {loading ? 'Resetting Password...' : 'Reset Password'}
           </Button>
 
           <Button
             fullWidth
             variant="text"
-            onClick={() => router.push("/auth/signin")}
+            onClick={() => router.push('/auth/signin')}
             disabled={loading}
             sx={{
-              textTransform: "none",
+              textTransform: 'none',
               fontWeight: 600,
-              color: "#64748b",
+              color: '#64748b',
             }}
           >
             Back to Sign In
@@ -375,10 +375,10 @@ export default function ResetPasswordPage() {
       fallback={
         <Box
           sx={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
         >
           <CircularProgress />
