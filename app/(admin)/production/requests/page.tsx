@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { styled } from "@mui/material/styles";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { styled } from '@mui/material/styles';
 import {
   Box,
   Typography,
@@ -21,39 +21,39 @@ import {
   Chip,
   MenuItem,
   CircularProgress,
-} from "@mui/material";
-import { Search, ArrowBack, PrecisionManufacturing } from "@mui/icons-material";
+} from '@mui/material';
+import { Search, ArrowBack, PrecisionManufacturing } from '@mui/icons-material';
 
 // --- Styled Components ---
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
-    backgroundColor: "#0F172A",
+    backgroundColor: '#0F172A',
     color: theme.palette.common.white,
     fontWeight: 600,
     fontSize: 13,
-    letterSpacing: "0.5px",
-    padding: "8px 16px",
-    borderBottom: "none",
+    letterSpacing: '0.5px',
+    padding: '8px 16px',
+    borderBottom: 'none',
   },
   [`&.${tableCellClasses.body}`]: {
     fontSize: 14,
-    padding: "14px 16px",
+    padding: '14px 16px',
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  "&:nth-of-type(odd)": {
+  '&:nth-of-type(odd)': {
     backgroundColor: theme.palette.action.hover,
   },
-  "&:hover": {
+  '&:hover': {
     backgroundColor: theme.palette.action.selected,
-    transition: "background-color 0.2s ease",
+    transition: 'background-color 0.2s ease',
   },
-  "&:last-child td": {
+  '&:last-child td': {
     borderBottom: 0,
   },
-  cursor: "pointer",
+  cursor: 'pointer',
 }));
 
 interface ProductionRequest {
@@ -79,10 +79,10 @@ interface ProductionRequest {
 }
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-  PENDING: { bg: "#F3F4F6", text: "#6B7280" },
-  ACKNOWLEDGED: { bg: "#FEF3C7", text: "#92400E" },
-  SCHEDULED: { bg: "#DBEAFE", text: "#1E40AF" },
-  COMPLETED: { bg: "#DCFCE7", text: "#166534" },
+  PENDING: { bg: '#F3F4F6', text: '#6B7280' },
+  ACKNOWLEDGED: { bg: '#FEF3C7', text: '#92400E' },
+  SCHEDULED: { bg: '#DBEAFE', text: '#1E40AF' },
+  COMPLETED: { bg: '#DCFCE7', text: '#166534' },
 };
 
 export default function ProductionRequestsPage() {
@@ -92,8 +92,8 @@ export default function ProductionRequestsPage() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
 
   useEffect(() => {
     fetchRequests();
@@ -116,17 +116,17 @@ export default function ProductionRequestsPage() {
         setTotal(data.pagination.total);
       }
     } catch (error) {
-      console.error("Error fetching production requests:", error);
+      console.error('Error fetching production requests:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+    new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
 
   return (
@@ -136,7 +136,7 @@ export default function ProductionRequestsPage() {
         <Button
           startIcon={<ArrowBack />}
           onClick={() => router.back()}
-          sx={{ mb: 1, textTransform: "none", color: "text.secondary", p: 0 }}
+          sx={{ mb: 1, textTransform: 'none', color: 'text.secondary', p: 0 }}
         >
           Back
         </Button>
@@ -153,7 +153,7 @@ export default function ProductionRequestsPage() {
       </Box>
 
       {/* Summary Cards */}
-      <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
         {Object.entries(statusColors).map(([status, colors]) => (
           <Paper
             key={status}
@@ -161,15 +161,15 @@ export default function ProductionRequestsPage() {
             sx={{
               p: 2.5,
               borderRadius: 2,
-              border: "1px solid",
-              borderColor: "divider",
+              border: '1px solid',
+              borderColor: 'divider',
               bgcolor: colors.bg,
               minWidth: 140,
               flex: 1,
             }}
           >
             <Typography variant="caption" color={colors.text} fontWeight={600}>
-              {status.replace("_", " ")}
+              {status.replace('_', ' ')}
             </Typography>
             <Typography variant="h4" fontWeight={700} color={colors.text}>
               {requests.filter((r) => r.status === status).length}
@@ -185,11 +185,11 @@ export default function ProductionRequestsPage() {
           p: 2,
           mb: 3,
           borderRadius: 2,
-          border: "1px solid",
-          borderColor: "divider",
+          border: '1px solid',
+          borderColor: 'divider',
         }}
       >
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             placeholder="Search by request #, item, quote..."
             value={search}
@@ -231,10 +231,10 @@ export default function ProductionRequestsPage() {
       <Paper
         elevation={0}
         sx={{
-          width: "100%",
-          overflow: "hidden",
-          border: "1px solid",
-          borderColor: "divider",
+          width: '100%',
+          overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'divider',
           borderRadius: 2,
         }}
       >
@@ -264,10 +264,10 @@ export default function ProductionRequestsPage() {
                 <TableRow>
                   <TableCell colSpan={9} align="center" sx={{ py: 8 }}>
                     <PrecisionManufacturing
-                      sx={{ fontSize: 48, color: "#D1D5DB", mb: 1 }}
+                      sx={{ fontSize: 48, color: '#D1D5DB', mb: 1 }}
                     />
                     <Typography color="text.secondary">
-                      No production requests found
+                      No production backorders found
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -281,7 +281,7 @@ export default function ProductionRequestsPage() {
                       <Typography
                         variant="body2"
                         fontWeight={600}
-                        sx={{ color: "#0F172A" }}
+                        sx={{ color: '#0F172A' }}
                       >
                         {pr.requestNumber}
                       </Typography>
@@ -323,7 +323,7 @@ export default function ProductionRequestsPage() {
                         sx={{
                           fontWeight: 500,
                           fontSize: 11,
-                          cursor: "pointer",
+                          cursor: 'pointer',
                         }}
                       />
                     </StyledTableCell>
@@ -336,11 +336,11 @@ export default function ProductionRequestsPage() {
 
                     <StyledTableCell>
                       <Chip
-                        label={pr.status.replace("_", " ")}
+                        label={pr.status.replace('_', ' ')}
                         size="small"
                         sx={{
-                          bgcolor: statusColors[pr.status]?.bg || "#F3F4F6",
-                          color: statusColors[pr.status]?.text || "#6B7280",
+                          bgcolor: statusColors[pr.status]?.bg || '#F3F4F6',
+                          color: statusColors[pr.status]?.text || '#6B7280',
                           fontWeight: 600,
                           fontSize: 11,
                         }}
@@ -355,7 +355,7 @@ export default function ProductionRequestsPage() {
 
                     <StyledTableCell>
                       <Typography variant="caption" color="text.secondary">
-                        {pr.dateCompleted ? formatDate(pr.dateCompleted) : "—"}
+                        {pr.dateCompleted ? formatDate(pr.dateCompleted) : '—'}
                       </Typography>
                     </StyledTableCell>
                   </StyledTableRow>
@@ -376,9 +376,9 @@ export default function ProductionRequestsPage() {
             setPage(0);
           }}
           sx={{
-            borderTop: "1px solid",
-            borderColor: "divider",
-            backgroundColor: "#F8FAFC",
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: '#F8FAFC',
           }}
         />
       </Paper>

@@ -54,11 +54,33 @@ export const AVAILABLE_PERMISSIONS = [
     ],
   },
   {
+    module: "Procurement",
+    permissions: [
+      { value: "procurement:read", label: "View Suppliers, PO Groups & Purchase Orders" },
+      { value: "procurement:write", label: "Manage Procurement (create/edit POs)" },
+      { value: "procurement:delete", label: "Delete Procurement Records" },
+    ],
+  },
+  {
     module: "Sales (Quotes & Invoices)",
     permissions: [
       { value: "sales:read", label: "View Sales Documents" },
       { value: "sales:write", label: "Manage Sales Documents" },
       { value: "sales:delete", label: "Delete Sales Orders" },
+    ],
+  },
+  {
+    module: "Store & Dispatch",
+    permissions: [
+      { value: "store:read", label: "View Store (Stock, Receipts, Dispatches)" },
+      { value: "store:write", label: "Manage Store Operations" },
+    ],
+  },
+  {
+    module: "Customers",
+    permissions: [
+      { value: "customers:read", label: "View Customers" },
+      { value: "customers:write", label: "Manage Customers" },
     ],
   },
 ];

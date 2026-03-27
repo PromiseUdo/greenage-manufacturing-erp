@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
+  Badge,
   Box,
   Drawer,
   List,
@@ -19,8 +20,9 @@ import ExpandLessRoundedIcon from '@mui/icons-material/ExpandLessRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import MenuOpenRoundedIcon from '@mui/icons-material/MenuOpenRounded';
-import { navigation, NavItem } from '@/lib/navigation';
+import { getFilteredNavigation, NavItem } from '@/lib/navigation';
 import { useSession, signOut } from 'next-auth/react';
+import { useNotifications } from '@/lib/contexts/NotificationContext';
 
 const DRAWER_WIDTH = 280; // Slightly wider for modern feel
 const MINI_WIDTH = 80;
@@ -30,10 +32,9 @@ export default function Sidebar() {
   const router = useRouter();
 
   const { data: session, status } = useSession();
+  const { unreadByPath } = useNotifications();
 
   const userName = session?.user?.name || 'User';
-  const userEmail = session?.user?.email || '';
-  const userImage = session?.user?.image || '/avatar.png';
 
   const isLoading = status === 'loading';
 
@@ -133,7 +134,23 @@ export default function Sidebar() {
                     justifyContent: 'center',
                   }}
                 >
-                  <Icon sx={{ fontSize: '1.3rem' }} />
+                  <Badge
+                    badgeContent={
+                      item.path ? (unreadByPath[item.path] ?? 0) : 0
+                    }
+                    color="error"
+                    max={99}
+                    sx={{
+                      '& .MuiBadge-badge': {
+                        fontSize: '0.6rem',
+                        height: 16,
+                        minWidth: 16,
+                        fontWeight: 700,
+                      },
+                    }}
+                  >
+                    <Icon sx={{ fontSize: '1.3rem' }} />
+                  </Badge>
                 </ListItemIcon>
 
                 {!collapsed && (
@@ -211,13 +228,13 @@ export default function Sidebar() {
       >
         {!collapsed && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            {/* <Box
+            <Box
               component="img"
               src="/greenage_logo.png"
               alt="GreenAge"
-              sx={{ height: 28, width: "auto" }}
-            /> */}
-            <Typography
+              sx={{ height: 28, width: 'auto' }}
+            />
+            {/* <Typography
               sx={{
                 fontSize: '1.5rem',
                 fontWeight: 700,
@@ -226,7 +243,7 @@ export default function Sidebar() {
               }}
             >
               LOGO
-            </Typography>
+            </Typography> */}
           </Box>
         )}
         <IconButton
@@ -242,7 +259,10 @@ export default function Sidebar() {
       </Box>
 
       <Box sx={{ flex: 1, overflowY: 'auto', mt: 1 }}>
-        {navigation.map((group) => (
+        {getFilteredNavigation(
+          session?.user?.role,
+          session?.user?.permissions ?? [],
+        ).map((group) => (
           <Box key={group.section} sx={{ mb: 4 }}>
             {!collapsed && (
               <Typography

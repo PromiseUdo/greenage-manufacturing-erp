@@ -52,11 +52,11 @@ import {
   ListItemIcon,
   Tooltip,
 } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import PersonIcon from '@mui/icons-material/Person';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import NotificationsDropdown from './NotificationsDropdown';
 
 export default function Topbar() {
   const { data: session, status } = useSession();
@@ -96,11 +96,7 @@ export default function Topbar() {
         {/* Right side actions */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {/* Notifications */}
-          <Tooltip title="Notifications">
-            <IconButton color="inherit" size="medium">
-              <NotificationsIcon />
-            </IconButton>
-          </Tooltip>
+          <NotificationsDropdown />
 
           {/* User Avatar + Dropdown */}
           <Tooltip title={userName}>

@@ -43,6 +43,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import BuildIcon from '@mui/icons-material/Build';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 const formatDate = (d: string) =>
@@ -137,9 +138,6 @@ export default function ProductionMaterialsPage() {
   );
   const [dialogUnit, setDialogUnit] = useState<any>(null);
   const [bomExpanded, setBomExpanded] = useState(false);
-  const [expandedUnits, setExpandedUnits] = useState<Record<string, boolean>>(
-    {},
-  );
   const [expandedReqs, setExpandedReqs] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -732,8 +730,6 @@ export default function ProductionMaterialsPage() {
           const reqStatusInfo =
             statusConfig[latestReq?.status ?? 'NOT_REQUESTED'] ??
             statusConfig.NOT_REQUESTED;
-          const isHistoryExpanded = expandedUnits[unit.id] ?? false;
-
           const cardBorderColor =
             latestReq?.status === 'FULFILLED'
               ? '#BBF7D0'
@@ -924,55 +920,20 @@ export default function ProductionMaterialsPage() {
                   </Box>
                 )}
 
-                {/* Requisition history toggle */}
+                {/* Requisition history */}
                 {unitReqs.length > 0 && (
                   <Box sx={{ mt: 1.5 }}>
                     <Box
                       sx={{
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.5,
-                        cursor: 'pointer',
-                        width: 'fit-content',
+                        flexDirection: 'column',
+                        gap: 2,
+                        mt: 1.5,
                       }}
-                      onClick={() =>
-                        setExpandedUnits((prev) => ({
-                          ...prev,
-                          [unit.id]: !isHistoryExpanded,
-                        }))
-                      }
                     >
-                      <Typography
-                        variant="caption"
-                        fontWeight={700}
-                        color="primary.main"
-                      >
-                        {isHistoryExpanded ? 'Hide' : 'View'} Requisition
-                        History ({unitReqs.length})
-                      </Typography>
-                      {isHistoryExpanded ? (
-                        <ExpandLessIcon
-                          sx={{ fontSize: 16, color: 'primary.main' }}
-                        />
-                      ) : (
-                        <ExpandMoreIcon
-                          sx={{ fontSize: 16, color: 'primary.main' }}
-                        />
-                      )}
-                    </Box>
-
-                    <Collapse in={isHistoryExpanded}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 2,
-                          mt: 1.5,
-                        }}
-                      >
-                        {unitReqs.map((req: any, index: number) => {
+                      {unitReqs.map((req: any) => {
                           const isReqExpanded =
-                            expandedReqs[req.id] ?? index === 0;
+                            expandedReqs[req.id] ?? false;
                           const isReplacement =
                             req.notes?.startsWith('[Replacement');
                           const issued =
@@ -1070,13 +1031,39 @@ export default function ProductionMaterialsPage() {
                                       {formatDate(req.createdAt)}
                                     </Typography>
                                   </Box>
-                                  <IconButton size="small">
-                                    {isReqExpanded ? (
-                                      <ExpandLessIcon />
-                                    ) : (
-                                      <ExpandMoreIcon />
-                                    )}
-                                  </IconButton>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Button
+                                      size="small"
+                                      variant="outlined"
+                                      startIcon={<PictureAsPdfIcon />}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        window.open(
+                                          `/api/production/orders/${orderId}/material-requisition/${req.id}/pdf`,
+                                          '_blank',
+                                        );
+                                      }}
+                                      sx={{
+                                        textTransform: 'none',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        borderColor: '#2563EB',
+                                        color: '#2563EB',
+                                        '&:hover': { bgcolor: '#EFF6FF', borderColor: '#1D4ED8' },
+                                        borderRadius: 2,
+                                        px: 1.5,
+                                      }}
+                                    >
+                                      Download PDF
+                                    </Button>
+                                    <IconButton size="small">
+                                      {isReqExpanded ? (
+                                        <ExpandLessIcon />
+                                      ) : (
+                                        <ExpandMoreIcon />
+                                      )}
+                                    </IconButton>
+                                  </Box>
                                 </Box>
 
                                 <Collapse in={isReqExpanded}>
@@ -1530,8 +1517,7 @@ export default function ProductionMaterialsPage() {
                             </Card>
                           );
                         })}
-                      </Box>
-                    </Collapse>
+                    </Box>
                   </Box>
                 )}
               </CardContent>

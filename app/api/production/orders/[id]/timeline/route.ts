@@ -30,15 +30,11 @@ export async function GET(
       );
     }
 
-    // Query activity logs scoped to this order directly in the database using
-    // Prisma's JSON path filter — no in-memory scanning required.
-    const activities = await prisma.activityLog.findMany({
+    // MongoDB doesn't support JSON path filters in Prisma, so fetch recent
+    // Production logs and filter by orderId in application code.
+    const allActivities = await prisma.activityLog.findMany({
       where: {
         module: 'Production',
-        details: {
-          path: ['orderId'],
-          equals: id,
-        },
       },
       include: {
         user: {
@@ -46,8 +42,15 @@ export async function GET(
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: 100,
+      take: 500,
     });
+
+    const activities = allActivities
+      .filter((activity) => {
+        const details = activity.details as any;
+        return details?.orderId === id;
+      })
+      .slice(0, 100);
 
     return NextResponse.json({ activities });
   } catch (error) {

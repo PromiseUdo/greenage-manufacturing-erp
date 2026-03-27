@@ -320,7 +320,7 @@ export default function EditEmployeePage({
               </TextField>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            {/* <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 label="Position/Job Title"
@@ -329,7 +329,7 @@ export default function EditEmployeePage({
                 onChange={(e) => handleChange('position', e.target.value)}
                 disabled={saving}
               />
-            </Grid>
+            </Grid> */}
 
             <Grid item xs={12} md={6}>
               <TextField

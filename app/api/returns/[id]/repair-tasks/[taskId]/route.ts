@@ -57,20 +57,10 @@ export async function PATCH(
       }
     }
 
-    // Also check if ALL tasks across the whole return are done → set return REPAIR_COMPLETED
-    const pendingCount = await prisma.returnRepairTask.count({
-      where: { returnId, status: 'PENDING' },
-    });
-    let returnStatus: string | null = null;
-    if (pendingCount === 0) {
-      const updatedReturn = await prisma.productReturn.update({
-        where: { id: returnId },
-        data: { status: 'REPAIR_COMPLETED' },
-      });
-      returnStatus = updatedReturn.status;
-    }
+    // Note: return status is NOT auto-promoted to REPAIR_COMPLETED here.
+    // A production manager must explicitly approve the repair via the "Approve Repair as Complete" action.
 
-    return NextResponse.json({ task: updatedTask, unitStatus, returnStatus });
+    return NextResponse.json({ task: updatedTask, unitStatus });
   } catch (error) {
     console.error('Error completing repair task:', error);
     return NextResponse.json({ error: 'Failed to complete repair task' }, { status: 500 });

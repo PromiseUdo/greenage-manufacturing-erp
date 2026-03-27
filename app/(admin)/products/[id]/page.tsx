@@ -346,16 +346,16 @@ export default function ProductDetailPage({
             <Typography variant="caption" color="text.secondary">
               POWER SOLUTIONS
             </Typography> */}
-            {/* <img
+            <img
               src="/greenage_logo_black.png"
               alt="Greenage Technologies"
               style={{
-                height: "60px",
-                maxWidth: "200px",
-                objectFit: "contain",
+                height: '60px',
+                maxWidth: '200px',
+                objectFit: 'contain',
               }}
-            /> */}
-            <Typography
+            />
+            {/* <Typography
               sx={{
                 fontSize: '1.5rem',
                 fontWeight: 700,
@@ -364,7 +364,7 @@ export default function ProductDetailPage({
               }}
             >
               LOGO
-            </Typography>
+            </Typography> */}
           </Box>
           <Box sx={{ textAlign: 'right' }}>
             <Typography variant="h5" fontWeight={600} color="#0F172A">
