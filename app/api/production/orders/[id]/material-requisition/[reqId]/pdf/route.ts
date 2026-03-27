@@ -104,14 +104,14 @@ export async function GET(
       doc.text(value || '—', x, y + 6);
     };
 
-    drawInfoRow('Production Order', requisition.productionOrder.orderNumber, col1X, infoY);
-    drawInfoRow('Product', `${requisition.productionOrder.product.name} (${requisition.productionOrder.product.productNumber})`, col2X, infoY);
+    drawInfoRow('Production Order', requisition.productionOrder?.orderNumber ?? '—', col1X, infoY);
+    drawInfoRow('Product', requisition.productionOrder ? `${requisition.productionOrder.product.name} (${requisition.productionOrder.product.productNumber})` : '—', col2X, infoY);
 
     drawInfoRow('Production Unit', requisition.productionUnit ? `${requisition.productionUnit.unitId}` : 'All Units', col1X, infoY + 18);
     drawInfoRow('Requested By', requisition.requestedBy?.name ?? '—', col2X, infoY + 18);
 
     drawInfoRow('Status', requisition.status.replace(/_/g, ' '), col1X, infoY + 36);
-    drawInfoRow('Order Qty', `${requisition.productionOrder.quantity} units`, col2X, infoY + 36);
+    drawInfoRow('Order Qty', `${requisition.productionOrder?.quantity ?? '—'} units`, col2X, infoY + 36);
 
     if (requisition.notes) {
       const cleanNotes = requisition.notes.replace(/^\[.*?\]\s*/, '');
@@ -250,7 +250,7 @@ export async function GET(
     doc.setFontSize(7.5);
     doc.setTextColor(...accentColor);
     doc.text(
-      `${requisition.requisitionNumber}  ·  ${requisition.productionOrder.orderNumber}  ·  Generated ${new Date().toLocaleString('en-GB')}  ·  Greenage Production Manager`,
+      `${requisition.requisitionNumber}  ·  ${requisition.productionOrder?.orderNumber ?? '—'}  ·  Generated ${new Date().toLocaleString('en-GB')}  ·  Greenage Production Manager`,
       105,
       pageHeight - 7,
       { align: 'center' }
