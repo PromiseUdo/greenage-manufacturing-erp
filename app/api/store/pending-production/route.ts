@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { ProductCategory } from '@prisma/client';
 
 export async function GET(_request: NextRequest) {
   try {
@@ -303,7 +304,7 @@ async function findOrCreateStoreItem(product: {
         itemNumber: `STK-${itemCount.toString().padStart(4, '0')}`,
         name: product.name,
         productId: product.id,
-        category: product.category,
+        category: product.category as ProductCategory,
         quantity: 0,
         unit: 'pcs',
         condition: 'NEW',
