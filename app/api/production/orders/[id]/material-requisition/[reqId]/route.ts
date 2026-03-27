@@ -144,25 +144,23 @@ export async function PATCH(
       },
     });
 
-    // If fully fulfilled, auto-complete P-1 action item
+    // If fully fulfilled, auto-complete P-1 unit step trackings
     if (newStatus === 'FULFILLED') {
-      const p1Action = await prisma.productionActionItem.findFirst({
+      await prisma.unitStepTracking.updateMany({
         where: {
-          stageEntry: { productionOrderId: orderId },
-          stepId: 'P-1',
+          actionItem: {
+            stepId: 'P-1',
+            stageEntry: { productionOrderId: orderId },
+          },
+          status: { not: 'COMPLETED' },
+        },
+        data: {
+          status: 'COMPLETED',
+          completedAt: new Date(),
+          completedById: session.user.id,
+          notes: `All BOM materials signed out via requisition ${requisition.requisitionNumber}`,
         },
       });
-      if (p1Action && p1Action.status !== 'COMPLETED') {
-        await prisma.productionActionItem.update({
-          where: { id: p1Action.id },
-          data: {
-            status: 'COMPLETED',
-            completedAt: new Date(),
-            completedById: session.user.id,
-            notes: `All BOM materials signed out via requisition ${requisition.requisitionNumber}`,
-          },
-        });
-      }
 
       // Log activity
       await prisma.activityLog.create({
