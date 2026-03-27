@@ -19,15 +19,13 @@ export async function PATCH(
 
     const { id, stageId, actionId } = await params;
     const body = await request.json();
-    const { 
-      status, 
-      responsibleId, 
+    const {
+      status,
+      responsibleId,
       notes,
       decisionOutcome,
-      quantityAffected,
       rejectionReason,
       rejectionCategory,
-      quantityPackaged
     } = body;
 
     // Verify production order exists
@@ -59,65 +57,59 @@ export async function PATCH(
       );
     }
 
-    const updateData: any = {};
-
-    if (status) {
-      updateData.status = status;
-
-      if (status === 'IN_PROGRESS' && !actionItem.startedAt) {
-        updateData.startedAt = new Date();
-      }
-      if (status === 'COMPLETED') {
-        updateData.completedAt = new Date();
-        updateData.completedById = session.user.id;
-        if (!actionItem.startedAt) {
-          updateData.startedAt = new Date();
-        }
-      }
-    }
-
+    // responsibleId lives on the blueprint; update it directly
     if (responsibleId !== undefined) {
-      updateData.responsibleId = responsibleId || null;
-    }
-    if (notes !== undefined) {
-      updateData.notes = notes;
-    }
-    if (decisionOutcome !== undefined) {
-      updateData.decisionOutcome = decisionOutcome;
-    }
-    if (quantityAffected !== undefined) {
-      updateData.quantityAffected = quantityAffected;
-    }
-    if (rejectionReason !== undefined) {
-      updateData.rejectionReason = rejectionReason;
-    }
-    if (rejectionCategory !== undefined) {
-      updateData.rejectionCategory = rejectionCategory;
+      await prisma.productionActionItem.update({
+        where: { id: actionId },
+        data: { responsibleId: responsibleId || null },
+      });
     }
 
-    const updatedAction = await prisma.productionActionItem.update({
+    // status and tracking fields live on UnitStepTracking
+    if (status) {
+      const trackingData: any = { status };
+      if (status === 'COMPLETED') {
+        trackingData.completedAt = new Date();
+        trackingData.completedById = session.user.id;
+      }
+      if (notes !== undefined) trackingData.notes = notes;
+      if (decisionOutcome !== undefined) trackingData.decisionOutcome = decisionOutcome;
+      if (rejectionReason !== undefined) trackingData.rejectionReason = rejectionReason;
+      if (rejectionCategory !== undefined) trackingData.rejectionCategory = rejectionCategory;
+
+      await prisma.unitStepTracking.updateMany({
+        where: {
+          actionItemId: actionId,
+          status: { notIn: ['COMPLETED', 'SKIPPED'] },
+        },
+        data: trackingData,
+      });
+    }
+
+    const updatedAction = await prisma.productionActionItem.findUniqueOrThrow({
       where: { id: actionId },
-      data: updateData,
       include: {
         responsible: {
           select: { id: true, name: true, email: true },
         },
-        _count: {
-          select: { activities: true },
+        unitTrackings: {
+          select: { status: true },
         },
       },
     });
 
-    // Check if ALL action items in this stage are completed/skipped → auto-complete stage
+    // Check if ALL unit trackings in this stage are completed/skipped → auto-complete stage
     if (status === 'COMPLETED' || status === 'SKIPPED') {
-      const allActions = await prisma.productionActionItem.findMany({
-        where: { stageEntryId: stageId },
+      const allTrackings = await prisma.unitStepTracking.findMany({
+        where: { actionItem: { stageEntryId: stageId } },
         select: { status: true },
       });
 
-      const allDone = allActions.every(
-        (a) => a.status === 'COMPLETED' || a.status === 'SKIPPED'
-      );
+      const allDone =
+        allTrackings.length > 0 &&
+        allTrackings.every(
+          (t) => t.status === 'COMPLETED' || t.status === 'SKIPPED'
+        );
 
       if (allDone) {
         await prisma.productionStageEntry.update({
@@ -152,11 +144,11 @@ export async function PATCH(
           // Auto-complete requests if packaged quantity meets the desired order quantity
           const orderQuantity = updatedOrder.quantity;
           const packaged = updatedOrder.quantityPackaged || 0;
-          
+
           if (packaged >= orderQuantity) {
             await prisma.productionRequest.updateMany({
               where: { productionOrderId: id },
-              data: { 
+              data: {
                 status: 'COMPLETED',
                 dateCompleted: new Date(),
               },
@@ -164,12 +156,10 @@ export async function PATCH(
           }
         }
       }
-
-
     }
 
-    // Also auto-set stage to IN_PROGRESS if it's NOT_STARTED and action starts
-    if (status === 'IN_PROGRESS' || status === 'COMPLETED') {
+    // Auto-set stage to IN_PROGRESS if it's NOT_STARTED
+    if (status === 'COMPLETED') {
       const stage = await prisma.productionStageEntry.findUnique({
         where: { id: stageId },
         select: { status: true, actualStart: true },
@@ -195,7 +185,6 @@ export async function PATCH(
           },
         });
 
-        // Update linked ProductionRequests based on order status change
         await prisma.productionRequest.updateMany({
           where: { productionOrderId: id },
           data: { status: 'SCHEDULED' },
