@@ -35,9 +35,7 @@ export async function PATCH(
     // Verify stage exists and belongs to this order
     const stage = await prisma.productionStageEntry.findFirst({
       where: { id: stageId, productionOrderId: id },
-      include: {
-        actionItems: { select: { id: true, status: true } },
-      },
+      select: { id: true, actualStart: true },
     });
 
     if (!stage) {
@@ -81,7 +79,7 @@ export async function PATCH(
               select: { id: true, name: true, email: true },
             },
             _count: {
-              select: { activities: true },
+              select: { unitTrackings: true },
             },
           },
           orderBy: { sortOrder: 'asc' },
