@@ -211,9 +211,8 @@ export async function GET() {
     // ─────────────────────────────────────────────────────────────────────────
     const activeProductionOrders = productionOrders.filter(
       (po) =>
-        po.status === 'IN_PRODUCTION' ||
-        po.status === 'PLANNED' ||
-        po.status === 'QC',
+        po.status === 'IN_PROGRESS' ||
+        po.status === 'ON_HOLD',
     ).length;
 
     const ordersWithYield = productionOrders.filter(
@@ -246,18 +245,19 @@ export async function GET() {
     // ─────────────────────────────────────────────────────────────────────────
     const openReturns = returns.filter(
       (r) =>
-        r.status !== 'COMPLETED' &&
-        r.status !== 'CLOSED',
+        r.status !== 'DISPATCHED' &&
+        r.status !== 'SCRAPPED',
     ).length;
 
     const returnStatusBreakdown = [
       'RECEIVED',
-      'EVALUATION',
-      'RECOMMENDATION',
-      'REPAIR',
-      'IN_TRANSIT',
-      'COMPLETED',
-      'CLOSED',
+      'INSPECTING',
+      'PENDING_APPROVAL',
+      'IN_REPAIR',
+      'REPAIR_COMPLETED',
+      'READY_FOR_DISPATCH',
+      'DISPATCHED',
+      'SCRAPPED',
     ].map((status) => ({
       status,
       count: returns.filter((r) => r.status === status).length,
