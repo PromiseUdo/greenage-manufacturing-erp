@@ -192,25 +192,6 @@ export default auth((req) => {
       }
     }
 
-    // Restrict /dashboard (and all admin routes) to ADMIN role only
-    const adminRoutes = [
-      '/dashboard',
-      '/customers',
-      '/inventory',
-      '/production',
-      '/products',
-      '/returns',
-      '/sales',
-      '/settings',
-      '/staff',
-    ];
-    const isAdminRoute = adminRoutes.some((route) =>
-      pathname.startsWith(route),
-    );
-    if (isAdminRoute && session.user.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/auth/signin', req.url));
-    }
-
     // Prevent accessing auth pages when already logged in
     if (isPublicRoute && !session.user.mustChangePassword) {
       return NextResponse.redirect(new URL('/dashboard', req.url));

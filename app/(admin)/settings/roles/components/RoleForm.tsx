@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 import {
   Box,
   Typography,
@@ -11,76 +11,101 @@ import {
   Checkbox,
   FormControlLabel,
   Divider,
-} from "@mui/material";
-import { useRouter } from "next/navigation";
+} from '@mui/material';
+import { useRouter } from 'next/navigation';
 
 export const AVAILABLE_PERMISSIONS = [
   {
-    module: "Users & Employees",
+    module: 'Users & Employees',
     permissions: [
-      { value: "users:read", label: "View Users/Employees" },
-      { value: "users:write", label: "Create/Edit Users" },
-      { value: "users:delete", label: "Delete Users" },
+      { value: 'users:read', label: 'View Users/Employees' },
+      { value: 'users:write', label: 'Create/Edit Users' },
+      { value: 'users:delete', label: 'Delete Users' },
     ],
   },
   {
-    module: "Roles & Permissions",
+    module: 'Roles & Permissions',
     permissions: [
-      { value: "roles:read", label: "View Roles" },
-      { value: "roles:write", label: "Manage Roles" },
+      { value: 'roles:read', label: 'View Roles' },
+      { value: 'roles:write', label: 'Manage Roles' },
     ],
   },
   {
-    module: "Products",
+    module: 'Products',
     permissions: [
-      { value: "products:read", label: "View Products" },
-      { value: "products:write", label: "Manage Products" },
-      { value: "products:delete", label: "Delete Products" },
+      { value: 'products:read', label: 'View Products' },
+      { value: 'products:write', label: 'Manage Products' },
+      { value: 'products:delete', label: 'Delete Products' },
     ],
   },
   {
-    module: "Production Orders",
+    module: 'Production Orders',
+    // permissions: [
+    //   { value: "production_orders:read", label: "View Production Orders" },
+    //   { value: "production_orders:write", label: "Manage Production Orders" },
+    //   { value: "production_orders:delete", label: "Delete Production Orders" },
+    // ],
     permissions: [
-      { value: "production_orders:read", label: "View Production Orders" },
-      { value: "production_orders:write", label: "Manage Production Orders" },
-      { value: "production_orders:delete", label: "Delete Production Orders" },
+      { value: 'production_orders:read', label: 'View Production Orders' },
+      { value: 'production_orders:create', label: 'Create Production Orders' },
+      { value: 'production_orders:update', label: 'Edit Production Orders' },
+      { value: 'production_orders:delete', label: 'Delete Production Orders' },
     ],
   },
   {
-    module: "Inventory & Store",
+    module: 'Production Activities',
     permissions: [
-      { value: "inventory:read", label: "View Inventory" },
-      { value: "inventory:write", label: "Manage Inventory" },
+      { value: 'production_activities:read', label: 'View Activities' },
+      {
+        value: 'production_activities:update',
+        label: 'Update Production Progress',
+      },
     ],
   },
   {
-    module: "Procurement",
+    module: 'Inventory & Store',
     permissions: [
-      { value: "procurement:read", label: "View Suppliers, PO Groups & Purchase Orders" },
-      { value: "procurement:write", label: "Manage Procurement (create/edit POs)" },
-      { value: "procurement:delete", label: "Delete Procurement Records" },
+      { value: 'inventory:read', label: 'View Inventory' },
+      { value: 'inventory:write', label: 'Manage Inventory' },
     ],
   },
   {
-    module: "Sales (Quotes & Invoices)",
+    module: 'Procurement',
     permissions: [
-      { value: "sales:read", label: "View Sales Documents" },
-      { value: "sales:write", label: "Manage Sales Documents" },
-      { value: "sales:delete", label: "Delete Sales Orders" },
+      {
+        value: 'procurement:read',
+        label: 'View Suppliers, PO Groups & Purchase Orders',
+      },
+      {
+        value: 'procurement:write',
+        label: 'Manage Procurement (create/edit POs)',
+      },
+      { value: 'procurement:delete', label: 'Delete Procurement Records' },
     ],
   },
   {
-    module: "Store & Dispatch",
+    module: 'Sales (Quotes & Invoices)',
     permissions: [
-      { value: "store:read", label: "View Store (Stock, Receipts, Dispatches)" },
-      { value: "store:write", label: "Manage Store Operations" },
+      { value: 'sales:read', label: 'View Sales Documents' },
+      { value: 'sales:write', label: 'Manage Sales Documents' },
+      { value: 'sales:delete', label: 'Delete Sales Orders' },
     ],
   },
   {
-    module: "Customers",
+    module: 'Store & Dispatch',
     permissions: [
-      { value: "customers:read", label: "View Customers" },
-      { value: "customers:write", label: "Manage Customers" },
+      {
+        value: 'store:read',
+        label: 'View Store (Stock, Receipts, Dispatches)',
+      },
+      { value: 'store:write', label: 'Manage Store Operations' },
+    ],
+  },
+  {
+    module: 'Customers',
+    permissions: [
+      { value: 'customers:read', label: 'View Customers' },
+      { value: 'customers:write', label: 'Manage Customers' },
     ],
   },
 ];
@@ -98,8 +123,8 @@ export default function RoleForm({ initialData }: RoleFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: initialData?.name || "",
-    description: initialData?.description || "",
+    name: initialData?.name || '',
+    description: initialData?.description || '',
     permissions: initialData?.permissions || [],
   });
 
@@ -143,7 +168,7 @@ export default function RoleForm({ initialData }: RoleFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name) {
-      alert("Role Name is required");
+      alert('Role Name is required');
       return;
     }
     setLoading(true);
@@ -151,25 +176,25 @@ export default function RoleForm({ initialData }: RoleFormProps) {
     try {
       const url = isEdit
         ? `/api/settings/roles/${initialData.id}`
-        : "/api/settings/roles";
-      const method = isEdit ? "PATCH" : "POST";
+        : '/api/settings/roles';
+      const method = isEdit ? 'PATCH' : 'POST';
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       if (res.ok) {
-        router.push("/settings/roles");
+        router.push('/settings/roles');
         router.refresh();
       } else {
         const err = await res.json();
-        alert(err.error || "Failed to save role");
+        alert(err.error || 'Failed to save role');
       }
     } catch (error) {
       console.error(error);
-      alert("An unexpected error occurred.");
+      alert('An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
@@ -179,14 +204,14 @@ export default function RoleForm({ initialData }: RoleFormProps) {
     <Box
       component="form"
       onSubmit={handleSubmit}
-      sx={{ display: "flex", flexDirection: "column", gap: 3 }}
+      sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
     >
       <Paper
         elevation={0}
-        sx={{ p: 4, borderRadius: "12px", border: "1px solid #e2e8f0" }}
+        sx={{ p: 4, borderRadius: '12px', border: '1px solid #e2e8f0' }}
       >
         <Typography variant="h6" fontWeight="bold" mb={3}>
-          {isEdit ? "Edit Role Details" : "New Role Details"}
+          {isEdit ? 'Edit Role Details' : 'New Role Details'}
         </Typography>
 
         <Grid container spacing={3}>
@@ -216,7 +241,7 @@ export default function RoleForm({ initialData }: RoleFormProps) {
 
       <Paper
         elevation={0}
-        sx={{ p: 4, borderRadius: "12px", border: "1px solid #e2e8f0" }}
+        sx={{ p: 4, borderRadius: '12px', border: '1px solid #e2e8f0' }}
       >
         <Typography variant="h6" fontWeight="bold" mb={1}>
           Permissions
@@ -239,10 +264,10 @@ export default function RoleForm({ initialData }: RoleFormProps) {
               <Grid size={{ xs: 12, md: 6, lg: 4 }} key={mod.module}>
                 <Box
                   sx={{
-                    border: "1px solid #f1f5f9",
-                    borderRadius: "8px",
+                    border: '1px solid #f1f5f9',
+                    borderRadius: '8px',
                     p: 2,
-                    bgcolor: "#fafafa",
+                    bgcolor: '#fafafa',
                   }}
                 >
                   <FormControlLabel
@@ -259,7 +284,7 @@ export default function RoleForm({ initialData }: RoleFormProps) {
                     }
                   />
                   <Divider sx={{ my: 1 }} />
-                  <Box sx={{ display: "flex", flexDirection: "column", pl: 3 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', pl: 3 }}>
                     {mod.permissions.map((perm) => (
                       <FormControlLabel
                         key={perm.value}
@@ -283,12 +308,12 @@ export default function RoleForm({ initialData }: RoleFormProps) {
         </Grid>
       </Paper>
 
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
         <Button
           variant="outlined"
           onClick={() => router.back()}
           disabled={loading}
-          sx={{ borderRadius: "8px" }}
+          sx={{ borderRadius: '8px' }}
         >
           Cancel
         </Button>
@@ -296,9 +321,9 @@ export default function RoleForm({ initialData }: RoleFormProps) {
           type="submit"
           variant="contained"
           disabled={loading}
-          sx={{ borderRadius: "8px", px: 4 }}
+          sx={{ borderRadius: '8px', px: 4 }}
         >
-          {isEdit ? "Save Changes" : "Create Role"}
+          {isEdit ? 'Save Changes' : 'Create Role'}
         </Button>
       </Box>
     </Box>

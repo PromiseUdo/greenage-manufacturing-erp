@@ -11,6 +11,7 @@ export async function GET() {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    console.log(session, 'session');
 
     const now = new Date();
     const last12MonthsStart = startOfMonth(subMonths(now, 11));
@@ -202,17 +203,13 @@ export async function GET() {
       (q) => q.status === 'CONVERTED' || q.status === 'ACCEPTED',
     ).length;
     const quoteConversionRate =
-      totalQuotes > 0
-        ? Math.round((convertedQuotes / totalQuotes) * 100)
-        : 0;
+      totalQuotes > 0 ? Math.round((convertedQuotes / totalQuotes) * 100) : 0;
 
     // ─────────────────────────────────────────────────────────────────────────
     // Production KPIs
     // ─────────────────────────────────────────────────────────────────────────
     const activeProductionOrders = productionOrders.filter(
-      (po) =>
-        po.status === 'IN_PROGRESS' ||
-        po.status === 'ON_HOLD',
+      (po) => po.status === 'IN_PROGRESS' || po.status === 'ON_HOLD',
     ).length;
 
     const ordersWithYield = productionOrders.filter(
@@ -244,9 +241,7 @@ export async function GET() {
     // Returns KPIs
     // ─────────────────────────────────────────────────────────────────────────
     const openReturns = returns.filter(
-      (r) =>
-        r.status !== 'DISPATCHED' &&
-        r.status !== 'SCRAPPED',
+      (r) => r.status !== 'DISPATCHED' && r.status !== 'SCRAPPED',
     ).length;
 
     const returnStatusBreakdown = [
@@ -320,9 +315,7 @@ export async function GET() {
       });
 
       const revenue = monthInvoices
-        .filter(
-          (inv) => inv.paymentStatus === 'PAID' || inv.status === 'PAID',
-        )
+        .filter((inv) => inv.paymentStatus === 'PAID' || inv.status === 'PAID')
         .reduce((sum, inv) => sum + inv.finalAmount, 0);
 
       const invoiced = monthInvoices.reduce(

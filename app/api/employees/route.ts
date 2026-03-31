@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (session.user.role !== 'ADMIN') {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     if (department) {
       where.OR = [
         { department: { contains: department, mode: 'insensitive' } },
-        { departmentId: department }
+        { departmentId: department },
       ];
     }
 
@@ -116,7 +116,9 @@ export async function POST(request: NextRequest) {
     // Validation
     if (!name || !email || !phone || !departmentId || !appRoleId) {
       return NextResponse.json(
-        { error: 'Name, email, phone, department, and system role are required' },
+        {
+          error: 'Name, email, phone, department, and system role are required',
+        },
         { status: 400 },
       );
     }
@@ -150,15 +152,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Role not found' }, { status: 404 });
     }
 
-    const dbDepartment = await prisma.department.findUnique({ where: { id: departmentId } });
+    const dbDepartment = await prisma.department.findUnique({
+      where: { id: departmentId },
+    });
     if (!dbDepartment) {
-      return NextResponse.json({ error: 'Department not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Department not found' },
+        { status: 404 },
+      );
     }
 
     const roleMapping: Record<string, string> = {
-      'Admin': 'ADMIN',
-      'Accountant': 'ACCOUNTANT',
-      'Operation Manager': 'OPERATION_MANAGER'
+      Admin: 'ADMIN',
+      Accountant: 'ACCOUNTANT',
+      'Operation Manager': 'OPERATION_MANAGER',
     };
     const mappedRole = roleMapping[dbRole.name] || 'PRODUCTION_STAFF';
 
