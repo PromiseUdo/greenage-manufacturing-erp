@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
+import { isSuperAdmin } from '@/lib/permissions';
 
 export async function POST(
   request: NextRequest,
@@ -19,8 +20,11 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!isSuperAdmin(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Only the superadmin can reset employee passwords.' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();

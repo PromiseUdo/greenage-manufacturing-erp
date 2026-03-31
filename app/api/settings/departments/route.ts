@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { isSuperAdmin } from '@/lib/permissions';
 
 export async function GET() {
   try {
@@ -31,8 +32,11 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user || !isSuperAdmin(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Only the superadmin can create departments.' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();

@@ -19,6 +19,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 interface Role {
   id: string;
@@ -32,6 +33,8 @@ export default function RolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { data: session } = useSession();
+  const isSuperAdmin = session?.user?.role === 'SUPERADMIN';
 
   const fetchRoles = async () => {
     try {
@@ -79,14 +82,16 @@ export default function RolesPage() {
         <Typography variant="h6" fontWeight={600}>
           Roles & Permissions
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddRoundedIcon />}
-          onClick={() => router.push("/settings/roles/new")}
-          sx={{ borderRadius: "8px", textTransform: "none", fontWeight: 600 }}
-        >
-          Add Role
-        </Button>
+        {isSuperAdmin && (
+          <Button
+            variant="contained"
+            startIcon={<AddRoundedIcon />}
+            onClick={() => router.push("/settings/roles/new")}
+            sx={{ borderRadius: "8px", textTransform: "none", fontWeight: 600 }}
+          >
+            Add Role
+          </Button>
+        )}
       </Box>
 
       <TableContainer
@@ -140,20 +145,24 @@ export default function RolesPage() {
                     />
                   </TableCell>
                   <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      onClick={() => router.push(`/settings/roles/${role.id}`)}
-                      sx={{ mr: 1 }}
-                    >
-                      <EditRoundedIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleDelete(role.id, role._count.users)}
-                    >
-                      <DeleteRoundedIcon fontSize="small" />
-                    </IconButton>
+                    {isSuperAdmin && (
+                      <>
+                        <IconButton
+                          size="small"
+                          onClick={() => router.push(`/settings/roles/${role.id}`)}
+                          sx={{ mr: 1 }}
+                        >
+                          <EditRoundedIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDelete(role.id, role._count.users)}
+                        >
+                          <DeleteRoundedIcon fontSize="small" />
+                        </IconButton>
+                      </>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { isSuperAdmin } from '@/lib/permissions';
 
 export async function GET(
   request: Request,
@@ -43,8 +44,11 @@ export async function PUT(
 ) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user || !isSuperAdmin(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Only the superadmin can update departments.' },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;
@@ -100,8 +104,11 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session?.user || !isSuperAdmin(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Only the superadmin can delete departments.' },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;

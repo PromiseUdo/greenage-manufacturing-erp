@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { isAdminOrSuperAdmin, isSuperAdmin } from '@/lib/permissions';
 
 export async function GET(
   request: NextRequest,
@@ -9,8 +10,8 @@ export async function GET(
   try {
     const session = await auth();
 
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || !isAdminOrSuperAdmin(session.user.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { id } = await params;
@@ -45,8 +46,11 @@ export async function PATCH(
   try {
     const session = await auth();
 
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || !isSuperAdmin(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Only the superadmin can edit roles.' },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;
@@ -97,8 +101,11 @@ export async function DELETE(
   try {
     const session = await auth();
 
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session || !isSuperAdmin(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Only the superadmin can delete roles.' },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;

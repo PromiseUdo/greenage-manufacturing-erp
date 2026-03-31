@@ -60,7 +60,7 @@ export function getFilteredNavigation(
   role: string | undefined,
   permissions: string[],
 ) {
-  if (role === 'ADMIN') return navigation;
+  if (role === 'SUPERADMIN' || role === 'ADMIN') return navigation;
   return navigation
     .map((group) => ({ ...group, items: filterNavItems(group.items, permissions) }))
     .filter((group) => group.items.length > 0);

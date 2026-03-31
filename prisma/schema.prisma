@@ -137,6 +137,7 @@ model Department {
 }
 
 enum UserRole {
+  SUPERADMIN
   ADMIN
   OPERATION_MANAGER
   PRODUCTION_MANAGER

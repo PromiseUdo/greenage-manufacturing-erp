@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { isAdminOrSuperAdmin, isSuperAdmin } from '@/lib/permissions';
 
 export async function GET(
   request: NextRequest,
@@ -19,7 +20,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'ADMIN') {
+    if (!isAdminOrSuperAdmin(session.user.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -71,8 +72,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!isSuperAdmin(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Only the superadmin can edit employees.' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -205,8 +209,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!isSuperAdmin(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Only the superadmin can deactivate employees.' },
+        { status: 403 }
+      );
     }
 
     const employee = await prisma.employee.findUnique({
