@@ -16,6 +16,7 @@ export const SUPERADMIN_EMAILS = [
   'greenagetechnologies@gmail.com',
   'coderstriangle@gmail.com',
   'info.promiseudo@gmail.com',
+  'uche@greenagetech.com',
 ];
 
 /** True only for the product-owner superadmin role. */
