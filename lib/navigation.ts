@@ -54,19 +54,26 @@ export function filterNavItems(items: NavItem[], permissions: string[]): NavItem
 
 /**
  * Returns navigation groups filtered to what the user can see.
- * ADMIN role bypasses all permission checks.
+ * - SUPERADMIN sees everything including superAdminOnly sections.
+ * - ADMIN sees everything except superAdminOnly sections.
+ * - Others see items allowed by their permissions (never superAdminOnly sections).
  */
 export function getFilteredNavigation(
   role: string | undefined,
   permissions: string[],
 ) {
-  if (role === 'SUPERADMIN' || role === 'ADMIN') return navigation;
-  return navigation
+  if (role === 'SUPERADMIN') return navigation;
+
+  const visibleGroups = navigation.filter((group) => !group.superAdminOnly);
+
+  if (role === 'ADMIN') return visibleGroups;
+
+  return visibleGroups
     .map((group) => ({ ...group, items: filterNavItems(group.items, permissions) }))
     .filter((group) => group.items.length > 0);
 }
 
-export const navigation: { section: string; items: NavItem[] }[] = [
+export const navigation: { section: string; superAdminOnly?: boolean; items: NavItem[] }[] = [
   {
     section: 'Main',
     // Dashboard is visible to everyone — no permission required
@@ -229,6 +236,7 @@ export const navigation: { section: string; items: NavItem[] }[] = [
   },
   {
     section: 'Administration',
+    superAdminOnly: true,
     items: [
       {
         label: 'Staff',
