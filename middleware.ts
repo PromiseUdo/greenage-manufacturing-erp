@@ -192,9 +192,18 @@ export default auth((req) => {
       }
     }
 
+    const isSuperAdmin = session.user.role === 'SUPERADMIN';
+    // Default landing page per role
+    const homePage = isSuperAdmin ? '/dashboard' : '/production/orders';
+
     // Prevent accessing auth pages when already logged in
     if (isPublicRoute && !session.user.mustChangePassword) {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
+      return NextResponse.redirect(new URL(homePage, req.url));
+    }
+
+    // Only SUPERADMIN can view the dashboard page
+    if (pathname === '/dashboard' && !isSuperAdmin) {
+      return NextResponse.redirect(new URL('/production/orders', req.url));
     }
   }
 

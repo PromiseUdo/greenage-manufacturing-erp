@@ -36,7 +36,10 @@ export interface NavItem {
  * Items without a `permission` key are always visible.
  * Parent items are kept only if they have at least one visible child.
  */
-export function filterNavItems(items: NavItem[], permissions: string[]): NavItem[] {
+export function filterNavItems(
+  items: NavItem[],
+  permissions: string[],
+): NavItem[] {
   return items.reduce<NavItem[]>((acc, item) => {
     if (item.children?.length) {
       const filteredChildren = filterNavItems(item.children, permissions);
@@ -69,13 +72,21 @@ export function getFilteredNavigation(
   if (role === 'ADMIN') return visibleGroups;
 
   return visibleGroups
-    .map((group) => ({ ...group, items: filterNavItems(group.items, permissions) }))
+    .map((group) => ({
+      ...group,
+      items: filterNavItems(group.items, permissions),
+    }))
     .filter((group) => group.items.length > 0);
 }
 
-export const navigation: { section: string; superAdminOnly?: boolean; items: NavItem[] }[] = [
+export const navigation: {
+  section: string;
+  superAdminOnly?: boolean;
+  items: NavItem[];
+}[] = [
   {
     section: 'Main',
+    // superAdminOnly: true,
     // Dashboard is visible to everyone — no permission required
     items: [{ label: 'Dashboard', path: '/dashboard', icon: DashboardIcon }],
   },
@@ -122,10 +133,30 @@ export const navigation: { section: string; superAdminOnly?: boolean; items: Nav
         label: 'Sales',
         icon: ShoppingCartIcon,
         children: [
-          { label: 'Overview', path: '/sales/overview', icon: DashboardIcon, permission: 'sales:read' },
-          { label: 'Quotes', path: '/sales/quotes', icon: DescriptionIcon, permission: 'sales:read' },
-          { label: 'Invoices', path: '/sales/invoices', icon: ReceiptIcon, permission: 'sales:read' },
-          { label: 'Orders', path: '/sales/orders', icon: DescriptionIcon, permission: 'sales:read' },
+          {
+            label: 'Overview',
+            path: '/sales/overview',
+            icon: DashboardIcon,
+            permission: 'sales:read',
+          },
+          {
+            label: 'Quotes',
+            path: '/sales/quotes',
+            icon: DescriptionIcon,
+            permission: 'sales:read',
+          },
+          {
+            label: 'Invoices',
+            path: '/sales/invoices',
+            icon: ReceiptIcon,
+            permission: 'sales:read',
+          },
+          {
+            label: 'Orders',
+            path: '/sales/orders',
+            icon: DescriptionIcon,
+            permission: 'sales:read',
+          },
           {
             label: 'Backorders',
             path: '/sales/backorders',
@@ -144,7 +175,12 @@ export const navigation: { section: string; superAdminOnly?: boolean; items: Nav
             icon: DashboardIcon,
             permission: 'store:read',
           },
-          { label: 'Stock', path: '/sales/store', icon: Inventory2Icon, permission: 'store:read' },
+          {
+            label: 'Stock',
+            path: '/sales/store',
+            icon: Inventory2Icon,
+            permission: 'store:read',
+          },
           {
             label: 'Receipts',
             path: '/sales/store/receipts',
@@ -181,7 +217,12 @@ export const navigation: { section: string; superAdminOnly?: boolean; items: Nav
         label: 'Inventory',
         icon: InventoryIcon,
         children: [
-          { label: 'Overview', path: '/inventory', icon: DashboardIcon, permission: 'inventory:read' },
+          {
+            label: 'Overview',
+            path: '/inventory',
+            icon: DashboardIcon,
+            permission: 'inventory:read',
+          },
           {
             label: 'Materials',
             path: '/inventory/materials',
@@ -200,7 +241,12 @@ export const navigation: { section: string; superAdminOnly?: boolean; items: Nav
             icon: AssignmentReturnIcon,
             permission: 'inventory:read',
           },
-          { label: 'GRN', path: '/inventory/grn', icon: LocalShippingIcon, permission: 'inventory:read' },
+          {
+            label: 'GRN',
+            path: '/inventory/grn',
+            icon: LocalShippingIcon,
+            permission: 'inventory:read',
+          },
           {
             label: 'Production Requests',
             path: '/inventory/production-requests',

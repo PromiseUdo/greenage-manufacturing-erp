@@ -170,7 +170,19 @@ export async function POST(request: NextRequest) {
     //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     // }
 
-    if (!session.user.permissions?.includes('production_orders:create')) {
+    // if (!session.user.permissions?.includes('production_orders:create')) {
+    //   return NextResponse.json(
+    //     { error: 'You do not have permission to create production orders.' },
+    //     { status: 403 },
+    //   );
+    // }
+
+    const isSuperAdmin = session.user.role === 'SUPERADMIN';
+    const hasPermission = session.user.permissions?.includes(
+      'production_orders:create',
+    );
+
+    if (!isSuperAdmin && !hasPermission) {
       return NextResponse.json(
         { error: 'You do not have permission to create production orders.' },
         { status: 403 },
