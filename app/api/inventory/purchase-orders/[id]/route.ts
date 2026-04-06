@@ -5,7 +5,7 @@ import { PurchaseOrderStatus } from '@prisma/client';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await auth();
@@ -37,7 +37,7 @@ export async function GET(
     if (!purchaseOrder) {
       return NextResponse.json(
         { error: 'Purchase order not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -46,14 +46,14 @@ export async function GET(
     console.error('Error fetching purchase order:', error);
     return NextResponse.json(
       { error: 'Failed to fetch purchase order' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await auth();
@@ -62,8 +62,8 @@ export async function PUT(
     }
 
     if (
-      !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
-        session.user.role
+      !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER', 'SUPERADMIN'].includes(
+        session.user.role,
       )
     ) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -79,7 +79,7 @@ export async function PUT(
     if (!existing) {
       return NextResponse.json(
         { error: 'Purchase order not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -91,10 +91,13 @@ export async function PUT(
     if (body.subtotal !== undefined) updateData.subtotal = body.subtotal;
     if (body.tax !== undefined) updateData.tax = body.tax;
     if (body.discount !== undefined) updateData.discount = body.discount;
-    if (body.totalAmount !== undefined) updateData.totalAmount = body.totalAmount;
+    if (body.totalAmount !== undefined)
+      updateData.totalAmount = body.totalAmount;
     if (body.currency !== undefined) updateData.currency = body.currency;
     if (body.invoiceDate !== undefined)
-      updateData.invoiceDate = body.invoiceDate ? new Date(body.invoiceDate) : null;
+      updateData.invoiceDate = body.invoiceDate
+        ? new Date(body.invoiceDate)
+        : null;
     if (body.invoiceStartDate !== undefined)
       updateData.invoiceStartDate = body.invoiceStartDate
         ? new Date(body.invoiceStartDate)
@@ -103,7 +106,8 @@ export async function PUT(
       updateData.invoiceEndDate = body.invoiceEndDate
         ? new Date(body.invoiceEndDate)
         : null;
-    if (body.invoiceNotes !== undefined) updateData.invoiceNotes = body.invoiceNotes;
+    if (body.invoiceNotes !== undefined)
+      updateData.invoiceNotes = body.invoiceNotes;
 
     // Planning step - Planned dates/details
     if (body.plannedInvoiceStartDate !== undefined)
@@ -154,8 +158,10 @@ export async function PUT(
       updateData.paymentEndDate = body.paymentEndDate
         ? new Date(body.paymentEndDate)
         : null;
-    if (body.paymentNotes !== undefined) updateData.paymentNotes = body.paymentNotes;
-    if (body.paymentStatus !== undefined) updateData.paymentStatus = body.paymentStatus;
+    if (body.paymentNotes !== undefined)
+      updateData.paymentNotes = body.paymentNotes;
+    if (body.paymentStatus !== undefined)
+      updateData.paymentStatus = body.paymentStatus;
     if (body.paidAmount !== undefined) updateData.paidAmount = body.paidAmount;
 
     // Step 3 - Shipment
@@ -230,14 +236,14 @@ export async function PUT(
     console.error('Error updating purchase order:', error);
     return NextResponse.json(
       { error: 'Failed to update purchase order' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await auth();
@@ -245,7 +251,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!['ADMIN'].includes(session.user.role)) {
+    if (!['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -258,7 +264,7 @@ export async function DELETE(
     if (!existing) {
       return NextResponse.json(
         { error: 'Purchase order not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -285,7 +291,7 @@ export async function DELETE(
     console.error('Error deleting purchase order:', error);
     return NextResponse.json(
       { error: 'Failed to delete purchase order' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
