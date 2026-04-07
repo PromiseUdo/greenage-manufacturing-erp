@@ -128,10 +128,10 @@ export const AVAILABLE_PERMISSIONS = [
       { value: 'reports:production', label: 'View Production Report' },
       { value: 'reports:inventory', label: 'View Inventory Report' },
       { value: 'reports:finance', label: 'View Finance Report' },
-      {
-        value: 'reports:quality-control',
-        label: 'View Quality Control Report',
-      },
+      // {
+      //   value: 'reports:quality-control',
+      //   label: 'View Quality Control Report',
+      // },
       { value: 'reports:dispatch', label: 'View Dispatch Report' },
     ],
   },
