@@ -747,7 +747,7 @@ export async function GET(
           prisma.dispatch.count({ where: { createdAt: dateFilter } }),
           prisma.storeDispatch.count({ where: { createdAt: dateFilter } }),
           prisma.productReturn.count({ where: { createdAt: dateFilter } }),
-          // Fetch delivered dispatches to compute avg delivery time
+          // Delivered customer dispatches — for avg delivery time
           prisma.dispatch.findMany({
             where: {
               createdAt: dateFilter,
@@ -784,15 +784,15 @@ export async function GET(
             orderBy: { _count: { customerId: 'desc' } },
             take: 5,
           }),
-          // Dispatch + store dispatch dates for monthly trend
-          prisma.dispatch.findMany({
+          // Dates from both dispatch tables for monthly trend
+          prisma.storeDispatch.findMany({
             where: { createdAt: dateFilter },
             select: { createdAt: true },
             orderBy: { createdAt: 'asc' },
           }),
         ]);
 
-        // ── Avg delivery time ─────────────────────────────────────────────────
+        // ── Avg delivery time (customer dispatches only — have dispatchDate field) ──
         let avgDeliveryDays: number | null = null;
         if (deliveredDispatches.length > 0) {
           const totalDays = deliveredDispatches.reduce((sum, d) => {
@@ -805,8 +805,9 @@ export async function GET(
           avgDeliveryDays = Number((totalDays / deliveredDispatches.length).toFixed(1));
         }
 
-        // ── Monthly dispatch trend ────────────────────────────────────────────
+        // ── Monthly dispatch trend — combine both dispatch sources ────────────
         const trendMap: Record<string, number> = {};
+        // dispatchesForTrend now comes from storeDispatch; also fold in customer dispatches
         for (const d of dispatchesForTrend) {
           const key = d.createdAt.toISOString().slice(0, 7);
           trendMap[key] = (trendMap[key] || 0) + 1;
@@ -835,18 +836,29 @@ export async function GET(
           select: { id: true, name: true },
         });
 
-        const deliveredCount =
+        // ── Combine both dispatch models for accurate KPIs ───────────────────
+        const deliveredFromOrders =
           dispatchStatuses.find((s) => s.status === 'DELIVERED')?._count._all || 0;
-        const failedCount =
+        const deliveredFromStore =
+          storeDispatchStatuses.find((s) => s.status === 'DELIVERED')?._count._all || 0;
+        const deliveredCount = deliveredFromOrders + deliveredFromStore;
+
+        const failedFromOrders =
           dispatchStatuses.find((s) => s.status === 'FAILED_DELIVERY')?._count._all || 0;
+        const failedFromStore =
+          storeDispatchStatuses.find((s) => s.status === 'FAILED_DELIVERY')?._count._all || 0;
+        const failedCount = failedFromOrders + failedFromStore;
+
+        const combinedTotal = totalDispatches + totalStoreDispatches;
         const deliveryRate =
-          totalDispatches > 0
-            ? ((deliveredCount / totalDispatches) * 100).toFixed(1)
+          combinedTotal > 0
+            ? ((deliveredCount / combinedTotal) * 100).toFixed(1)
             : '0';
 
         return NextResponse.json({
           // ── KPI figures ────────────────────────────────────────────────
-          totalDispatches,
+          totalDispatches: combinedTotal,
+          customerDispatches: totalDispatches,
           totalStoreDispatches,
           totalReturns,
           deliveredCount,

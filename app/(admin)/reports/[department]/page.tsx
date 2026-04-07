@@ -40,7 +40,6 @@ import {
   AttachMoney,
   Receipt,
   Factory,
-
 } from '@mui/icons-material';
 import {
   PieChart,
@@ -392,7 +391,11 @@ function SalesReport({ data }: { data: any }) {
                   shape={(props: any) => (
                     <Rectangle
                       {...props}
-                      fill={(['#4CAF50', '#2196F3', '#FF9800'] as const)[props.index] ?? '#9E9E9E'}
+                      fill={
+                        (['#4CAF50', '#2196F3', '#FF9800'] as const)[
+                          props.index
+                        ] ?? '#9E9E9E'
+                      }
                       radius={[0, 4, 4, 0]}
                     />
                   )}
@@ -407,10 +410,12 @@ function SalesReport({ data }: { data: any }) {
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie
-                  data={(data.paymentStatuses ?? []).map((s: any, i: number) => ({
-                    ...s,
-                    fill: CHART_COLORS[i % CHART_COLORS.length],
-                  }))}
+                  data={(data.paymentStatuses ?? []).map(
+                    (s: any, i: number) => ({
+                      ...s,
+                      fill: CHART_COLORS[i % CHART_COLORS.length],
+                    }),
+                  )}
                   dataKey="count"
                   nameKey="status"
                   cx="50%"
@@ -500,13 +505,23 @@ function SalesReport({ data }: { data: any }) {
 // ─── Yield rate badge ─────────────────────────────────────────────────────────
 
 function YieldBadge({ rate }: { rate: number | null }) {
-  if (rate === null) return <Typography variant="body2" color="text.disabled">N/A</Typography>;
+  if (rate === null)
+    return (
+      <Typography variant="body2" color="text.disabled">
+        N/A
+      </Typography>
+    );
   const color = rate >= 90 ? '#4CAF50' : rate >= 70 ? '#FF9800' : '#F44336';
   return (
     <Chip
       label={`${rate}%`}
       size="small"
-      sx={{ bgcolor: alpha(color, 0.12), color, fontWeight: 700, fontSize: '0.78rem' }}
+      sx={{
+        bgcolor: alpha(color, 0.12),
+        color,
+        fontWeight: 700,
+        fontSize: '0.78rem',
+      }}
     />
   );
 }
@@ -542,7 +557,12 @@ function ProductionReport({ data }: { data: any }) {
       label: 'Avg Yield Rate',
       value: data.avgYieldRate !== null ? pct(data.avgYieldRate) : 'N/A',
       icon: <TrendingUp />,
-      color: data.avgYieldRate >= 90 ? '#4CAF50' : data.avgYieldRate >= 70 ? '#FF9800' : '#F44336',
+      color:
+        data.avgYieldRate >= 90
+          ? '#4CAF50'
+          : data.avgYieldRate >= 70
+            ? '#FF9800'
+            : '#F44336',
       sub: 'Passed ÷ Started',
     },
     {
@@ -550,7 +570,10 @@ function ProductionReport({ data }: { data: any }) {
       value: data.reworkCount,
       icon: <Warning />,
       color: '#FF9800',
-      sub: data.reworkRate !== null ? `${data.reworkRate}% rework rate` : undefined,
+      sub:
+        data.reworkRate !== null
+          ? `${data.reworkRate}% rework rate`
+          : undefined,
     },
   ];
 
@@ -625,7 +648,11 @@ function ProductionReport({ data }: { data: any }) {
                 margin={{ left: 80, right: 24 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 11 }}
+                  allowDecimals={false}
+                />
                 <YAxis
                   type="category"
                   dataKey="status"
@@ -652,7 +679,9 @@ function ProductionReport({ data }: { data: any }) {
                 <Pie
                   data={(data.qcOutcomes ?? []).map((e: any, i: number) => ({
                     ...e,
-                    fill: QC_COLOR[e.outcome] ?? CHART_COLORS[i % CHART_COLORS.length],
+                    fill:
+                      QC_COLOR[e.outcome] ??
+                      CHART_COLORS[i % CHART_COLORS.length],
                   }))}
                   dataKey="count"
                   nameKey="outcome"
@@ -664,10 +693,7 @@ function ProductionReport({ data }: { data: any }) {
                   labelLine={false}
                 />
                 <ReTooltip formatter={(v: any) => [v, 'Checkpoints']} />
-                <Legend
-                  formatter={(v) => v.replace(/_/g, ' ')}
-                  iconSize={10}
-                />
+                <Legend formatter={(v) => v.replace(/_/g, ' ')} iconSize={10} />
               </PieChart>
             </ResponsiveContainer>
           </ChartBox>
@@ -694,7 +720,10 @@ function ProductionReport({ data }: { data: any }) {
                   shape={(props: any) => (
                     <Rectangle
                       {...props}
-                      fill={STAGE_COLOR[props.status] ?? CHART_COLORS[props.index % CHART_COLORS.length]}
+                      fill={
+                        STAGE_COLOR[props.status] ??
+                        CHART_COLORS[props.index % CHART_COLORS.length]
+                      }
                       radius={[4, 4, 0, 0]}
                     />
                   )}
@@ -733,7 +762,12 @@ function ProductionReport({ data }: { data: any }) {
       {hasFailCategories && (
         <Paper
           elevation={0}
-          sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, mb: 3 }}
+          sx={{
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 3,
+            mb: 3,
+          }}
         >
           <Box sx={{ p: 2.5, pb: 1.5 }}>
             <Typography variant="subtitle1" fontWeight={700}>
@@ -742,9 +776,17 @@ function ProductionReport({ data }: { data: any }) {
           </Box>
           <Box sx={{ px: 2.5, pb: 2 }}>
             <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={data.failCategories} layout="vertical" margin={{ left: 120 }}>
+              <BarChart
+                data={data.failCategories}
+                layout="vertical"
+                margin={{ left: 120 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 11 }}
+                  allowDecimals={false}
+                />
                 <YAxis
                   type="category"
                   dataKey="category"
@@ -792,10 +834,16 @@ function ProductionReport({ data }: { data: any }) {
                   <TableCell sx={{ fontWeight: 600 }}>{p.name}</TableCell>
                   <TableCell align="right">{p.orders}</TableCell>
                   <TableCell align="right">{p.started}</TableCell>
-                  <TableCell align="right" sx={{ color: '#4CAF50', fontWeight: 600 }}>
+                  <TableCell
+                    align="right"
+                    sx={{ color: '#4CAF50', fontWeight: 600 }}
+                  >
                     {p.packaged}
                   </TableCell>
-                  <TableCell align="right" sx={{ color: p.rejected > 0 ? '#F44336' : 'inherit' }}>
+                  <TableCell
+                    align="right"
+                    sx={{ color: p.rejected > 0 ? '#F44336' : 'inherit' }}
+                  >
                     {p.rejected}
                   </TableCell>
                   <TableCell align="right">
@@ -904,7 +952,9 @@ function InventoryReport({ data }: { data: any }) {
                 <Pie
                   data={(data.stockHealth ?? []).map((s: any, i: number) => ({
                     ...s,
-                    fill: HEALTH_COLOR[s.status] ?? CHART_COLORS[i % CHART_COLORS.length],
+                    fill:
+                      HEALTH_COLOR[s.status] ??
+                      CHART_COLORS[i % CHART_COLORS.length],
                   }))}
                   dataKey="count"
                   nameKey="status"
@@ -937,7 +987,9 @@ function InventoryReport({ data }: { data: any }) {
                   }}
                 />
                 <ReTooltip
-                  formatter={((v: any, name: string) => [v, `${name} materials`]) as any}
+                  formatter={
+                    ((v: any, name: string) => [v, `${name} materials`]) as any
+                  }
                 />
                 <Legend iconSize={10} iconType="circle" />
               </PieChart>
@@ -1026,7 +1078,11 @@ function InventoryReport({ data }: { data: any }) {
                   shape={(props: any) => (
                     <Rectangle
                       {...props}
-                      fill={(['#9C27B0', '#4CAF50', '#FF9800'] as const)[props.index] ?? '#9C27B0'}
+                      fill={
+                        (['#9C27B0', '#4CAF50', '#FF9800'] as const)[
+                          props.index
+                        ] ?? '#9C27B0'
+                      }
                       radius={[0, 4, 4, 0]}
                     />
                   )}
@@ -1120,10 +1176,14 @@ function InventoryReport({ data }: { data: any }) {
                       width={96}
                     />
                     <ReTooltip
-                      formatter={((v: any, name: string) => [
-                        v,
-                        name === 'quantityIssued' ? 'Qty Issued' : 'Issuances',
-                      ]) as any}
+                      formatter={
+                        ((v: any, name: string) => [
+                          v,
+                          name === 'quantityIssued'
+                            ? 'Qty Issued'
+                            : 'Issuances',
+                        ]) as any
+                      }
                     />
                     <Bar
                       dataKey="quantityIssued"
@@ -1141,7 +1201,12 @@ function InventoryReport({ data }: { data: any }) {
       {/* ── Low stock / out of stock table ──────────────────────────────── */}
       <Paper
         elevation={0}
-        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, mb: 3 }}
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 3,
+          mb: 3,
+        }}
       >
         <Box sx={{ p: 2.5, pb: 1.5 }}>
           <Typography variant="subtitle1" fontWeight={700}>
@@ -1195,7 +1260,10 @@ function InventoryReport({ data }: { data: any }) {
                     </TableCell>
                     <TableCell
                       align="right"
-                      sx={{ fontWeight: 700, color: isOut ? '#F44336' : '#FF9800' }}
+                      sx={{
+                        fontWeight: 700,
+                        color: isOut ? '#F44336' : '#FF9800',
+                      }}
                     >
                       {isOut ? (
                         <Chip label="OUT" size="small" color="error" />
@@ -1205,7 +1273,9 @@ function InventoryReport({ data }: { data: any }) {
                     </TableCell>
                     <TableCell align="right">{m.reorderLevel}</TableCell>
                     <TableCell align="center" sx={{ minWidth: 110 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
                         <Box
                           sx={{
                             flex: 1,
@@ -1227,7 +1297,11 @@ function InventoryReport({ data }: { data: any }) {
                         </Box>
                         <Typography
                           variant="caption"
-                          sx={{ minWidth: 30, color: barColor, fontWeight: 700 }}
+                          sx={{
+                            minWidth: 30,
+                            color: barColor,
+                            fontWeight: 700,
+                          }}
                         >
                           {pct}%
                         </Typography>
@@ -1235,7 +1309,9 @@ function InventoryReport({ data }: { data: any }) {
                     </TableCell>
                     <TableCell align="right">
                       {m.unitCost > 0 ? (
-                        <Typography variant="body2">{fmt(m.unitCost)}</Typography>
+                        <Typography variant="body2">
+                          {fmt(m.unitCost)}
+                        </Typography>
                       ) : (
                         <Typography variant="caption" color="text.disabled">
                           —
@@ -1248,7 +1324,9 @@ function InventoryReport({ data }: { data: any }) {
               {data.lowStockItems.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
-                    <CheckCircle sx={{ color: '#4CAF50', mb: 1, fontSize: 32 }} />
+                    <CheckCircle
+                      sx={{ color: '#4CAF50', mb: 1, fontSize: 32 }}
+                    />
                     <Typography variant="body2" color="text.secondary">
                       All materials are adequately stocked
                     </Typography>
@@ -1291,9 +1369,16 @@ function InventoryReport({ data }: { data: any }) {
                       <TableCell>{i + 1}</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{s.name}</TableCell>
                       <TableCell align="right">
-                        <Chip label={s.poCount} size="small" variant="outlined" />
+                        <Chip
+                          label={s.poCount}
+                          size="small"
+                          variant="outlined"
+                        />
                       </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700, color: '#9C27B0' }}>
+                      <TableCell
+                        align="right"
+                        sx={{ fontWeight: 700, color: '#9C27B0' }}
+                      >
                         {fmt(s.spend ?? 0)}
                       </TableCell>
                       <TableCell align="right">{fmt(s.paid ?? 0)}</TableCell>
@@ -1389,7 +1474,13 @@ function FinanceReport({ data }: { data: any }) {
       {hasMonthlyTrend && (
         <Paper
           elevation={0}
-          sx={{ p: 3, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+          sx={{
+            p: 3,
+            mb: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 3,
+          }}
         >
           <Typography variant="subtitle1" fontWeight={700} mb={2}>
             Monthly Revenue Trend — Invoiced vs Collected
@@ -1398,11 +1489,11 @@ function FinanceReport({ data }: { data: any }) {
             <AreaChart data={data.monthlyTrend} margin={{ top: 4, right: 16 }}>
               <defs>
                 <linearGradient id="gradInvoiced" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#9C27B0" stopOpacity={0.18} />
+                  <stop offset="5%" stopColor="#9C27B0" stopOpacity={0.18} />
                   <stop offset="95%" stopColor="#9C27B0" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradCollected" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#4CAF50" stopOpacity={0.18} />
+                  <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.18} />
                   <stop offset="95%" stopColor="#4CAF50" stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -1419,10 +1510,12 @@ function FinanceReport({ data }: { data: any }) {
                 }
               />
               <ReTooltip
-                formatter={((v: any, name: string) => [
-                  fmt(v),
-                  name === 'invoiced' ? 'Invoiced' : 'Collected',
-                ]) as any}
+                formatter={
+                  ((v: any, name: string) => [
+                    fmt(v),
+                    name === 'invoiced' ? 'Invoiced' : 'Collected',
+                  ]) as any
+                }
               />
               <Legend />
               <Area
@@ -1453,10 +1546,7 @@ function FinanceReport({ data }: { data: any }) {
         <Grid size={{ xs: 12, md: 6 }}>
           <ChartBox title="Invoiced vs Collected by Invoice Status">
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart
-                data={data.invoicesByStatus ?? []}
-                margin={{ top: 4 }}
-              >
+              <BarChart data={data.invoicesByStatus ?? []} margin={{ top: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
                   dataKey="status"
@@ -1474,10 +1564,12 @@ function FinanceReport({ data }: { data: any }) {
                   }
                 />
                 <ReTooltip
-                  formatter={((v: any, name: string) => [
-                    fmt(v),
-                    name === 'amount' ? 'Invoiced' : 'Collected',
-                  ]) as any}
+                  formatter={
+                    ((v: any, name: string) => [
+                      fmt(v),
+                      name === 'amount' ? 'Invoiced' : 'Collected',
+                    ]) as any
+                  }
                   labelFormatter={(l) => l.replace(/_/g, ' ')}
                 />
                 <Legend />
@@ -1517,7 +1609,9 @@ function FinanceReport({ data }: { data: any }) {
                         : String(v)
                   }
                 />
-                <ReTooltip formatter={(v: any) => [fmt(v as number), 'Outstanding']} />
+                <ReTooltip
+                  formatter={(v: any) => [fmt(v as number), 'Outstanding']}
+                />
                 <Bar
                   dataKey="value"
                   radius={[4, 4, 0, 0]}
@@ -1543,10 +1637,12 @@ function FinanceReport({ data }: { data: any }) {
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie
-                  data={(data.paymentMethods ?? []).map((m: any, i: number) => ({
-                    ...m,
-                    fill: CHART_COLORS[i % CHART_COLORS.length],
-                  }))}
+                  data={(data.paymentMethods ?? []).map(
+                    (m: any, i: number) => ({
+                      ...m,
+                      fill: CHART_COLORS[i % CHART_COLORS.length],
+                    }),
+                  )}
                   dataKey="amount"
                   nameKey="method"
                   cx="50%"
@@ -1592,11 +1688,11 @@ function FinanceReport({ data }: { data: any }) {
             <ResponsiveContainer width="100%" height={240}>
               <BarChart
                 data={[
-                  { label: 'Invoiced',     value: data.totalInvoiced    ?? 0 },
-                  { label: 'Collected',    value: data.totalCollected   ?? 0 },
-                  { label: 'Outstanding',  value: data.totalOutstanding ?? 0 },
-                  { label: 'PO Spend',     value: data.totalPurchaseSpend ?? 0 },
-                  { label: 'PO Paid',      value: data.totalPurchasePaid  ?? 0 },
+                  { label: 'Invoiced', value: data.totalInvoiced ?? 0 },
+                  { label: 'Collected', value: data.totalCollected ?? 0 },
+                  { label: 'Outstanding', value: data.totalOutstanding ?? 0 },
+                  { label: 'PO Spend', value: data.totalPurchaseSpend ?? 0 },
+                  { label: 'PO Paid', value: data.totalPurchasePaid ?? 0 },
                 ]}
                 layout="vertical"
                 margin={{ left: 16, right: 56 }}
@@ -1649,7 +1745,12 @@ function FinanceReport({ data }: { data: any }) {
       {/* ── Invoice status summary table ─────────────────────────────────── */}
       <Paper
         elevation={0}
-        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, mb: 3 }}
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 3,
+          mb: 3,
+        }}
       >
         <Box sx={{ p: 2.5, pb: 1.5 }}>
           <Typography variant="subtitle1" fontWeight={700}>
@@ -1671,9 +1772,7 @@ function FinanceReport({ data }: { data: any }) {
             <TableBody>
               {(data.invoicesByStatus ?? []).map((s: any, i: number) => {
                 const rate =
-                  s.amount > 0
-                    ? Math.round((s.paid / s.amount) * 100)
-                    : null;
+                  s.amount > 0 ? Math.round((s.paid / s.amount) * 100) : null;
                 return (
                   <TableRow key={i} hover>
                     <TableCell>
@@ -1684,7 +1783,10 @@ function FinanceReport({ data }: { data: any }) {
                       />
                     </TableCell>
                     <TableCell align="right">{s.count}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: '#9C27B0' }}>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: 700, color: '#9C27B0' }}
+                    >
                       {fmt(s.amount)}
                     </TableCell>
                     <TableCell align="right" sx={{ color: '#4CAF50' }}>
@@ -1773,10 +1875,17 @@ function FinanceReport({ data }: { data: any }) {
                     <TableCell>{i + 1}</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>{d.name}</TableCell>
                     <TableCell align="right">
-                      <Chip label={d.invoiceCount} size="small" variant="outlined" />
+                      <Chip
+                        label={d.invoiceCount}
+                        size="small"
+                        variant="outlined"
+                      />
                     </TableCell>
                     <TableCell align="right">{fmt(d.totalInvoiced)}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: '#FF9800' }}>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: 700, color: '#FF9800' }}
+                    >
                       {fmt(d.outstanding)}
                     </TableCell>
                   </TableRow>
@@ -1947,12 +2056,12 @@ function QCReport({ data }: { data: any }) {
 
 // Status colour map for dispatch statuses
 const DISPATCH_STATUS_COLOR: Record<string, string> = {
-  DELIVERED:       '#4CAF50',
-  IN_TRANSIT:      '#2196F3',
-  PENDING:         '#FF9800',
-  REQUESTED:       '#9E9E9E',
+  DELIVERED: '#4CAF50',
+  IN_TRANSIT: '#2196F3',
+  PENDING: '#FF9800',
+  REQUESTED: '#9E9E9E',
   FAILED_DELIVERY: '#F44336',
-  RETURNED:        '#9C27B0',
+  RETURNED: '#9C27B0',
 };
 
 function DispatchReport({ data }: { data: any }) {
@@ -1985,19 +2094,21 @@ function DispatchReport({ data }: { data: any }) {
       value: pct(data.deliveryRate),
       icon: <CheckCircle />,
       color:
-        deliveryRate >= 80 ? '#4CAF50' : deliveryRate >= 50 ? '#FF9800' : '#F44336',
+        deliveryRate >= 80
+          ? '#4CAF50'
+          : deliveryRate >= 50
+            ? '#FF9800'
+            : '#F44336',
       sub: 'Customer dispatches successfully delivered',
     },
-    {
-      label: 'Avg Delivery Time',
-      value:
-        data.avgDeliveryDays != null
-          ? `${data.avgDeliveryDays} days`
-          : 'N/A',
-      icon: <TrendingUp />,
-      color: '#2196F3',
-      sub: 'From dispatch to delivery',
-    },
+    // {
+    //   label: 'Avg Delivery Time',
+    //   value:
+    //     data.avgDeliveryDays != null ? `${data.avgDeliveryDays} days` : 'N/A',
+    //   icon: <TrendingUp />,
+    //   color: '#2196F3',
+    //   sub: 'From dispatch to delivery',
+    // },
     {
       label: 'Product Returns',
       value: data.totalReturns,
@@ -2029,7 +2140,13 @@ function DispatchReport({ data }: { data: any }) {
       {hasMonthlyTrend && (
         <Paper
           elevation={0}
-          sx={{ p: 3, mb: 3, border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+          sx={{
+            p: 3,
+            mb: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 3,
+          }}
         >
           <Typography variant="subtitle1" fontWeight={700} mb={2}>
             Monthly Dispatch Volume
@@ -2038,7 +2155,7 @@ function DispatchReport({ data }: { data: any }) {
             <AreaChart data={data.monthlyTrend} margin={{ top: 4, right: 16 }}>
               <defs>
                 <linearGradient id="gradDispatch" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#F44336" stopOpacity={0.18} />
+                  <stop offset="5%" stopColor="#F44336" stopOpacity={0.18} />
                   <stop offset="95%" stopColor="#F44336" stopOpacity={0} />
                 </linearGradient>
               </defs>
@@ -2065,10 +2182,7 @@ function DispatchReport({ data }: { data: any }) {
         <Grid size={{ xs: 12, md: 6 }}>
           <ChartBox title="Customer Dispatch Status">
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart
-                data={data.dispatchStatuses ?? []}
-                margin={{ top: 4 }}
-              >
+              <BarChart data={data.dispatchStatuses ?? []} margin={{ top: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
                   dataKey="status"
@@ -2148,7 +2262,11 @@ function DispatchReport({ data }: { data: any }) {
                 margin={{ left: 8, right: 16 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 11 }}
+                  allowDecimals={false}
+                />
                 <YAxis
                   type="category"
                   dataKey="status"
@@ -2239,7 +2357,11 @@ function DispatchReport({ data }: { data: any }) {
                   margin={{ left: 8, right: 40 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <XAxis
+                    type="number"
+                    tick={{ fontSize: 11 }}
+                    allowDecimals={false}
+                  />
                   <YAxis
                     type="category"
                     dataKey="name"
@@ -2247,14 +2369,26 @@ function DispatchReport({ data }: { data: any }) {
                     width={130}
                   />
                   <ReTooltip
-                    formatter={((v: any, name: string) => [
-                      v,
-                      name === 'returns' ? 'Return events' : 'Units returned',
-                    ]) as any}
+                    formatter={
+                      ((v: any, name: string) => [
+                        v,
+                        name === 'returns' ? 'Return events' : 'Units returned',
+                      ]) as any
+                    }
                   />
                   <Legend />
-                  <Bar dataKey="returns" fill="#9C27B0" radius={[0, 4, 4, 0]} maxBarSize={22} />
-                  <Bar dataKey="quantity" fill="#E91E63" radius={[0, 4, 4, 0]} maxBarSize={22} />
+                  <Bar
+                    dataKey="returns"
+                    fill="#9C27B0"
+                    radius={[0, 4, 4, 0]}
+                    maxBarSize={22}
+                  />
+                  <Bar
+                    dataKey="quantity"
+                    fill="#E91E63"
+                    radius={[0, 4, 4, 0]}
+                    maxBarSize={22}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </ChartBox>
@@ -2265,7 +2399,13 @@ function DispatchReport({ data }: { data: any }) {
           <Grid size={{ xs: 12, md: hasReturnsByProduct ? 6 : 12 }}>
             <Paper
               elevation={0}
-              sx={{ p: 3, height: '100%', border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+              sx={{
+                p: 3,
+                height: '100%',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 3,
+              }}
             >
               <Typography variant="subtitle1" fontWeight={700} mb={2}>
                 Top Customers by Store Dispatches
@@ -2285,7 +2425,11 @@ function DispatchReport({ data }: { data: any }) {
                         <TableCell>{i + 1}</TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>{c.name}</TableCell>
                         <TableCell align="right">
-                          <Chip label={c.dispatches} size="small" variant="outlined" />
+                          <Chip
+                            label={c.dispatches}
+                            size="small"
+                            variant="outlined"
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -2535,7 +2679,16 @@ async function exportPDF(
     addSection('Invoice Status Summary');
     autoTable(doc, {
       startY: y,
-      head: [['Status', 'Count', 'Total Invoiced', 'Collected', 'Outstanding', 'Collection %']],
+      head: [
+        [
+          'Status',
+          'Count',
+          'Total Invoiced',
+          'Collected',
+          'Outstanding',
+          'Collection %',
+        ],
+      ],
       body: (data.invoicesByStatus ?? []).map((s: any) => {
         const rate = s.amount > 0 ? Math.round((s.paid / s.amount) * 100) : 0;
         return [
@@ -2551,7 +2704,10 @@ async function exportPDF(
     });
     y = (doc as any).lastAutoTable.finalY + 8;
 
-    if (Array.isArray(data.receivablesAging) && data.receivablesAging.length > 0) {
+    if (
+      Array.isArray(data.receivablesAging) &&
+      data.receivablesAging.length > 0
+    ) {
       addSection('Receivables Aging');
       autoTable(doc, {
         startY: y,
@@ -2567,7 +2723,11 @@ async function exportPDF(
       autoTable(doc, {
         startY: y,
         head: [['Month', 'Invoiced', 'Collected']],
-        body: data.monthlyTrend.map((m: any) => [m.month, fmt(m.invoiced), fmt(m.collected)]),
+        body: data.monthlyTrend.map((m: any) => [
+          m.month,
+          fmt(m.invoiced),
+          fmt(m.collected),
+        ]),
         ...tableStyles([156, 39, 176]),
       });
       y = (doc as any).lastAutoTable.finalY + 8;
@@ -2622,12 +2782,13 @@ async function exportPDF(
       startY: y,
       head: [['Metric', 'Value']],
       body: [
-        ['Total Dispatches', data.totalDispatches],
-        ['Delivered', data.deliveredCount ?? 0],
-        ['Failed Delivery', data.failedCount ?? 0],
+        ['Total Dispatches (Combined)', data.totalDispatches],
+        ['  — Customer Order Dispatches', data.customerDispatches ?? 0],
+        ['  — Store Dispatches', data.totalStoreDispatches],
+        ['Delivered (Combined)', data.deliveredCount ?? 0],
+        ['Failed Delivery (Combined)', data.failedCount ?? 0],
         ['Delivery Rate', `${data.deliveryRate}%`],
         ['Avg Delivery Time', data.avgDeliveryDays != null ? `${data.avgDeliveryDays} days` : 'N/A'],
-        ['Store Dispatches', data.totalStoreDispatches],
         ['Product Returns', data.totalReturns],
         ['Units Returned', data.totalUnitsReturned ?? 0],
         ['Total Repair Cost', fmt(data.totalRepairCost ?? 0)],
@@ -2674,12 +2835,19 @@ async function exportPDF(
       y = (doc as any).lastAutoTable.finalY + 8;
     }
 
-    if (Array.isArray(data.returnsByProduct) && data.returnsByProduct.length > 0) {
+    if (
+      Array.isArray(data.returnsByProduct) &&
+      data.returnsByProduct.length > 0
+    ) {
       addSection('Top Returned Products');
       autoTable(doc, {
         startY: y,
         head: [['Product', 'Return Events', 'Units Returned']],
-        body: data.returnsByProduct.map((r: any) => [r.name, r.returns, r.quantity]),
+        body: data.returnsByProduct.map((r: any) => [
+          r.name,
+          r.returns,
+          r.quantity,
+        ]),
         ...tableStyles([244, 67, 54]),
       });
       y = (doc as any).lastAutoTable.finalY + 8;
@@ -2690,13 +2858,20 @@ async function exportPDF(
       autoTable(doc, {
         startY: y,
         head: [['#', 'Customer', 'Dispatches']],
-        body: data.topCustomers.map((c: any, i: number) => [i + 1, c.name, c.dispatches]),
+        body: data.topCustomers.map((c: any, i: number) => [
+          i + 1,
+          c.name,
+          c.dispatches,
+        ]),
         ...tableStyles([244, 67, 54]),
       });
       y = (doc as any).lastAutoTable.finalY + 8;
     }
 
-    if (Array.isArray(data.deliveryMethods) && data.deliveryMethods.length > 0) {
+    if (
+      Array.isArray(data.deliveryMethods) &&
+      data.deliveryMethods.length > 0
+    ) {
       addSection('Delivery Methods');
       autoTable(doc, {
         startY: y,
@@ -2748,8 +2923,7 @@ export default function DepartmentReportPage({
   const role = (session?.user as any)?.role;
   const permissions: string[] = (session?.user as any)?.permissions ?? [];
   const hasAccess =
-    role === 'SUPERADMIN' ||
-    permissions.includes(`reports:${department}`);
+    role === 'SUPERADMIN' || permissions.includes(`reports:${department}`);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
