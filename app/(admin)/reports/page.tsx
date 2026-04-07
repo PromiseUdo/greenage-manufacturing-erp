@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import {
   Box,
   Typography,
@@ -90,6 +91,15 @@ const DEPARTMENTS = [
 
 export default function ReportsHubPage() {
   const router = useRouter();
+  const { data: session } = useSession();
+
+  const role = (session?.user as any)?.role;
+  const permissions: string[] = (session?.user as any)?.permissions ?? [];
+  const isSuperUser = role === 'SUPERADMIN';
+
+  const visibleDepts = DEPARTMENTS.filter(
+    (d) => isSuperUser || permissions.includes(`reports:${d.id}`),
+  );
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto' }}>
@@ -110,7 +120,7 @@ export default function ReportsHubPage() {
 
       {/* Department cards */}
       <Grid container spacing={3}>
-        {DEPARTMENTS.map((dept) => {
+        {visibleDepts.map((dept) => {
           const Icon = dept.icon;
           return (
             <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={dept.id}>

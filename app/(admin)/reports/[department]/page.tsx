@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, use } from 'react';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -44,7 +45,6 @@ import {
 import {
   PieChart,
   Pie,
-  Cell,
   BarChart,
   Bar,
   Rectangle,
@@ -340,14 +340,17 @@ function SalesReport({ data }: { data: any }) {
                   formatter={(v: any) => [v, 'Quotes']}
                   labelFormatter={(l) => l.replace(/_/g, ' ')}
                 />
-                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {(data.quotesByStatus ?? []).map((_: any, i: number) => (
-                    <Cell
-                      key={i}
-                      fill={CHART_COLORS[i % CHART_COLORS.length]}
+                <Bar
+                  dataKey="count"
+                  radius={[4, 4, 0, 0]}
+                  shape={(props: any) => (
+                    <Rectangle
+                      {...props}
+                      fill={CHART_COLORS[props.index % CHART_COLORS.length]}
+                      radius={[4, 4, 0, 0]}
                     />
-                  ))}
-                </Bar>
+                  )}
+                />
               </BarChart>
             </ResponsiveContainer>
           </ChartBox>
@@ -382,11 +385,18 @@ function SalesReport({ data }: { data: any }) {
                   tick={{ fontSize: 12, fontWeight: 600 }}
                 />
                 <ReTooltip formatter={(v: any) => [fmt(v), '']} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={36}>
-                  <Cell fill="#4CAF50" />
-                  <Cell fill="#2196F3" />
-                  <Cell fill="#FF9800" />
-                </Bar>
+                <Bar
+                  dataKey="value"
+                  radius={[0, 4, 4, 0]}
+                  maxBarSize={36}
+                  shape={(props: any) => (
+                    <Rectangle
+                      {...props}
+                      fill={(['#4CAF50', '#2196F3', '#FF9800'] as const)[props.index] ?? '#9E9E9E'}
+                      radius={[0, 4, 4, 0]}
+                    />
+                  )}
+                />
               </BarChart>
             </ResponsiveContainer>
           </ChartBox>
@@ -397,7 +407,10 @@ function SalesReport({ data }: { data: any }) {
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie
-                  data={data.paymentStatuses}
+                  data={(data.paymentStatuses ?? []).map((s: any, i: number) => ({
+                    ...s,
+                    fill: CHART_COLORS[i % CHART_COLORS.length],
+                  }))}
                   dataKey="count"
                   nameKey="status"
                   cx="50%"
@@ -406,14 +419,7 @@ function SalesReport({ data }: { data: any }) {
                   outerRadius={80}
                   label={pieLabel}
                   labelLine={false}
-                >
-                  {data.paymentStatuses.map((_: any, i: number) => (
-                    <Cell
-                      key={i}
-                      fill={CHART_COLORS[i % CHART_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
+                />
                 <ReTooltip formatter={(v: any) => [v, 'Invoices']} />
               </PieChart>
             </ResponsiveContainer>
@@ -644,7 +650,10 @@ function ProductionReport({ data }: { data: any }) {
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie
-                  data={data.qcOutcomes ?? []}
+                  data={(data.qcOutcomes ?? []).map((e: any, i: number) => ({
+                    ...e,
+                    fill: QC_COLOR[e.outcome] ?? CHART_COLORS[i % CHART_COLORS.length],
+                  }))}
                   dataKey="count"
                   nameKey="outcome"
                   cx="50%"
@@ -653,14 +662,7 @@ function ProductionReport({ data }: { data: any }) {
                   outerRadius={85}
                   label={pieLabel}
                   labelLine={false}
-                >
-                  {(data.qcOutcomes ?? []).map((e: any, i: number) => (
-                    <Cell
-                      key={i}
-                      fill={QC_COLOR[e.outcome] ?? CHART_COLORS[i % CHART_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
+                />
                 <ReTooltip formatter={(v: any) => [v, 'Checkpoints']} />
                 <Legend
                   formatter={(v) => v.replace(/_/g, ' ')}
@@ -686,14 +688,17 @@ function ProductionReport({ data }: { data: any }) {
                   formatter={(v: any) => [v, 'Stages']}
                   labelFormatter={(l) => l.replace(/_/g, ' ')}
                 />
-                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {(data.stageActivity ?? []).map((s: any, i: number) => (
-                    <Cell
-                      key={i}
-                      fill={STAGE_COLOR[s.status] ?? CHART_COLORS[i % CHART_COLORS.length]}
+                <Bar
+                  dataKey="count"
+                  radius={[4, 4, 0, 0]}
+                  shape={(props: any) => (
+                    <Rectangle
+                      {...props}
+                      fill={STAGE_COLOR[props.status] ?? CHART_COLORS[props.index % CHART_COLORS.length]}
+                      radius={[4, 4, 0, 0]}
                     />
-                  ))}
-                </Bar>
+                  )}
+                />
               </BarChart>
             </ResponsiveContainer>
           </ChartBox>
@@ -704,7 +709,10 @@ function ProductionReport({ data }: { data: any }) {
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie
-                  data={data.unitsByStatus}
+                  data={(data.unitsByStatus ?? []).map((s: any, i: number) => ({
+                    ...s,
+                    fill: CHART_COLORS[i % CHART_COLORS.length],
+                  }))}
                   dataKey="count"
                   nameKey="status"
                   cx="50%"
@@ -713,11 +721,7 @@ function ProductionReport({ data }: { data: any }) {
                   outerRadius={85}
                   label={pieLabel}
                   labelLine={false}
-                >
-                  {data.unitsByStatus.map((_: any, i: number) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
+                />
                 <ReTooltip formatter={(v: any) => [v, 'Units']} />
               </PieChart>
             </ResponsiveContainer>
@@ -898,7 +902,10 @@ function InventoryReport({ data }: { data: any }) {
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
                 <Pie
-                  data={data.stockHealth ?? []}
+                  data={(data.stockHealth ?? []).map((s: any, i: number) => ({
+                    ...s,
+                    fill: HEALTH_COLOR[s.status] ?? CHART_COLORS[i % CHART_COLORS.length],
+                  }))}
                   dataKey="count"
                   nameKey="status"
                   cx="50%"
@@ -928,14 +935,7 @@ function InventoryReport({ data }: { data: any }) {
                       </text>
                     );
                   }}
-                >
-                  {(data.stockHealth ?? []).map((s: any, i: number) => (
-                    <Cell
-                      key={i}
-                      fill={HEALTH_COLOR[s.status] ?? CHART_COLORS[i % CHART_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
+                />
                 <ReTooltip
                   formatter={((v: any, name: string) => [v, `${name} materials`]) as any}
                 />
@@ -975,11 +975,17 @@ function InventoryReport({ data }: { data: any }) {
                   formatter={(v: any) => [fmt(v as number), 'Value']}
                   labelFormatter={(l) => l.replace(/_/g, ' ')}
                 />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                  {(data.valueByCategory ?? []).map((_: any, i: number) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Bar>
+                <Bar
+                  dataKey="value"
+                  radius={[0, 4, 4, 0]}
+                  shape={(props: any) => (
+                    <Rectangle
+                      {...props}
+                      fill={CHART_COLORS[props.index % CHART_COLORS.length]}
+                      radius={[0, 4, 4, 0]}
+                    />
+                  )}
+                />
               </BarChart>
             </ResponsiveContainer>
           </ChartBox>
@@ -1512,11 +1518,18 @@ function FinanceReport({ data }: { data: any }) {
                   }
                 />
                 <ReTooltip formatter={(v: any) => [fmt(v as number), 'Outstanding']} />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={64}>
-                  {(data.receivablesAging ?? []).map((_: any, i: number) => (
-                    <Cell key={i} fill={AGING_COLOR[i] ?? '#9E9E9E'} />
-                  ))}
-                </Bar>
+                <Bar
+                  dataKey="value"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={64}
+                  shape={(props: any) => (
+                    <Rectangle
+                      {...props}
+                      fill={AGING_COLOR[props.index] ?? '#9E9E9E'}
+                      radius={[4, 4, 0, 0]}
+                    />
+                  )}
+                />
               </BarChart>
             </ResponsiveContainer>
           </ChartBox>
@@ -1530,7 +1543,10 @@ function FinanceReport({ data }: { data: any }) {
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie
-                  data={data.paymentMethods ?? []}
+                  data={(data.paymentMethods ?? []).map((m: any, i: number) => ({
+                    ...m,
+                    fill: CHART_COLORS[i % CHART_COLORS.length],
+                  }))}
                   dataKey="amount"
                   nameKey="method"
                   cx="50%"
@@ -1560,11 +1576,7 @@ function FinanceReport({ data }: { data: any }) {
                       </text>
                     );
                   }}
-                >
-                  {(data.paymentMethods ?? []).map((_: any, i: number) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
+                />
                 <ReTooltip
                   formatter={(v: any) => [fmt(v as number), 'Amount collected']}
                 />
@@ -1818,7 +1830,15 @@ function QCReport({ data }: { data: any }) {
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie
-                  data={data.qcResults}
+                  data={(data.qcResults ?? []).map((r: any) => ({
+                    ...r,
+                    fill:
+                      r.result === 'PASS'
+                        ? '#4CAF50'
+                        : r.result === 'FAIL'
+                          ? '#F44336'
+                          : '#FF9800',
+                  }))}
                   dataKey="count"
                   nameKey="result"
                   cx="50%"
@@ -1826,20 +1846,7 @@ function QCReport({ data }: { data: any }) {
                   outerRadius={80}
                   label={pieLabel}
                   labelLine={false}
-                >
-                  {data.qcResults.map((r: any, i: number) => (
-                    <Cell
-                      key={i}
-                      fill={
-                        r.result === 'PASS'
-                          ? '#4CAF50'
-                          : r.result === 'FAIL'
-                            ? '#F44336'
-                            : '#FF9800'
-                      }
-                    />
-                  ))}
-                </Pie>
+                />
                 <ReTooltip formatter={(v: any) => [v, 'Tests']} />
               </PieChart>
             </ResponsiveContainer>
@@ -1878,7 +1885,10 @@ function QCReport({ data }: { data: any }) {
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie
-                  data={data.ncrStatuses}
+                  data={(data.ncrStatuses ?? []).map((s: any, i: number) => ({
+                    ...s,
+                    fill: CHART_COLORS[i % CHART_COLORS.length],
+                  }))}
                   dataKey="count"
                   nameKey="status"
                   cx="50%"
@@ -1886,14 +1896,7 @@ function QCReport({ data }: { data: any }) {
                   outerRadius={80}
                   label={pieLabel}
                   labelLine={false}
-                >
-                  {data.ncrStatuses.map((_: any, i: number) => (
-                    <Cell
-                      key={i}
-                      fill={CHART_COLORS[i % CHART_COLORS.length]}
-                    />
-                  ))}
-                </Pie>
+                />
                 <ReTooltip formatter={(v: any) => [v, 'NCRs']} />
               </PieChart>
             </ResponsiveContainer>
@@ -2732,6 +2735,7 @@ export default function DepartmentReportPage({
 }) {
   const { department } = use(params);
   const router = useRouter();
+  const { data: session } = useSession();
 
   const [period, setPeriod] = useState<Period>('monthly');
   const [data, setData] = useState<any>(null);
@@ -2740,6 +2744,12 @@ export default function DepartmentReportPage({
   const [exporting, setExporting] = useState(false);
 
   const meta = DEPT_META[department];
+
+  const role = (session?.user as any)?.role;
+  const permissions: string[] = (session?.user as any)?.permissions ?? [];
+  const hasAccess =
+    role === 'SUPERADMIN' ||
+    permissions.includes(`reports:${department}`);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -2774,6 +2784,19 @@ export default function DepartmentReportPage({
     return (
       <Box sx={{ p: 4 }}>
         <Alert severity="error">Unknown department: {department}</Alert>
+      </Box>
+    );
+  }
+
+  if (session && !hasAccess) {
+    return (
+      <Box sx={{ p: 4, maxWidth: 480, mx: 'auto', mt: 8, textAlign: 'center' }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          You do not have permission to view the {meta.label} report.
+        </Alert>
+        <Button variant="outlined" onClick={() => router.push('/reports')}>
+          Back to Reports
+        </Button>
       </Box>
     );
   }

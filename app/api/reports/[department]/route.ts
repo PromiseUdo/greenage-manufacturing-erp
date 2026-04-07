@@ -31,6 +31,17 @@ export async function GET(
     }
 
     const { department } = await params;
+
+    // Only SUPERADMIN bypasses permission checks; all other roles require explicit grants
+    const role = (session.user as any)?.role;
+    if (role !== 'SUPERADMIN') {
+      const permissions: string[] = (session.user as any)?.permissions ?? [];
+      const requiredPermission = `reports:${department}`;
+      if (!permissions.includes(requiredPermission)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
     const period = req.nextUrl.searchParams.get('period') || 'monthly';
     const startDate = getStartDate(period);
     const dateFilter = startDate ? { gte: startDate } : undefined;

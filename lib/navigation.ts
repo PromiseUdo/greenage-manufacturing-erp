@@ -72,8 +72,6 @@ export function getFilteredNavigation(
 
   const visibleGroups = navigation.filter((group) => !group.superAdminOnly);
 
-  if (role === 'ADMIN') return visibleGroups;
-
   return visibleGroups
     .map((group) => ({
       ...group,
@@ -271,37 +269,37 @@ export const navigation: {
             label: 'Sales',
             path: '/reports/sales',
             icon: ShoppingCartIcon,
-            permission: 'sales:read',
+            permission: 'reports:sales',
           },
           {
             label: 'Production',
             path: '/reports/production',
             icon: PrecisionManufacturingIcon,
-            permission: 'production_orders:read',
+            permission: 'reports:production',
           },
           {
             label: 'Inventory',
             path: '/reports/inventory',
             icon: Inventory2Icon,
-            permission: 'inventory:read',
+            permission: 'reports:inventory',
           },
           {
             label: 'Finance',
             path: '/reports/finance',
             icon: AccountBalanceIcon,
-            permission: 'sales:read',
+            permission: 'reports:finance',
           },
-          // {
-          //   label: 'Quality Control',
-          //   path: '/reports/quality-control',
-          //   icon: VerifiedUserIcon,
-          //   permission: 'production_orders:read',
-          // },
+          {
+            label: 'Quality Control',
+            path: '/reports/quality-control',
+            icon: VerifiedUserIcon,
+            permission: 'reports:quality-control',
+          },
           {
             label: 'Dispatch',
             path: '/reports/dispatch',
             icon: LocalShippingIcon,
-            permission: 'store:read',
+            permission: 'reports:dispatch',
           },
         ],
       },
