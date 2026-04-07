@@ -289,12 +289,12 @@ export const navigation: {
             icon: AccountBalanceIcon,
             permission: 'reports:finance',
           },
-          {
-            label: 'Quality Control',
-            path: '/reports/quality-control',
-            icon: VerifiedUserIcon,
-            permission: 'reports:quality-control',
-          },
+          // {
+          //   label: 'Quality Control',
+          //   path: '/reports/quality-control',
+          //   icon: VerifiedUserIcon,
+          //   permission: 'reports:quality-control',
+          // },
           {
             label: 'Dispatch',
             path: '/reports/dispatch',
