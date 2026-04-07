@@ -15,6 +15,9 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 
 import SettingsIcon from '@mui/icons-material/Settings';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -252,6 +255,53 @@ export const navigation: {
             path: '/inventory/production-requests',
             icon: PrecisionManufacturingIcon,
             permission: 'inventory:read',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    section: 'Reports',
+    items: [
+      {
+        label: 'Reports',
+        icon: BarChartIcon,
+        children: [
+          {
+            label: 'Sales',
+            path: '/reports/sales',
+            icon: ShoppingCartIcon,
+            permission: 'sales:read',
+          },
+          {
+            label: 'Production',
+            path: '/reports/production',
+            icon: PrecisionManufacturingIcon,
+            permission: 'production_orders:read',
+          },
+          {
+            label: 'Inventory',
+            path: '/reports/inventory',
+            icon: Inventory2Icon,
+            permission: 'inventory:read',
+          },
+          {
+            label: 'Finance',
+            path: '/reports/finance',
+            icon: AccountBalanceIcon,
+            permission: 'sales:read',
+          },
+          // {
+          //   label: 'Quality Control',
+          //   path: '/reports/quality-control',
+          //   icon: VerifiedUserIcon,
+          //   permission: 'production_orders:read',
+          // },
+          {
+            label: 'Dispatch',
+            path: '/reports/dispatch',
+            icon: LocalShippingIcon,
+            permission: 'store:read',
           },
         ],
       },
