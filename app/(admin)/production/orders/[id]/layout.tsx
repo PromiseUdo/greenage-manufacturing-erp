@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   useState,
@@ -6,8 +6,8 @@ import {
   useCallback,
   createContext,
   useContext,
-} from "react";
-import { useRouter, usePathname, useParams } from "next/navigation";
+} from 'react';
+import { useRouter, usePathname, useParams } from 'next/navigation';
 import {
   Box,
   Typography,
@@ -28,22 +28,22 @@ import {
   Alert,
   AlertTitle,
   TextField,
-} from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { useSession } from "next-auth/react";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import FactoryIcon from "@mui/icons-material/Factory";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import TrackChangesIcon from "@mui/icons-material/TrackChanges";
-import TimelineIcon from "@mui/icons-material/Timeline";
-import Inventory2Icon from "@mui/icons-material/Inventory2";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import PauseIcon from "@mui/icons-material/Pause";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import DeleteIcon from "@mui/icons-material/Delete";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import CircularProgress from "@mui/material/CircularProgress";
+} from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { useSession } from 'next-auth/react';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import FactoryIcon from '@mui/icons-material/Factory';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import TrackChangesIcon from '@mui/icons-material/TrackChanges';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import DeleteIcon from '@mui/icons-material/Delete';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import CircularProgress from '@mui/material/CircularProgress';
 
 interface ActionItemSummary {
   id: string;
@@ -94,8 +94,17 @@ interface ProductionOrderSummary {
   scheduleStatus: string;
   // Minimal unit list — no tracking data. The Units tab fetches its own full unit data.
   units: { id: string; unitId: string; unitNumber: number; status: string }[];
-  materialRequisitions: { id: string; status: string; productionUnitId: string | null }[];
-  product: { id: string; name: string; productNumber: string; category: string };
+  materialRequisitions: {
+    id: string;
+    status: string;
+    productionUnitId: string | null;
+  }[];
+  product: {
+    id: string;
+    name: string;
+    productNumber: string;
+    category: string;
+  };
   manager: { id: string; name: string; email: string };
   stages: StageSummary[];
 }
@@ -119,25 +128,25 @@ const STATUS_COLORS: Record<
   string,
   { bg: string; text: string; border: string }
 > = {
-  DRAFT: { bg: "#F3F4F6", text: "#6B7280", border: "#D1D5DB" },
-  IN_PROGRESS: { bg: "#DBEAFE", text: "#1E40AF", border: "#93C5FD" },
-  ON_HOLD: { bg: "#FEF3C7", text: "#92400E", border: "#FCD34D" },
-  PARTIALLY_COMPLETED: { bg: "#FEF3C7", text: "#B45309", border: "#F59E0B" },
-  COMPLETED: { bg: "#DCFCE7", text: "#166534", border: "#86EFAC" },
-  CANCELLED: { bg: "#FEE2E2", text: "#991B1B", border: "#FCA5A5" },
+  DRAFT: { bg: '#F3F4F6', text: '#6B7280', border: '#D1D5DB' },
+  IN_PROGRESS: { bg: '#DBEAFE', text: '#1E40AF', border: '#93C5FD' },
+  ON_HOLD: { bg: '#FEF3C7', text: '#92400E', border: '#FCD34D' },
+  PARTIALLY_COMPLETED: { bg: '#FEF3C7', text: '#B45309', border: '#F59E0B' },
+  COMPLETED: { bg: '#DCFCE7', text: '#166534', border: '#86EFAC' },
+  CANCELLED: { bg: '#FEE2E2', text: '#991B1B', border: '#FCA5A5' },
 };
 
 const SCHEDULE_COLORS: Record<string, { bg: string; text: string }> = {
-  ON_TRACK: { bg: "#DBEAFE", text: "#1E40AF" },
-  AHEAD: { bg: "#DCFCE7", text: "#166534" },
-  DELAYED: { bg: "#FEE2E2", text: "#991B1B" },
+  ON_TRACK: { bg: '#DBEAFE', text: '#1E40AF' },
+  AHEAD: { bg: '#DCFCE7', text: '#166534' },
+  DELAYED: { bg: '#FEE2E2', text: '#991B1B' },
 };
 
 const TABS = [
-  { label: "Overview", path: "overview", icon: <DashboardIcon /> },
-  { label: "Units", path: "units", icon: <TrackChangesIcon /> },
-  { label: "Materials", path: "materials", icon: <Inventory2Icon /> },
-  { label: "Timeline", path: "timeline", icon: <TimelineIcon /> },
+  { label: 'Overview', path: 'overview', icon: <DashboardIcon /> },
+  { label: 'Units', path: 'units', icon: <TrackChangesIcon /> },
+  { label: 'Materials', path: 'materials', icon: <Inventory2Icon /> },
+  { label: 'Timeline', path: 'timeline', icon: <TimelineIcon /> },
 ];
 
 // ── Complete dialog: asks for final packaged qty before closing ───────────
@@ -157,7 +166,7 @@ function CompleteOrderDialog({
   const [packaged, setPackaged] = useState<string>(
     order.quantityPackaged !== null
       ? String(order.quantityPackaged)
-      : String(order.quantity)
+      : String(order.quantity),
   );
 
   const qty = parseInt(packaged) || 0;
@@ -169,8 +178,8 @@ function CompleteOrderDialog({
       <DialogTitle sx={{ fontWeight: 700 }}>Close Production Order</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Enter the final number of units packaged for{" "}
-          <strong>{order.orderNumber}</strong> (planned:{" "}
+          Enter the final number of units packaged for{' '}
+          <strong>{order.orderNumber}</strong> (planned:{' '}
           <strong>{order.quantity}</strong> units).
         </Typography>
         <TextField
@@ -186,14 +195,14 @@ function CompleteOrderDialog({
         {hasShortfall && qty > 0 && (
           <Alert severity="warning" icon={<WarningAmberIcon />}>
             <AlertTitle sx={{ fontWeight: 700 }}>Shortfall Detected</AlertTitle>
-            {shortfall} unit{shortfall !== 1 ? "s" : ""} short of the {order.quantity}{" "}
-            planned. This order will be marked{" "}
+            {shortfall} unit{shortfall !== 1 ? 's' : ''} short of the{' '}
+            {order.quantity} planned. This order will be marked{' '}
             <strong>Partially Completed</strong>.
           </Alert>
         )}
         {!hasShortfall && qty > 0 && (
           <Alert severity="success">
-            All {order.quantity} planned units packaged — order will be marked{" "}
+            All {order.quantity} planned units packaged — order will be marked{' '}
             <strong>Completed</strong>.
           </Alert>
         )}
@@ -202,7 +211,7 @@ function CompleteOrderDialog({
         <Button
           onClick={onClose}
           color="inherit"
-          sx={{ textTransform: "none", borderRadius: 2 }}
+          sx={{ textTransform: 'none', borderRadius: 2 }}
         >
           Cancel
         </Button>
@@ -211,19 +220,17 @@ function CompleteOrderDialog({
           variant="contained"
           disabled={loading || qty < 1}
           sx={{
-            textTransform: "none",
+            textTransform: 'none',
             fontWeight: 700,
             borderRadius: 2,
-            bgcolor: hasShortfall ? "#D97706" : "#16A34A",
-            "&:hover": { bgcolor: hasShortfall ? "#B45309" : "#15803D" },
+            bgcolor: hasShortfall ? '#D97706' : '#16A34A',
+            '&:hover': { bgcolor: hasShortfall ? '#B45309' : '#15803D' },
           }}
         >
           {loading ? (
             <CircularProgress size={14} color="inherit" sx={{ mr: 0.5 }} />
           ) : null}
-          {hasShortfall
-            ? "Close with Shortfall"
-            : "Mark Complete"}
+          {hasShortfall ? 'Close with Shortfall' : 'Mark Complete'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -240,7 +247,7 @@ export default function ProductionOrderLayout({
   const params = useParams();
   const orderId = params.id as string;
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { data: session } = useSession();
 
   const [order, setOrder] = useState<ProductionOrderSummary | null>(null);
@@ -271,7 +278,7 @@ export default function ProductionOrderLayout({
   }, [fetchOrder]);
 
   const activeTabPath =
-    TABS.find((t) => pathname?.includes(`/${t.path}`))?.path ?? "overview";
+    TABS.find((t) => pathname?.includes(`/${t.path}`))?.path ?? 'overview';
   const activeTabIndex = TABS.findIndex((t) => t.path === activeTabPath);
 
   const handleTabChange = (_: any, newIndex: number) => {
@@ -282,8 +289,8 @@ export default function ProductionOrderLayout({
     setActionLoading(true);
     try {
       await fetch(`/api/production/orders/${orderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
       await fetchOrder();
@@ -297,10 +304,10 @@ export default function ProductionOrderLayout({
     setActionLoading(true);
     try {
       await fetch(`/api/production/orders/${orderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          status: "COMPLETED",
+          status: 'COMPLETED',
           quantityPackaged: packagedQty,
         }),
       });
@@ -320,13 +327,13 @@ export default function ProductionOrderLayout({
     setActionLoading(true);
     try {
       const res = await fetch(`/api/production/orders/${orderId}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
       if (res.ok) {
-        router.push("/production/orders");
+        router.push('/production/orders');
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to delete order");
+        alert(data.error || 'Failed to delete order');
       }
     } catch (e) {
       console.error(e);
@@ -337,42 +344,42 @@ export default function ProductionOrderLayout({
 
   const userRole = session?.user?.role;
   const canDelete =
-    order?.status === "DRAFT" &&
-    (userRole === "ADMIN" ||
-      userRole === "PRODUCTION_MANAGER" ||
+    order?.status === 'DRAFT' &&
+    (userRole === 'ADMIN' ||
+      userRole === 'PRODUCTION_MANAGER' ||
       // @ts-ignore
-      session?.user?.permissions?.includes("production_orders:delete"));
+      session?.user?.permissions?.includes('production_orders:delete'));
 
   const isManager =
-    userRole === "ADMIN" ||
-    userRole === "PRODUCTION_MANAGER" ||
-    userRole === "OPERATION_MANAGER";
+    userRole === 'ADMIN' ||
+    userRole === 'PRODUCTION_MANAGER' ||
+    userRole === 'OPERATION_MANAGER';
 
-  const sc = STATUS_COLORS[order?.status ?? "DRAFT"] ?? STATUS_COLORS.DRAFT;
+  const sc = STATUS_COLORS[order?.status ?? 'DRAFT'] ?? STATUS_COLORS.DRAFT;
   const shc =
-    SCHEDULE_COLORS[order?.scheduleStatus ?? "ON_TRACK"] ??
+    SCHEDULE_COLORS[order?.scheduleStatus ?? 'ON_TRACK'] ??
     SCHEDULE_COLORS.ON_TRACK;
 
   // Shared action buttons renderer
   const renderActionButtons = (mobile = false) => {
     if (!order) return null;
-    const btnSize = mobile ? "small" : "small";
+    const btnSize = mobile ? 'small' : 'small';
     return (
       <>
         {canDelete && (
           <Button
             size={btnSize}
-            variant={mobile ? "text" : "outlined"}
+            variant={mobile ? 'text' : 'outlined'}
             color="error"
             startIcon={mobile ? undefined : <DeleteIcon />}
             onClick={handleDelete}
             disabled={actionLoading}
-            sx={{ textTransform: "none", borderRadius: 2, minWidth: 0 }}
+            sx={{ textTransform: 'none', borderRadius: 2, minWidth: 0 }}
           >
-            {mobile ? <DeleteIcon fontSize="small" /> : "Delete"}
+            {mobile ? <DeleteIcon fontSize="small" /> : 'Delete'}
           </Button>
         )}
-        {order.status === "DRAFT" && (
+        {order.status === 'DRAFT' && (
           <Button
             size={btnSize}
             variant="contained"
@@ -383,28 +390,28 @@ export default function ProductionOrderLayout({
                 <PlayArrowIcon />
               )
             }
-            onClick={() => updateStatus("IN_PROGRESS")}
+            onClick={() => updateStatus('IN_PROGRESS')}
             disabled={actionLoading}
             sx={{
-              bgcolor: "#2563EB",
-              "&:hover": { bgcolor: "#1D4ED8" },
-              textTransform: "none",
+              bgcolor: '#2563EB',
+              '&:hover': { bgcolor: '#1D4ED8' },
+              textTransform: 'none',
               fontWeight: 700,
               borderRadius: 2,
             }}
           >
-            Start{!mobile ? " Production" : ""}
+            Start{!mobile ? ' Production' : ''}
           </Button>
         )}
-        {order.status === "IN_PROGRESS" && (
+        {order.status === 'IN_PROGRESS' && (
           <>
             <Button
               size={btnSize}
               variant="outlined"
               startIcon={<PauseIcon />}
-              onClick={() => updateStatus("ON_HOLD")}
+              onClick={() => updateStatus('ON_HOLD')}
               disabled={actionLoading}
-              sx={{ textTransform: "none", borderRadius: 2 }}
+              sx={{ textTransform: 'none', borderRadius: 2 }}
             >
               Hold
             </Button>
@@ -415,9 +422,9 @@ export default function ProductionOrderLayout({
               onClick={() => setCompleteDialogOpen(true)}
               disabled={actionLoading}
               sx={{
-                bgcolor: "#16A34A",
-                "&:hover": { bgcolor: "#15803D" },
-                textTransform: "none",
+                bgcolor: '#16A34A',
+                '&:hover': { bgcolor: '#15803D' },
+                textTransform: 'none',
                 fontWeight: 700,
                 borderRadius: 2,
               }}
@@ -426,17 +433,17 @@ export default function ProductionOrderLayout({
             </Button>
           </>
         )}
-        {order.status === "ON_HOLD" && (
+        {order.status === 'ON_HOLD' && (
           <Button
             size={btnSize}
             variant="contained"
             startIcon={<PlayArrowIcon />}
-            onClick={() => updateStatus("IN_PROGRESS")}
+            onClick={() => updateStatus('IN_PROGRESS')}
             disabled={actionLoading}
             sx={{
-              bgcolor: "#2563EB",
-              "&:hover": { bgcolor: "#1D4ED8" },
-              textTransform: "none",
+              bgcolor: '#2563EB',
+              '&:hover': { bgcolor: '#1D4ED8' },
+              textTransform: 'none',
               fontWeight: 700,
               borderRadius: 2,
             }}
@@ -454,25 +461,27 @@ export default function ProductionOrderLayout({
   };
 
   return (
-    <OrderContext.Provider value={{ order, loading, refresh: fetchOrder, patchOrder }}>
+    <OrderContext.Provider
+      value={{ order, loading, refresh: fetchOrder, patchOrder }}
+    >
       {/* ── Mobile: Sticky header ── */}
       {isMobile && (
         <Box
           sx={{
-            position: "sticky",
+            position: 'sticky',
             top: 0,
             zIndex: 100,
-            bgcolor: "background.paper",
-            borderBottom: "1px solid",
-            borderColor: "divider",
+            bgcolor: 'background.paper',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             px: 1.5,
             py: 1,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <IconButton
               size="small"
-              onClick={() => router.push("/production/orders")}
+              onClick={() => router.push('/production/orders')}
             >
               <ArrowBackIcon fontSize="small" />
             </IconButton>
@@ -480,18 +489,18 @@ export default function ProductionOrderLayout({
               {loading ? (
                 <Skeleton width={160} height={20} />
               ) : (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Typography variant="subtitle2" fontWeight={800} noWrap>
                     {order?.orderNumber}
                   </Typography>
                   <Chip
-                    label={order?.status?.replace(/_/g, " ")}
+                    label={order?.status?.replace(/_/g, ' ')}
                     size="small"
                     sx={{
                       bgcolor: sc.bg,
                       color: sc.text,
                       fontWeight: 700,
-                      fontSize: "0.6rem",
+                      fontSize: '0.6rem',
                       height: 18,
                     }}
                   />
@@ -502,13 +511,13 @@ export default function ProductionOrderLayout({
                   variant="caption"
                   color="text.secondary"
                   noWrap
-                  sx={{ display: "block" }}
+                  sx={{ display: 'block' }}
                 >
                   {order?.product.name} · {order?.quantity} units
                 </Typography>
               )}
             </Box>
-            <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
+            <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
               {renderActionButtons(true)}
             </Box>
           </Box>
@@ -516,7 +525,7 @@ export default function ProductionOrderLayout({
           {/* Mini progress bar */}
           {!loading && order && (
             <Box
-              sx={{ mt: 0.8, display: "flex", alignItems: "center", gap: 1 }}
+              sx={{ mt: 0.8, display: 'flex', alignItems: 'center', gap: 1 }}
             >
               <LinearProgress
                 variant="determinate"
@@ -525,25 +534,25 @@ export default function ProductionOrderLayout({
                   flex: 1,
                   height: 5,
                   borderRadius: 3,
-                  bgcolor: "#E5E7EB",
-                  "& .MuiLinearProgress-bar": {
+                  bgcolor: '#E5E7EB',
+                  '& .MuiLinearProgress-bar': {
                     borderRadius: 3,
                     bgcolor:
-                      order.progressPercent === 100 ? "#16A34A" : "#2563EB",
+                      order.progressPercent === 100 ? '#16A34A' : '#2563EB',
                   },
                 }}
               />
               <Typography
                 variant="caption"
                 fontWeight={700}
-                sx={{ minWidth: 28, fontSize: "0.65rem" }}
+                sx={{ minWidth: 28, fontSize: '0.65rem' }}
               >
                 {order.progressPercent}%
               </Typography>
               <Typography
                 variant="caption"
                 color="text.secondary"
-                sx={{ fontSize: "0.65rem" }}
+                sx={{ fontSize: '0.65rem' }}
               >
                 {order.completedActions}/{order.totalActions}
               </Typography>
@@ -556,10 +565,10 @@ export default function ProductionOrderLayout({
       {!isMobile && (
         <Box sx={{ py: 3 }}>
           {/* Breadcrumb */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <IconButton
               size="small"
-              onClick={() => router.push("/production/orders")}
+              onClick={() => router.push('/production/orders')}
             >
               <ArrowBackIcon fontSize="small" />
             </IconButton>
@@ -576,19 +585,19 @@ export default function ProductionOrderLayout({
             sx={{
               p: 2.5,
               mb: 0,
-              bgcolor: "background.paper",
-              border: "1px solid",
+              bgcolor: 'background.paper',
+              border: '1px solid',
               borderColor: sc.border,
-              borderRadius: "12px 12px 0 0",
+              borderRadius: '12px 12px 0 0',
               backgroundImage: `linear-gradient(135deg, ${sc.bg}80 0%, rgba(255,255,255,0) 60%)`,
-              display: "flex",
-              flexWrap: "wrap",
+              display: 'flex',
+              flexWrap: 'wrap',
               gap: 2,
-              alignItems: "flex-start",
-              justifyContent: "space-between",
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
             }}
           >
-            <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
               <Box
                 sx={{
                   width: 52,
@@ -596,9 +605,9 @@ export default function ProductionOrderLayout({
                   bgcolor: sc.bg,
                   border: `1px solid ${sc.border}`,
                   borderRadius: 2.5,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
@@ -610,17 +619,17 @@ export default function ProductionOrderLayout({
                 ) : (
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 1,
-                      flexWrap: "wrap",
+                      flexWrap: 'wrap',
                     }}
                   >
                     <Typography variant="h5" fontWeight={800}>
                       {order?.orderNumber}
                     </Typography>
                     <Chip
-                      label={order?.status.replace(/_/g, " ")}
+                      label={order?.status.replace(/_/g, ' ')}
                       size="small"
                       sx={{
                         bgcolor: sc.bg,
@@ -630,7 +639,7 @@ export default function ProductionOrderLayout({
                       }}
                     />
                     <Chip
-                      label={order?.scheduleStatus.replace(/_/g, " ")}
+                      label={order?.scheduleStatus.replace(/_/g, ' ')}
                       size="small"
                       sx={{ bgcolor: shc.bg, color: shc.text, fontWeight: 600 }}
                     />
@@ -656,8 +665,8 @@ export default function ProductionOrderLayout({
                 {!loading && order && (
                   <Box
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 1,
                       mt: 1,
                       minWidth: 300,
@@ -670,13 +679,13 @@ export default function ProductionOrderLayout({
                         flex: 1,
                         height: 7,
                         borderRadius: 4,
-                        bgcolor: "#E5E7EB",
-                        "& .MuiLinearProgress-bar": {
+                        bgcolor: '#E5E7EB',
+                        '& .MuiLinearProgress-bar': {
                           borderRadius: 4,
                           background:
                             order.progressPercent === 100
-                              ? "#16A34A"
-                              : "linear-gradient(90deg, #2563EB, #6366F1)",
+                              ? '#16A34A'
+                              : 'linear-gradient(90deg, #2563EB, #6366F1)',
                         },
                       }}
                     />
@@ -698,10 +707,10 @@ export default function ProductionOrderLayout({
             {/* Action buttons */}
             <Box
               sx={{
-                display: "flex",
+                display: 'flex',
                 gap: 1,
-                alignItems: "center",
-                flexWrap: "wrap",
+                alignItems: 'center',
+                flexWrap: 'wrap',
               }}
             >
               {renderActionButtons(false)}
@@ -711,16 +720,16 @@ export default function ProductionOrderLayout({
           {/* Desktop Tab Bar */}
           <Box
             sx={{
-              bgcolor: "background.paper",
-              borderLeft: "1px solid",
-              borderRight: "1px solid",
-              borderBottom: "1px solid",
-              borderColor: "divider",
-              borderRadius: "0 0 12px 12px",
-              overflowX: "auto",
+              bgcolor: 'background.paper',
+              borderLeft: '1px solid',
+              borderRight: '1px solid',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              borderRadius: '0 0 12px 12px',
+              overflowX: 'auto',
             }}
           >
-            <Box sx={{ display: "flex", px: 2 }}>
+            <Box sx={{ display: 'flex', px: 2 }}>
               {TABS.map((tab, idx) => {
                 const isActive =
                   idx === (activeTabIndex === -1 ? 0 : activeTabIndex);
@@ -731,24 +740,24 @@ export default function ProductionOrderLayout({
                       router.push(`/production/orders/${orderId}/${tab.path}`)
                     }
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 0.8,
                       px: 2,
                       py: 1.5,
-                      cursor: "pointer",
+                      cursor: 'pointer',
                       borderBottom: isActive
-                        ? "2px solid #2563EB"
-                        : "2px solid transparent",
-                      color: isActive ? "#2563EB" : "text.secondary",
+                        ? '2px solid #2563EB'
+                        : '2px solid transparent',
+                      color: isActive ? '#2563EB' : 'text.secondary',
                       fontWeight: isActive ? 700 : 500,
-                      fontSize: "0.85rem",
-                      whiteSpace: "nowrap",
-                      transition: "color 0.15s, border-color 0.15s",
-                      "&:hover": { color: "#2563EB" },
+                      fontSize: '0.85rem',
+                      whiteSpace: 'nowrap',
+                      transition: 'color 0.15s, border-color 0.15s',
+                      '&:hover': { color: '#2563EB' },
                     }}
                   >
-                    <Box sx={{ fontSize: 16, display: "flex" }}>{tab.icon}</Box>
+                    <Box sx={{ fontSize: 16, display: 'flex' }}>{tab.icon}</Box>
                     {tab.label}
                   </Box>
                 );
@@ -762,25 +771,21 @@ export default function ProductionOrderLayout({
       )}
 
       {/* Mobile content area */}
-      {isMobile && (
-        <Box sx={{ px: 1.5, pt: 2, pb: 10 }}>
-          {children}
-        </Box>
-      )}
+      {isMobile && <Box sx={{ px: 1.5, pt: 2, pb: 10 }}>{children}</Box>}
 
       {/* ── Mobile: Bottom tab bar (fixed) ── */}
       {isMobile && (
         <Box
           sx={{
-            position: "fixed",
+            position: 'fixed',
             bottom: 0,
             left: 0,
             right: 0,
             zIndex: 100,
-            bgcolor: "background.paper",
-            borderTop: "1px solid",
-            borderColor: "divider",
-            boxShadow: "0 -4px 20px rgba(0,0,0,0.08)",
+            bgcolor: 'background.paper',
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
           }}
         >
           <BottomNavigation
@@ -788,16 +793,16 @@ export default function ProductionOrderLayout({
             onChange={handleTabChange}
             sx={{
               height: 60,
-              "& .MuiBottomNavigationAction-root": {
+              '& .MuiBottomNavigationAction-root': {
                 minWidth: 0,
-                fontSize: "0.6rem",
-                padding: "6px 0 8px",
+                fontSize: '0.6rem',
+                padding: '6px 0 8px',
                 gap: 0.3,
-                color: "text.secondary",
+                color: 'text.secondary',
               },
-              "& .Mui-selected": { color: "#2563EB" },
-              "& .MuiBottomNavigationAction-label": {
-                fontSize: "0.6rem !important",
+              '& .Mui-selected': { color: '#2563EB' },
+              '& .MuiBottomNavigationAction-label': {
+                fontSize: '0.6rem !important',
               },
             }}
           >
@@ -816,7 +821,10 @@ export default function ProductionOrderLayout({
       {/* ── Dialogs ── */}
 
       {/* Delete Confirmation */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
         <DialogTitle sx={{ fontWeight: 700 }}>Confirm Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -828,7 +836,7 @@ export default function ProductionOrderLayout({
           <Button
             onClick={() => setDeleteDialogOpen(false)}
             color="inherit"
-            sx={{ textTransform: "none", borderRadius: 2 }}
+            sx={{ textTransform: 'none', borderRadius: 2 }}
           >
             Cancel
           </Button>
@@ -836,7 +844,7 @@ export default function ProductionOrderLayout({
             onClick={confirmDelete}
             color="error"
             variant="contained"
-            sx={{ textTransform: "none", borderRadius: 2 }}
+            sx={{ textTransform: 'none', borderRadius: 2 }}
           >
             Delete
           </Button>
@@ -853,7 +861,6 @@ export default function ProductionOrderLayout({
           loading={actionLoading}
         />
       )}
-
     </OrderContext.Provider>
   );
 }

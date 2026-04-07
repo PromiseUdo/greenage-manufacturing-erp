@@ -3,11 +3,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import { computeProgressPercent, computeScheduleStatus, computeShortfall } from '@/lib/production-utils';
+import {
+  computeProgressPercent,
+  computeScheduleStatus,
+  computeShortfall,
+} from '@/lib/production-utils';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await auth();
@@ -24,14 +28,23 @@ export async function GET(
     // Shared includes across both views
     const sharedInclude = {
       product: {
-        select: { id: true, name: true, productNumber: true, category: true, primaryImage: true, description: true },
+        select: {
+          id: true,
+          name: true,
+          productNumber: true,
+          category: true,
+          primaryImage: true,
+          description: true,
+        },
       },
       manager: { select: { id: true, name: true, email: true } },
       stages: {
         include: {
           responsible: { select: { id: true, name: true, email: true } },
           actionItems: {
-            include: { responsible: { select: { id: true, name: true, email: true } } },
+            include: {
+              responsible: { select: { id: true, name: true, email: true } },
+            },
             orderBy: { sortOrder: 'asc' as const },
           },
         },
@@ -71,8 +84,13 @@ export async function GET(
                   completedBy: { select: { id: true, name: true } },
                   tasks: {
                     select: {
-                      id: true, name: true, status: true, notes: true,
-                      completedAt: true, sortOrder: true, attachments: true,
+                      id: true,
+                      name: true,
+                      status: true,
+                      notes: true,
+                      completedAt: true,
+                      sortOrder: true,
+                      attachments: true,
                     },
                     orderBy: { sortOrder: 'asc' as const },
                   },
@@ -101,7 +119,7 @@ export async function GET(
     if (!order) {
       return NextResponse.json(
         { error: 'Production order not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -124,11 +142,21 @@ export async function GET(
     } else {
       // Summary view: use aggregation queries — no tracking records loaded
       const [total, completed, completedByAction] = await Promise.all([
-        prisma.unitStepTracking.count({ where: { unit: { productionOrderId: id } } }),
-        prisma.unitStepTracking.count({ where: { unit: { productionOrderId: id }, status: { in: ['COMPLETED', 'SKIPPED'] } } }),
+        prisma.unitStepTracking.count({
+          where: { unit: { productionOrderId: id } },
+        }),
+        prisma.unitStepTracking.count({
+          where: {
+            unit: { productionOrderId: id },
+            status: { in: ['COMPLETED', 'SKIPPED'] },
+          },
+        }),
         prisma.unitStepTracking.groupBy({
           by: ['actionItemId'],
-          where: { unit: { productionOrderId: id }, status: { in: ['COMPLETED', 'SKIPPED'] } },
+          where: {
+            unit: { productionOrderId: id },
+            status: { in: ['COMPLETED', 'SKIPPED'] },
+          },
           _count: { _all: true },
         }),
       ]);
@@ -136,31 +164,49 @@ export async function GET(
       completedActions = completed;
 
       const totalUnits = order.units.length;
-      const completedByActionMap = new Map(completedByAction.map((c: any) => [c.actionItemId, c._count._all]));
+      const completedByActionMap = new Map(
+        completedByAction.map((c: any) => [c.actionItemId, c._count._all]),
+      );
 
       // Enrich stages and action items with pre-computed progressPercent for the Gantt
       stagesWithProgress = order.stages.map((stage: any) => {
-        const actionItemsWithProgress = stage.actionItems.map((action: any) => ({
-          ...action,
-          progressPercent: totalUnits > 0
-            ? Math.round(((completedByActionMap.get(action.id) ?? 0) / totalUnits) * 100)
-            : 0,
-        }));
+        const actionItemsWithProgress = stage.actionItems.map(
+          (action: any) => ({
+            ...action,
+            progressPercent:
+              totalUnits > 0
+                ? Math.round(
+                    ((completedByActionMap.get(action.id) ?? 0) / totalUnits) *
+                      100,
+                  )
+                : 0,
+          }),
+        );
         const stageCompleted = actionItemsWithProgress.reduce(
-          (sum: number, a: any) => sum + (completedByActionMap.get(a.id) ?? 0), 0,
+          (sum: number, a: any) => sum + (completedByActionMap.get(a.id) ?? 0),
+          0,
         );
         const stageTotal = actionItemsWithProgress.length * totalUnits;
         return {
           ...stage,
           actionItems: actionItemsWithProgress,
-          progressPercent: stageTotal > 0 ? Math.round((stageCompleted / stageTotal) * 100) : 0,
+          progressPercent:
+            stageTotal > 0
+              ? Math.round((stageCompleted / stageTotal) * 100)
+              : 0,
         };
       });
     }
 
-    const progressPercent = computeProgressPercent(completedActions, totalActions);
+    const progressPercent = computeProgressPercent(
+      completedActions,
+      totalActions,
+    );
     const scheduleStatus = computeScheduleStatus(order, progressPercent);
-    const shortfallQuantity = computeShortfall(order.quantityPackaged, order.quantity);
+    const shortfallQuantity = computeShortfall(
+      order.quantityPackaged,
+      order.quantity,
+    );
 
     return NextResponse.json({
       ...order,
@@ -175,14 +221,14 @@ export async function GET(
     console.error('Error fetching production order:', error);
     return NextResponse.json(
       { error: 'Failed to fetch production order' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await auth();
@@ -191,11 +237,26 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (
-      !['ADMIN', 'PRODUCTION_MANAGER', 'OPERATION_MANAGER'].includes(
-        session.user.role
-      )
-    ) {
+    // if (
+    //   !['ADMIN', 'PRODUCTION_MANAGER', 'OPERATION_MANAGER'].includes(
+    //     session.user.role,
+    //   )
+    // ) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
+
+    const hasRequiredRole = [
+      'ADMIN',
+      'SUPERADMIN',
+      'PRODUCTION_MANAGER',
+      'OPERATION_MANAGER',
+    ].includes(session.user.role);
+
+    const hasRequiredPermission =
+      session.user.permissions?.includes('production_orders:delete') ||
+      session.user.permissions?.includes('production_orders:update');
+
+    if (!hasRequiredRole && !hasRequiredPermission) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -222,7 +283,7 @@ export async function PATCH(
     if (!existingOrder) {
       return NextResponse.json(
         { error: 'Production order not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -259,11 +320,16 @@ export async function PATCH(
     if (scheduledEnd) updateData.scheduledEnd = new Date(scheduledEnd);
 
     // Quantity / yield fields
-    if (quantityStarted !== undefined) updateData.quantityStarted = quantityStarted;
-    if (quantityPassed !== undefined) updateData.quantityPassed = quantityPassed;
-    if (quantityRejected !== undefined) updateData.quantityRejected = quantityRejected;
-    if (quantityReworked !== undefined) updateData.quantityReworked = quantityReworked;
-    if (quantityPackaged !== undefined) updateData.quantityPackaged = quantityPackaged;
+    if (quantityStarted !== undefined)
+      updateData.quantityStarted = quantityStarted;
+    if (quantityPassed !== undefined)
+      updateData.quantityPassed = quantityPassed;
+    if (quantityRejected !== undefined)
+      updateData.quantityRejected = quantityRejected;
+    if (quantityReworked !== undefined)
+      updateData.quantityReworked = quantityReworked;
+    if (quantityPackaged !== undefined)
+      updateData.quantityPackaged = quantityPackaged;
     if (yieldRate !== undefined) updateData.yieldRate = yieldRate;
 
     const updatedOrder = await prisma.productionOrder.update({
@@ -320,14 +386,14 @@ export async function PATCH(
     console.error('Error updating production order:', error);
     return NextResponse.json(
       { error: 'Failed to update production order' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await auth();
@@ -336,11 +402,26 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!session.user.permissions?.includes('production_orders:delete')) {
-      return NextResponse.json(
-        { error: 'You do not have permission to delete production orders.' },
-        { status: 403 }
-      );
+    // if (!session.user.permissions?.includes('production_orders:delete')) {
+    //   return NextResponse.json(
+    //     { error: 'You do not have permission to delete production orders.' },
+    //     { status: 403 },
+    //   );
+    // }
+
+    const hasRequiredRole = [
+      'ADMIN',
+      'SUPERADMIN',
+      'PRODUCTION_MANAGER',
+      'OPERATION_MANAGER',
+    ].includes(session.user.role);
+
+    const hasRequiredPermission =
+      session.user.permissions?.includes('production_orders:delete') ||
+      session.user.permissions?.includes('production_orders:update');
+
+    if (!hasRequiredRole && !hasRequiredPermission) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { id } = await params;
@@ -352,14 +433,14 @@ export async function DELETE(
     if (!order) {
       return NextResponse.json(
         { error: 'Production order not found' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     if (order.status !== 'DRAFT') {
       return NextResponse.json(
         { error: 'Only DRAFT orders can be deleted' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -407,7 +488,7 @@ export async function DELETE(
     console.error('Error deleting production order:', error);
     return NextResponse.json(
       { error: 'Failed to delete production order' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
