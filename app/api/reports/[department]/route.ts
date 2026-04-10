@@ -716,24 +716,16 @@ export async function GET(
       // ─── DISPATCH / LOGISTICS ─────────────────────────────────────────────────
       case 'dispatch': {
         const [
-          dispatchStatuses,
           storeDispatchStatuses,
           returnStatuses,
           totalDispatches,
-          totalStoreDispatches,
           totalReturns,
-          deliveredDispatches,
           deliveryMethods,
           returnsByProductRaw,
           returnAgg,
           storeDispatchByCustomerRaw,
           dispatchesForTrend,
         ] = await Promise.all([
-          prisma.dispatch.groupBy({
-            by: ['status'],
-            _count: { _all: true },
-            where: { createdAt: dateFilter },
-          }),
           prisma.storeDispatch.groupBy({
             by: ['status'],
             _count: { _all: true },
@@ -744,19 +736,9 @@ export async function GET(
             _count: { _all: true },
             where: { createdAt: dateFilter },
           }),
-          prisma.dispatch.count({ where: { createdAt: dateFilter } }),
           prisma.storeDispatch.count({ where: { createdAt: dateFilter } }),
           prisma.productReturn.count({ where: { createdAt: dateFilter } }),
-          // Delivered customer dispatches — for avg delivery time
-          prisma.dispatch.findMany({
-            where: {
-              createdAt: dateFilter,
-              status: 'DELIVERED',
-              deliveryDate: { not: null },
-            },
-            select: { dispatchDate: true, deliveryDate: true },
-          }),
-          // Delivery method breakdown from store dispatches
+          // Delivery method breakdown
           prisma.storeDispatch.groupBy({
             by: ['deliveryMethod'],
             _count: { _all: true },
@@ -776,7 +758,7 @@ export async function GET(
             _sum: { quantity: true, repairCost: true },
             where: { createdAt: dateFilter },
           }),
-          // Top customers by store dispatch volume
+          // Top customers by dispatch volume
           prisma.storeDispatch.groupBy({
             by: ['customerId'],
             _count: { _all: true },
@@ -784,7 +766,7 @@ export async function GET(
             orderBy: { _count: { customerId: 'desc' } },
             take: 5,
           }),
-          // Dates from both dispatch tables for monthly trend
+          // Dates for monthly trend
           prisma.storeDispatch.findMany({
             where: { createdAt: dateFilter },
             select: { createdAt: true },
@@ -792,22 +774,8 @@ export async function GET(
           }),
         ]);
 
-        // ── Avg delivery time (customer dispatches only — have dispatchDate field) ──
-        let avgDeliveryDays: number | null = null;
-        if (deliveredDispatches.length > 0) {
-          const totalDays = deliveredDispatches.reduce((sum, d) => {
-            const days =
-              (new Date(d.deliveryDate!).getTime() -
-                new Date(d.dispatchDate).getTime()) /
-              (1000 * 60 * 60 * 24);
-            return sum + days;
-          }, 0);
-          avgDeliveryDays = Number((totalDays / deliveredDispatches.length).toFixed(1));
-        }
-
-        // ── Monthly dispatch trend — combine both dispatch sources ────────────
+        // ── Monthly dispatch trend ────────────────────────────────────────────
         const trendMap: Record<string, number> = {};
-        // dispatchesForTrend now comes from storeDispatch; also fold in customer dispatches
         for (const d of dispatchesForTrend) {
           const key = d.createdAt.toISOString().slice(0, 7);
           trendMap[key] = (trendMap[key] || 0) + 1;
@@ -829,42 +797,31 @@ export async function GET(
           select: { id: true, name: true },
         });
 
-        // ── Resolve customer names for top store dispatch customers ──────────
+        // ── Resolve customer names ────────────────────────────────────────────
         const topCustomerIds = storeDispatchByCustomerRaw.map((c) => c.customerId);
         const topCustomers = await prisma.customer.findMany({
           where: { id: { in: topCustomerIds } },
           select: { id: true, name: true },
         });
 
-        // ── Combine both dispatch models for accurate KPIs ───────────────────
-        const deliveredFromOrders =
-          dispatchStatuses.find((s) => s.status === 'DELIVERED')?._count._all || 0;
-        const deliveredFromStore =
+        // ── KPI derivations ───────────────────────────────────────────────────
+        const deliveredCount =
           storeDispatchStatuses.find((s) => s.status === 'DELIVERED')?._count._all || 0;
-        const deliveredCount = deliveredFromOrders + deliveredFromStore;
-
-        const failedFromOrders =
-          dispatchStatuses.find((s) => s.status === 'FAILED_DELIVERY')?._count._all || 0;
-        const failedFromStore =
+        const failedCount =
           storeDispatchStatuses.find((s) => s.status === 'FAILED_DELIVERY')?._count._all || 0;
-        const failedCount = failedFromOrders + failedFromStore;
-
-        const combinedTotal = totalDispatches + totalStoreDispatches;
         const deliveryRate =
-          combinedTotal > 0
-            ? ((deliveredCount / combinedTotal) * 100).toFixed(1)
+          totalDispatches > 0
+            ? ((deliveredCount / totalDispatches) * 100).toFixed(1)
             : '0';
 
         return NextResponse.json({
           // ── KPI figures ────────────────────────────────────────────────
-          totalDispatches: combinedTotal,
-          customerDispatches: totalDispatches,
-          totalStoreDispatches,
+          totalDispatches,
+          totalStoreDispatches: totalDispatches,
           totalReturns,
           deliveredCount,
           failedCount,
           deliveryRate,
-          avgDeliveryDays,
           totalUnitsReturned: returnAgg._sum.quantity || 0,
           totalRepairCost: returnAgg._sum.repairCost || 0,
 
@@ -872,7 +829,7 @@ export async function GET(
           monthlyTrend,
 
           // ── Chart data ─────────────────────────────────────────────────
-          dispatchStatuses: dispatchStatuses.map((s) => ({
+          dispatchStatuses: storeDispatchStatuses.map((s) => ({
             status: s.status,
             count: s._count._all,
           })),

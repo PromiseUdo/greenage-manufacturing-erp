@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     if (!isSuperAdmin(session.user.role)) {
       return NextResponse.json(
         { error: 'Only the superadmin can create employees.' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 

@@ -106,13 +106,13 @@ export default function EmployeesPage() {
   useEffect(() => {
     const fetchDepts = async () => {
       try {
-        const res = await fetch("/api/settings/departments");
+        const res = await fetch('/api/settings/departments');
         if (res.ok) {
           const data = await res.json();
           setDbDepartments(data);
         }
       } catch (e) {
-        console.error("Failed to load departments", e);
+        console.error('Failed to load departments', e);
       }
     };
     fetchDepts();
@@ -134,6 +134,8 @@ export default function EmployeesPage() {
 
       setEmployees(data?.employees || []);
       setTotal(data?.pagination?.total || 0);
+
+      console.log(employees, 'employees');
     } catch (error) {
       console.error('Error fetching employees:', error);
     } finally {
@@ -395,7 +397,7 @@ export default function EmployeesPage() {
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  <StyledTableCell>Employee #</StyledTableCell>
+                  <StyledTableCell>ID</StyledTableCell>
                   <StyledTableCell>Name</StyledTableCell>
                   <StyledTableCell>Email</StyledTableCell>
                   <StyledTableCell>Phone</StyledTableCell>
