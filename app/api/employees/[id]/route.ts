@@ -280,22 +280,27 @@ export async function DELETE(
       );
     }
 
-    // Soft delete - deactivate employee and user
-    await prisma.$transaction(async (tx) => {
-      // Deactivate employee
-      await tx.employee.update({
-        where: { id },
-        data: {
-          isActive: false,
-          dateTerminated: new Date(),
-        },
-      });
+    // // Soft delete - deactivate employee and user
+    // await prisma.$transaction(async (tx) => {
+    //   // Deactivate employee
+    //   await tx.employee.update({
+    //     where: { id },
+    //     data: {
+    //       isActive: false,
+    //       dateTerminated: new Date(),
+    //     },
+    //   });
 
-      // Deactivate user account
-      await tx.user.update({
-        where: { id: employee.userId },
-        data: { isActive: false },
-      });
+    //   // Deactivate user account
+    //   await tx.user.update({
+    //     where: { id: employee.userId },
+    //     data: { isActive: false },
+    //   });
+    // });
+
+    await prisma.user.update({
+      where: { id: employee.userId },
+      data: { isActive: false },
     });
 
     // Log activity
