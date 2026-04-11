@@ -19,7 +19,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'ADMIN') {
+    if (session.user.role !== 'EMPLOYEE') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -77,7 +77,7 @@ export async function POST(
           name: customer.name,
           email,
           password: hashedPassword,
-          role: 'SALES_TEAM', // Default role for customer portal users
+          role: 'CUSTOMER', // Default role for customer portal users
           isActive: true,
           isVerified: true, // No email verification for customers
         },
@@ -150,7 +150,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'ADMIN') {
+    if (session.user.role !== 'EMPLOYEE') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
