@@ -343,17 +343,17 @@ export default function ProductionOrderLayout({
   };
 
   const userRole = session?.user?.role;
-  const canDelete =
-    order?.status === 'DRAFT' &&
-    (userRole === 'ADMIN' ||
-      userRole === 'PRODUCTION_MANAGER' ||
-      // @ts-ignore
-      session?.user?.permissions?.includes('production_orders:delete'));
+  // const canDelete =
+  //   order?.status === 'DRAFT' &&
+  //   (userRole === 'ADMIN' ||
+  //     userRole === 'PRODUCTION_MANAGER' ||
+  //     // @ts-ignore
+  //     session?.user?.permissions?.includes('production_orders:delete'));
 
-  const isManager =
-    userRole === 'ADMIN' ||
-    userRole === 'PRODUCTION_MANAGER' ||
-    userRole === 'OPERATION_MANAGER';
+  // const isManager =
+  //   userRole === 'ADMIN' ||
+  //   userRole === 'PRODUCTION_MANAGER' ||
+  //   userRole === 'OPERATION_MANAGER';
 
   const sc = STATUS_COLORS[order?.status ?? 'DRAFT'] ?? STATUS_COLORS.DRAFT;
   const shc =
@@ -366,19 +366,18 @@ export default function ProductionOrderLayout({
     const btnSize = mobile ? 'small' : 'small';
     return (
       <>
-        {canDelete && (
-          <Button
-            size={btnSize}
-            variant={mobile ? 'text' : 'outlined'}
-            color="error"
-            startIcon={mobile ? undefined : <DeleteIcon />}
-            onClick={handleDelete}
-            disabled={actionLoading}
-            sx={{ textTransform: 'none', borderRadius: 2, minWidth: 0 }}
-          >
-            {mobile ? <DeleteIcon fontSize="small" /> : 'Delete'}
-          </Button>
-        )}
+        <Button
+          size={btnSize}
+          variant={mobile ? 'text' : 'outlined'}
+          color="error"
+          startIcon={mobile ? undefined : <DeleteIcon />}
+          onClick={handleDelete}
+          disabled={actionLoading}
+          sx={{ textTransform: 'none', borderRadius: 2, minWidth: 0 }}
+        >
+          {mobile ? <DeleteIcon fontSize="small" /> : 'Delete'}
+        </Button>
+
         {order.status === 'DRAFT' && (
           <Button
             size={btnSize}
