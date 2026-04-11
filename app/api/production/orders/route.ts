@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    console.log(session?.user, 'session user');
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
@@ -162,21 +164,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // if (
-    //   !['ADMIN', 'PRODUCTION_MANAGER', 'OPERATION_MANAGER'].includes(
-    //     session.user.role
-    //   )
-    // ) {
-    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    // }
-
-    // if (!session.user.permissions?.includes('production_orders:create')) {
-    //   return NextResponse.json(
-    //     { error: 'You do not have permission to create production orders.' },
-    //     { status: 403 },
-    //   );
-    // }
-
     const isSuperAdmin = session.user.role === 'SUPERADMIN';
     const hasPermission = session.user.permissions?.includes(
       'production_orders:create',
@@ -245,21 +232,15 @@ export async function POST(request: NextRequest) {
     }
     const orderNumber = `PRD-${year}-${orderCount.toString().padStart(4, '0')}`;
 
-    // Create production order with stages and action items in a transaction.
-    // Stages are created in parallel, and action items within each stage are
-    // created in parallel to minimise round-trips on MongoDB Atlas.
-    // The final findUnique is intentionally outside the transaction so it does
-    // not count against the transaction timeout.
-    const orderId = await prisma.$transaction(
-      async (tx) => {
-        // 1. Reserve sequential unit numbers on the product atomically
+    // Step 1 — atomic: reserve unit numbers and create the order record.
+    // Keep this transaction tiny so it never times out.
+    const { orderId, startUnitNumber, productCode } =
+      await prisma.$transaction(async (tx) => {
         const updatedProduct = await tx.product.update({
           where: { id: productId },
           data: { lastUnitNumber: { increment: quantity } },
         });
-        const startUnitNumber = updatedProduct.lastUnitNumber - quantity;
 
-        // 2. Create the order record
         const order = await tx.productionOrder.create({
           data: {
             orderNumber,
@@ -274,99 +255,96 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        // 3. Create all stages and their action items in parallel
-        const actionItemIdArrays = await Promise.all(
-          stages.map(async (stage: any) => {
-            const stageEntry = await tx.productionStageEntry.create({
-              data: {
-                productionOrderId: order.id,
-                stageName: stage.stageName,
-                stageLabel: stage.stageLabel,
-                sortOrder: stage.sortOrder,
-                scheduledStart: stage.scheduledStart
-                  ? new Date(stage.scheduledStart)
-                  : null,
-                scheduledEnd: stage.scheduledEnd
-                  ? new Date(stage.scheduledEnd)
-                  : null,
-                responsibleId: stage.responsibleId || null,
-                status: 'NOT_STARTED',
-              },
-            });
+        return {
+          orderId: order.id,
+          startUnitNumber: updatedProduct.lastUnitNumber - quantity,
+          productCode: updatedProduct.productCode,
+        };
+      });
 
-            if (!stage.actionItems?.length) return [];
-
-            const createdActions = await Promise.all(
-              stage.actionItems.map((action: any) =>
-                tx.productionActionItem.create({
-                  data: {
-                    stageEntryId: stageEntry.id,
-                    stepId: action.stepId,
-                    actionName: action.actionName,
-                    defaultResponsibility: action.defaultResponsibility,
-                    outputNextStep: action.outputNextStep,
-                    focusGoal: action.focusGoal || null,
-                    sortOrder: action.sortOrder,
-                    isDecisionPoint: action.isDecisionPoint || false,
-                    responsibleId: action.responsibleId || null,
-                    scheduledStart: action.scheduledStart
-                      ? new Date(action.scheduledStart)
-                      : null,
-                    scheduledEnd: action.scheduledEnd
-                      ? new Date(action.scheduledEnd)
-                      : null,
-                  },
-                }),
-              ),
-            );
-            return createdActions.map((a) => a.id);
-          }),
-        );
-        const actionItemIds = actionItemIdArrays.flat();
-
-        // 4. Create all units in one bulk write
-        const unitData = Array.from({ length: quantity }, (_, i) => ({
-          productionOrderId: order.id,
-          unitNumber: i + 1,
-          unitId: `${updatedProduct.productCode}${(startUnitNumber + i + 1).toString().padStart(5, '0')}`,
-          currentStage: 'SMD_PRODUCTION' as const,
-          status: 'IN_PROGRESS' as const,
-        }));
-        await tx.productionUnit.createMany({ data: unitData });
-
-        // 5. Fetch created unit IDs
-        const createdUnits = await tx.productionUnit.findMany({
-          where: { productionOrderId: order.id },
-          select: { id: true },
+    // Step 2 — create stages and their action items in parallel (outside tx)
+    const actionItemIdArrays = await Promise.all(
+      stages.map(async (stage: any) => {
+        const stageEntry = await prisma.productionStageEntry.create({
+          data: {
+            productionOrderId: orderId,
+            stageName: stage.stageName,
+            stageLabel: stage.stageLabel,
+            sortOrder: stage.sortOrder,
+            scheduledStart: stage.scheduledStart
+              ? new Date(stage.scheduledStart)
+              : null,
+            scheduledEnd: stage.scheduledEnd
+              ? new Date(stage.scheduledEnd)
+              : null,
+            responsibleId: stage.responsibleId || null,
+            status: 'NOT_STARTED',
+          },
         });
 
-        // 6. Create all step-tracking records in one bulk write
-        const trackingData: any[] = [];
-        for (const cu of createdUnits) {
-          for (const aiId of actionItemIds) {
-            trackingData.push({
-              unitId: cu.id,
-              actionItemId: aiId,
-              status: 'PENDING',
-            });
-          }
-        }
-        if (trackingData.length > 0) {
-          await tx.unitStepTracking.createMany({ data: trackingData });
-        }
+        if (!stage.actionItems?.length) return [];
 
-        // 7. Link and acknowledge production requests
-        if (productionRequestIds?.length) {
-          await tx.productionRequest.updateMany({
-            where: { id: { in: productionRequestIds } },
-            data: { productionOrderId: order.id, status: 'ACKNOWLEDGED' },
-          });
-        }
-
-        return order.id;
-      },
-      { timeout: 60000 },
+        const createdActions = await Promise.all(
+          stage.actionItems.map((action: any) =>
+            prisma.productionActionItem.create({
+              data: {
+                stageEntryId: stageEntry.id,
+                stepId: action.stepId,
+                actionName: action.actionName,
+                defaultResponsibility: action.defaultResponsibility,
+                outputNextStep: action.outputNextStep,
+                focusGoal: action.focusGoal || null,
+                sortOrder: action.sortOrder,
+                isDecisionPoint: action.isDecisionPoint || false,
+                responsibleId: action.responsibleId || null,
+                scheduledStart: action.scheduledStart
+                  ? new Date(action.scheduledStart)
+                  : null,
+                scheduledEnd: action.scheduledEnd
+                  ? new Date(action.scheduledEnd)
+                  : null,
+              },
+            }),
+          ),
+        );
+        return createdActions.map((a) => a.id);
+      }),
     );
+    const actionItemIds = actionItemIdArrays.flat();
+
+    // Step 3 — bulk-create units
+    const unitData = Array.from({ length: quantity }, (_, i) => ({
+      productionOrderId: orderId,
+      unitNumber: i + 1,
+      unitId: `${productCode}${(startUnitNumber + i + 1).toString().padStart(5, '0')}`,
+      currentStage: 'SMD_PRODUCTION' as const,
+      status: 'IN_PROGRESS' as const,
+    }));
+    await prisma.productionUnit.createMany({ data: unitData });
+
+    // Step 4 — fetch unit IDs then bulk-create tracking records
+    const createdUnits = await prisma.productionUnit.findMany({
+      where: { productionOrderId: orderId },
+      select: { id: true },
+    });
+
+    const trackingData: any[] = [];
+    for (const cu of createdUnits) {
+      for (const aiId of actionItemIds) {
+        trackingData.push({ unitId: cu.id, actionItemId: aiId, status: 'PENDING' });
+      }
+    }
+    if (trackingData.length > 0) {
+      await prisma.unitStepTracking.createMany({ data: trackingData });
+    }
+
+    // Step 5 — link and acknowledge production requests
+    if (productionRequestIds?.length) {
+      await prisma.productionRequest.updateMany({
+        where: { id: { in: productionRequestIds } },
+        data: { productionOrderId: orderId, status: 'ACKNOWLEDGED' },
+      });
+    }
 
     // Fetch the full order outside the transaction (no timeout pressure)
     const productionOrder = await prisma.productionOrder.findUnique({

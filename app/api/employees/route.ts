@@ -63,6 +63,16 @@ export async function GET(request: NextRequest) {
               isActive: true,
             },
           },
+          appRole: {
+            select: {
+              name: true,
+            },
+          },
+          department: {
+            select: {
+              name: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -70,7 +80,9 @@ export async function GET(request: NextRequest) {
       }),
       prisma.employee.count({ where }),
     ]);
-
+    console.log('====================================');
+    console.log(employees);
+    console.log('====================================');
     return NextResponse.json({
       employees,
       pagination: {
@@ -150,7 +162,6 @@ export async function POST(request: NextRequest) {
       : 1;
     const employeeNumber = `EMP-${empCount.toString().padStart(4, '0')}`;
 
-    // Map to UserRole enum (for backwards compatibility)
     const dbRole = await prisma.role.findUnique({ where: { id: appRoleId } });
     if (!dbRole) {
       return NextResponse.json({ error: 'Role not found' }, { status: 404 });
@@ -166,13 +177,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const roleMapping: Record<string, string> = {
-      Admin: 'ADMIN',
-      Accountant: 'ACCOUNTANT',
-      'Operation Manager': 'OPERATION_MANAGER',
-    };
-    const mappedRole = roleMapping[dbRole.name] || 'PRODUCTION_STAFF';
-
     // Generate default password if not provided
     const defaultPassword =
       password ||
@@ -187,8 +191,7 @@ export async function POST(request: NextRequest) {
           name,
           email,
           password: hashedPassword,
-          role: mappedRole as any,
-          appRoleId: dbRole.id, // Link to the dynamic Role
+          role: 'EMPLOYEE',
           isActive: true,
           isVerified: true, // No email verification for staff
         },
@@ -199,9 +202,9 @@ export async function POST(request: NextRequest) {
         data: {
           employeeNumber,
           userId: user.id, // Link to User
+          appRoleId: dbRole.id,
           phone,
           address,
-          department: dbDepartment.name,
           departmentId: dbDepartment.id,
           position,
           mustChangePassword: true,

@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
         verificationToken: tokenHash,
         verificationTokenExpiry: new Date(Date.now() + 60 * 60 * 1000),
         isVerified: false,
-        role: 'ADMIN',
+        role: 'EMPLOYEE',
       },
     });
 

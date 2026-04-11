@@ -64,6 +64,10 @@ export async function GET(request: NextRequest) {
       prisma.product.count({ where }),
     ]);
 
+    console.log('====================================');
+    console.log(products);
+    console.log('====================================');
+
     return NextResponse.json({
       products,
       pagination: {
@@ -106,7 +110,7 @@ export async function POST(request: NextRequest) {
       notes,
       tags,
       designFiles, // New
-      materials,   // New: [{ materialId, quantity }]
+      materials, // New: [{ materialId, quantity }]
     } = body;
 
     // Validation

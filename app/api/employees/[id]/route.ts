@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { isAdminOrSuperAdmin, isSuperAdmin } from '@/lib/permissions';
+import { updateEmployee } from '@/services/employee.service';
 
 export async function GET(
   request: NextRequest,
@@ -33,7 +34,6 @@ export async function GET(
             name: true,
             email: true,
             role: true,
-            appRoleId: true,
             isActive: true,
             createdAt: true,
           },
@@ -58,14 +58,139 @@ export async function GET(
   }
 }
 
+// export async function PATCH(
+//   request: NextRequest,
+//   context: { params: { id: string } | Promise<{ id: string }> },
+// ) {
+//   const params = await context.params;
+//   const { id } = params;
+
+//   try {
+//     const session = await auth();
+
+//     if (!session) {
+//       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+//     }
+
+//     if (!isSuperAdmin(session.user.role)) {
+//       return NextResponse.json(
+//         { error: 'Only the superadmin can edit employees.' },
+//         { status: 403 },
+//       );
+//     }
+
+//     const body = await request.json();
+//     const {
+//       name,
+//       phone,
+//       address,
+//       departmentId,
+//       position,
+//       appRoleId,
+//       isActive,
+//       notes,
+//     } = body;
+
+//     const employee = await prisma.employee.findUnique({
+//       where: { id },
+//       include: { user: true },
+//     });
+
+//     if (!employee) {
+//       return NextResponse.json(
+//         { error: 'Employee not found' },
+//         { status: 404 },
+//       );
+//     }
+
+//     // Update Employee and User in transaction
+//     const updated = await prisma.$transaction(async (tx) => {
+//       // Fetch department name if departmentId is provided
+//       let departmentName = undefined;
+//       if (departmentId) {
+//         const dbDepartment = await tx.department.findUnique({
+//           where: { id: departmentId },
+//         });
+//         if (dbDepartment) {
+//           departmentName = dbDepartment.name;
+//         }
+//       }
+
+//       // Update Employee record
+//       await tx.employee.update({
+//         where: { id },
+//         data: {
+//           ...(phone && { phone }),
+//           ...(address !== undefined && { address }),
+//           ...(departmentName && { department: departmentName }),
+//           ...(departmentId && { departmentId }),
+//           ...(position !== undefined && { position }),
+//           ...(appRoleId && { appRoleId }),
+//           ...(isActive !== undefined && { isActive }),
+//           ...(notes !== undefined && { notes }),
+//         },
+//       });
+
+//       // Update User record (name, isActive)
+//       await tx.user.update({
+//         where: { id: employee.userId },
+//         data: {
+//           ...(name && { name }),
+//           ...(isActive !== undefined && { isActive }),
+//         },
+//       });
+
+//       // Return employee with updated user info
+//       return await tx.employee.findUnique({
+//         where: { id },
+//         include: {
+//           user: {
+//             select: {
+//               id: true,
+//               name: true,
+//               email: true,
+//               role: true,
+//               isActive: true,
+//             },
+//           },
+//           appRole: {
+//             select: { name: true },
+//           },
+//         },
+//       });
+//     });
+
+//     await prisma.activityLog.create({
+//       data: {
+//         userId: session.user.id,
+//         action: 'Updated Employee',
+//         module: 'Staff Management',
+//         details: {
+//           employeeId: id,
+//           employeeNumber: employee.employeeNumber,
+//           changes: body,
+//         },
+//       },
+//     });
+
+//     return NextResponse.json(updated);
+//   } catch (error) {
+//     console.error('Error updating employee:', error);
+//     return NextResponse.json(
+//       { error: 'Failed to update employee' },
+//       { status: 500 },
+//     );
+//   }
+// }
+
 export async function PATCH(
   request: NextRequest,
   context: { params: { id: string } | Promise<{ id: string }> },
 ) {
   const params = await context.params;
   const { id } = params;
-
   try {
+    // 🔐 AUTH
     const session = await auth();
 
     if (!session) {
@@ -75,119 +200,46 @@ export async function PATCH(
     if (!isSuperAdmin(session.user.role)) {
       return NextResponse.json(
         { error: 'Only the superadmin can edit employees.' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     const body = await request.json();
-    const {
-      name,
-      phone,
-      address,
-      departmentId,
-      position,
-      appRoleId,
-      isActive,
-      notes,
-    } = body;
 
-    const employee = await prisma.employee.findUnique({
-      where: { id },
-      include: { user: true },
-    });
-
-    if (!employee) {
+    // 🧠 BASIC VALIDATION
+    if (!body.name || !body.phone || !body.departmentId || !body.appRoleId) {
       return NextResponse.json(
-        { error: 'Employee not found' },
-        { status: 404 },
+        { error: 'Missing required fields' },
+        { status: 400 },
       );
     }
 
-    // Update Employee and User in transaction
-    const updated = await prisma.$transaction(async (tx) => {
-      // Fetch department name if departmentId is provided
-      let departmentName = undefined;
-      if (departmentId) {
-        const dbDepartment = await tx.department.findUnique({ where: { id: departmentId } });
-        if (dbDepartment) {
-          departmentName = dbDepartment.name;
-        }
-      }
+    const updated = await updateEmployee(params.id, body);
 
-      // Update Employee record
-      const updatedEmployee = await tx.employee.update({
-        where: { id },
-        data: {
-          ...(phone && { phone }),
-          ...(address !== undefined && { address }),
-          ...(departmentName && { department: departmentName }),
-          ...(departmentId && { departmentId }),
-          ...(position !== undefined && { position }),
-          ...(isActive !== undefined && { isActive }),
-          ...(notes !== undefined && { notes }),
-        },
-      });
-
-      // Map appRoleId to UserRole enum if provided
-      let mappedRole = undefined;
-      if (appRoleId) {
-        const dbRole = await tx.role.findUnique({ where: { id: appRoleId } });
-        if (dbRole) {
-          const roleMapping: Record<string, string> = {
-            'Admin': 'ADMIN',
-            'Accountant': 'ACCOUNTANT',
-            'Operation Manager': 'OPERATION_MANAGER'
-          };
-          mappedRole = roleMapping[dbRole.name] || 'PRODUCTION_STAFF';
-        }
-      }
-
-      // Update User record (name, role, isActive)
-      await tx.user.update({
-        where: { id: employee.userId },
-        data: {
-          ...(name && { name }),
-          ...(mappedRole && { role: mappedRole as any }),
-          ...(appRoleId && { appRoleId }),
-          ...(isActive !== undefined && { isActive }),
-        },
-      });
-
-      // Return employee with updated user info
-      return await tx.employee.findUnique({
-        where: { id },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-              appRoleId: true,
-              isActive: true,
-            },
-          },
-        },
-      });
-    });
-
-    // Log activity
+    // 📝 Activity Log
     await prisma.activityLog.create({
       data: {
         userId: session.user.id,
         action: 'Updated Employee',
         module: 'Staff Management',
         details: {
-          employeeId: id,
-          employeeNumber: employee.employeeNumber,
+          employeeId: params.id,
           changes: body,
         },
       },
     });
 
     return NextResponse.json(updated);
-  } catch (error) {
-    console.error('Error updating employee:', error);
+  } catch (error: any) {
+    console.error('PATCH employee error:', error);
+
+    if (error.message === 'Employee not found') {
+      return NextResponse.json(
+        { error: 'Employee not found' },
+        { status: 404 },
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to update employee' },
       { status: 500 },
@@ -212,7 +264,7 @@ export async function DELETE(
     if (!isSuperAdmin(session.user.role)) {
       return NextResponse.json(
         { error: 'Only the superadmin can deactivate employees.' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 

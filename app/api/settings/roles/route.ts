@@ -11,25 +11,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdminOrSuperAdmin(session.user.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (!isAdminOrSuperAdmin(session.user.role)) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const roles = await prisma.role.findMany({
       include: {
         _count: {
-          select: { users: true },
+          select: { employees: true },
         },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    console.log('====================================');
+    console.log(roles);
+    console.log('====================================');
 
     return NextResponse.json(roles);
   } catch (error) {
     console.error('Error fetching roles:', error);
     return NextResponse.json(
       { error: 'Failed to fetch roles' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -41,7 +45,7 @@ export async function POST(request: NextRequest) {
     if (!session || !isSuperAdmin(session.user.role)) {
       return NextResponse.json(
         { error: 'Only the superadmin can create roles.' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -51,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (!name || !permissions) {
       return NextResponse.json(
         { error: 'Name and permissions are required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -62,7 +66,7 @@ export async function POST(request: NextRequest) {
     if (existingRole) {
       return NextResponse.json(
         { error: 'Role with this name already exists' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -79,7 +83,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating role:', error);
     return NextResponse.json(
       { error: 'Failed to create role' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Typography,
@@ -36,18 +36,18 @@ import {
   TableRow,
   Switch,
   IconButton,
-} from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import FactoryIcon from "@mui/icons-material/Factory";
-import PersonIcon from "@mui/icons-material/Person";
+} from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import FactoryIcon from '@mui/icons-material/Factory';
+import PersonIcon from '@mui/icons-material/Person';
 import {
   PRODUCTION_STAGES,
   StageTemplate,
   ActionItemTemplate,
-} from "@/lib/production-stages";
+} from '@/lib/production-stages';
 
 interface Product {
   id: string;
@@ -86,10 +86,10 @@ interface SelectedStage extends StageTemplate {
 }
 
 const steps = [
-  "Product & Timeline",
-  "Production Stages",
-  "Assign Personnel",
-  "Review & Submit",
+  'Product & Timeline',
+  'Production Stages',
+  'Assign Personnel',
+  'Review & Submit',
 ];
 
 export default function NewProductionOrderPage() {
@@ -97,7 +97,7 @@ export default function NewProductionOrderPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   // Products
   const [products, setProducts] = useState<Product[]>([]);
@@ -110,10 +110,10 @@ export default function NewProductionOrderPage() {
   // Step 1: Product & Timeline
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [quantity, setQuantity] = useState<number>(0);
-  const [scheduledStart, setScheduledStart] = useState("");
-  const [scheduledEnd, setScheduledEnd] = useState("");
-  const [priority, setPriority] = useState("NORMAL");
-  const [notes, setNotes] = useState("");
+  const [scheduledStart, setScheduledStart] = useState('');
+  const [scheduledEnd, setScheduledEnd] = useState('');
+  const [priority, setPriority] = useState('NORMAL');
+  const [notes, setNotes] = useState('');
 
   // Pending Production Requests (Backorders)
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
@@ -125,18 +125,18 @@ export default function NewProductionOrderPage() {
     PRODUCTION_STAGES.map((stage) => ({
       ...stage,
       selected: true,
-      scheduledStart: "",
-      scheduledEnd: "",
-      responsibleId: "",
+      scheduledStart: '',
+      scheduledEnd: '',
+      responsibleId: '',
       isCustom: false,
       selectedActionItems: stage.actionItems.map((action) => ({
         ...action,
         selected: true,
-        responsibleId: "",
-        scheduledStart: "",
-        scheduledEnd: "",
+        responsibleId: '',
+        scheduledStart: '',
+        scheduledEnd: '',
         isCustom: false,
-        durationDays: "",
+        durationDays: '',
       })),
     })),
   );
@@ -145,11 +145,11 @@ export default function NewProductionOrderPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("/api/products?limit=200&isActive=true");
+        const res = await fetch('/api/products?limit=200&isActive=true');
         const data = await res.json();
         setProducts(data.products || []);
       } catch (err) {
-        console.error("Error fetching products:", err);
+        console.error('Error fetching products:', err);
       } finally {
         setLoadingProducts(false);
       }
@@ -175,7 +175,7 @@ export default function NewProductionOrderPage() {
         setPendingRequests(data.requests || []);
         setSelectedRequestIds([]); // Reset selection when product changes
       } catch (err) {
-        console.error("Error fetching pending requests:", err);
+        console.error('Error fetching pending requests:', err);
       } finally {
         setLoadingRequests(false);
       }
@@ -205,11 +205,11 @@ export default function NewProductionOrderPage() {
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const res = await fetch("/api/employees?limit=200");
+        const res = await fetch('/api/employees?limit=200');
         const data = await res.json();
         setEmployees(data.employees || []);
       } catch (err) {
-        console.error("Error fetching employees:", err);
+        console.error('Error fetching employees:', err);
       } finally {
         setLoadingEmployees(false);
       }
@@ -254,7 +254,7 @@ export default function NewProductionOrderPage() {
 
   const updateStageDate = (
     stageIndex: number,
-    field: "scheduledStart" | "scheduledEnd",
+    field: 'scheduledStart' | 'scheduledEnd',
     value: string,
   ) => {
     setSelectedStages((prev) =>
@@ -294,7 +294,7 @@ export default function NewProductionOrderPage() {
   const updateActionDate = (
     stageIndex: number,
     actionIndex: number,
-    field: "scheduledStart" | "scheduledEnd",
+    field: 'scheduledStart' | 'scheduledEnd',
     value: string,
   ) => {
     setSelectedStages((prev) =>
@@ -326,11 +326,11 @@ export default function NewProductionOrderPage() {
               return a;
             }),
           };
-          if (field === "scheduledStart" && actionIndex === 0) {
+          if (field === 'scheduledStart' && actionIndex === 0) {
             updatedStage.scheduledStart = value;
           }
           if (
-            field === "scheduledEnd" &&
+            field === 'scheduledEnd' &&
             actionIndex === stage.selectedActionItems.length - 1
           ) {
             updatedStage.scheduledEnd = value;
@@ -350,9 +350,9 @@ export default function NewProductionOrderPage() {
     const duration = parseInt(durationStr);
 
     setSelectedStages((prev) => {
-      let referenceStartDate = "";
+      let referenceStartDate = '';
 
-      let prevSelectedEnd = "";
+      let prevSelectedEnd = '';
       for (let j = actionIndex - 1; j >= 0; j--) {
         const a = prev[stageIndex].selectedActionItems[j];
         if (a.selected && a.scheduledEnd) {
@@ -386,12 +386,12 @@ export default function NewProductionOrderPage() {
             selectedActionItems: stage.selectedActionItems.map((a, j) => {
               if (j === actionIndex) {
                 const newStart = referenceStartDate;
-                let newEnd = "";
+                let newEnd = '';
                 if (newStart && !isNaN(duration) && duration >= 0) {
                   const d = new Date(newStart);
                   if (!isNaN(d.getTime())) {
                     d.setDate(d.getDate() + duration);
-                    newEnd = d.toISOString().split("T")[0];
+                    newEnd = d.toISOString().split('T')[0];
                   }
                 }
                 return {
@@ -427,7 +427,7 @@ export default function NewProductionOrderPage() {
 
   const updateCustomStage = (
     stageIndex: number,
-    field: "stageLabel",
+    field: 'stageLabel',
     value: string,
   ) => {
     setSelectedStages((prev) =>
@@ -436,7 +436,7 @@ export default function NewProductionOrderPage() {
           ? {
               ...stage,
               [field]: value,
-              stageName: value.toUpperCase().replace(/\s+/g, "_"),
+              stageName: value.toUpperCase().replace(/\s+/g, '_'),
             }
           : stage,
       ),
@@ -446,7 +446,7 @@ export default function NewProductionOrderPage() {
   const updateCustomAction = (
     stageIndex: number,
     actionIndex: number,
-    field: "actionName" | "defaultResponsibility" | "outputNextStep",
+    field: 'actionName' | 'defaultResponsibility' | 'outputNextStep',
     value: string,
   ) => {
     setSelectedStages((prev) =>
@@ -467,12 +467,12 @@ export default function NewProductionOrderPage() {
     const newSortOrder = selectedStages.length + 1;
     const newStage: SelectedStage = {
       stageName: `CUSTOM_STAGE_${newSortOrder}`,
-      stageLabel: "New Custom Stage",
+      stageLabel: 'New Custom Stage',
       sortOrder: newSortOrder,
       selected: true,
-      scheduledStart: "",
-      scheduledEnd: "",
-      responsibleId: "",
+      scheduledStart: '',
+      scheduledEnd: '',
+      responsibleId: '',
       isCustom: true,
       actionItems: [],
       selectedActionItems: [],
@@ -488,17 +488,17 @@ export default function NewProductionOrderPage() {
           const newStepId = `C-${stage.sortOrder}-${newSortOrder}`;
           const newAction: SelectedActionItem = {
             stepId: newStepId,
-            actionName: "New Custom Action",
-            defaultResponsibility: "To be assigned",
-            outputNextStep: "Done",
-            focusGoal: "",
+            actionName: 'New Custom Action',
+            defaultResponsibility: 'To be assigned',
+            outputNextStep: 'Done',
+            focusGoal: '',
             sortOrder: newSortOrder,
             selected: true,
-            responsibleId: "",
-            scheduledStart: "",
-            scheduledEnd: "",
+            responsibleId: '',
+            scheduledStart: '',
+            scheduledEnd: '',
             isCustom: true,
-            durationDays: "",
+            durationDays: '',
           };
           return {
             ...stage,
@@ -547,7 +547,7 @@ export default function NewProductionOrderPage() {
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    setError("");
+    setError('');
 
     try {
       const stages = selectedStages
@@ -574,9 +574,9 @@ export default function NewProductionOrderPage() {
             })),
         }));
 
-      const res = await fetch("/api/production/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/production/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: selectedProduct!.id,
           quantity,
@@ -591,7 +591,7 @@ export default function NewProductionOrderPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create production order");
+        throw new Error(data.error || 'Failed to create production order');
       }
 
       const order = await res.json();
@@ -616,18 +616,18 @@ export default function NewProductionOrderPage() {
 
   const getEmployeeName = (userId: string) => {
     const emp = employees.find((e) => e.user.id === userId);
-    return emp ? emp.user.name : "—";
+    return emp ? emp.user.name : '—';
   };
 
   const renderStep1 = () => (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Card
         elevation={0}
-        sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}
+        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
       >
         <CardHeader
           title="Select Product"
-          titleTypographyProps={{ variant: "h6", fontWeight: 600 }}
+          titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
           subheader="Choose the product to be manufactured"
         />
         <CardContent>
@@ -663,11 +663,11 @@ export default function NewProductionOrderPage() {
 
       <Card
         elevation={0}
-        sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}
+        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
       >
         <CardHeader
           title="Production Details"
-          titleTypographyProps={{ variant: "h6", fontWeight: 600 }}
+          titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
           subheader="Specify quantity, timeline, and priority"
         />
         <CardContent>
@@ -694,7 +694,7 @@ export default function NewProductionOrderPage() {
                 <MenuItem value="LOW">Low</MenuItem>
                 <MenuItem value="NORMAL">Normal</MenuItem>
                 <MenuItem value="HIGH">High</MenuItem>
-                <MenuItem value="URGENT" sx={{ color: "error.main" }}>
+                <MenuItem value="URGENT" sx={{ color: 'error.main' }}>
                   Urgent
                 </MenuItem>
               </TextField>
@@ -739,22 +739,22 @@ export default function NewProductionOrderPage() {
       {selectedProduct && (
         <Card
           elevation={0}
-          sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}
+          sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
         >
           <CardHeader
             title="Fulfill Backorders (Optional)"
-            titleTypographyProps={{ variant: "h6", fontWeight: 600 }}
+            titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
             subheader="Select pending production requests to include in this manufacturing run"
           />
           <CardContent sx={{ pt: 0 }}>
             {loadingRequests ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
                 <CircularProgress size={24} />
               </Box>
             ) : pendingRequests.length > 0 ? (
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ bgcolor: "action.hover" }}>
+                  <TableRow sx={{ bgcolor: 'action.hover' }}>
                     <TableCell padding="checkbox" />
                     <TableCell sx={{ fontWeight: 600 }}>Request #</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
@@ -772,7 +772,7 @@ export default function NewProductionOrderPage() {
                       onClick={() =>
                         toggleRequestSelection(req.id, req.quantityNeeded)
                       }
-                      sx={{ cursor: "pointer" }}
+                      sx={{ cursor: 'pointer' }}
                     >
                       <TableCell padding="checkbox">
                         <Checkbox
@@ -818,7 +818,7 @@ export default function NewProductionOrderPage() {
   );
 
   const renderStep2 = () => (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Alert severity="info" sx={{ borderRadius: 2 }}>
         Toggle entire stages on/off, or pick individual action items within each
         stage. All stages are selected by default.
@@ -829,15 +829,15 @@ export default function NewProductionOrderPage() {
           key={stage.stageName}
           elevation={0}
           sx={{
-            border: "1px solid",
-            borderColor: stage.selected ? "primary.main" : "divider",
+            border: '1px solid',
+            borderColor: stage.selected ? 'primary.main' : 'divider',
             borderRadius: 2,
-            transition: "border-color 0.2s",
+            transition: 'border-color 0.2s',
           }}
         >
           <CardHeader
             title={
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Switch
                   checked={stage.selected}
                   onChange={() => toggleStage(stageIndex)}
@@ -852,7 +852,7 @@ export default function NewProductionOrderPage() {
                       onChange={(e) =>
                         updateCustomStage(
                           stageIndex,
-                          "stageLabel",
+                          'stageLabel',
                           e.target.value,
                         )
                       }
@@ -864,14 +864,14 @@ export default function NewProductionOrderPage() {
                     </Typography>
                   )}
                   <Typography variant="caption" color="text.secondary">
-                    {stage.selectedActionItems.filter((a) => a.selected).length}{" "}
+                    {stage.selectedActionItems.filter((a) => a.selected).length}{' '}
                     / {stage.actionItems.length} action items selected
                   </Typography>
                 </Box>
               </Box>
             }
             action={
-              <Box sx={{ display: "flex", gap: 2, mr: 1, mt: 1 }}>
+              <Box sx={{ display: 'flex', gap: 2, mr: 1, mt: 1 }}>
                 <TextField
                   label="Stage Start"
                   type="date"
@@ -880,7 +880,7 @@ export default function NewProductionOrderPage() {
                   onChange={(e) =>
                     updateStageDate(
                       stageIndex,
-                      "scheduledStart",
+                      'scheduledStart',
                       e.target.value,
                     )
                   }
@@ -894,7 +894,7 @@ export default function NewProductionOrderPage() {
                   size="small"
                   value={stage.scheduledEnd}
                   onChange={(e) =>
-                    updateStageDate(stageIndex, "scheduledEnd", e.target.value)
+                    updateStageDate(stageIndex, 'scheduledEnd', e.target.value)
                   }
                   InputLabelProps={{ shrink: true }}
                   disabled={!stage.selected}
@@ -907,7 +907,7 @@ export default function NewProductionOrderPage() {
             <CardContent sx={{ pt: 0 }}>
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ bgcolor: "action.hover" }}>
+                  <TableRow sx={{ bgcolor: 'action.hover' }}>
                     <TableCell padding="checkbox" />
                     <TableCell sx={{ fontWeight: 600 }}>Step</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>
@@ -923,8 +923,8 @@ export default function NewProductionOrderPage() {
                       key={action.stepId}
                       sx={{
                         bgcolor: action.selected
-                          ? "transparent"
-                          : "action.disabledBackground",
+                          ? 'transparent'
+                          : 'action.disabledBackground',
                         opacity: action.selected ? 1 : 0.5,
                       }}
                     >
@@ -941,15 +941,15 @@ export default function NewProductionOrderPage() {
                         <Chip
                           label={action.stepId}
                           size="small"
-                          sx={{ fontWeight: 600, fontSize: "0.7rem" }}
+                          sx={{ fontWeight: 600, fontSize: '0.7rem' }}
                         />
                       </TableCell>
                       <TableCell>
                         {action.isCustom ? (
                           <Box
                             sx={{
-                              display: "flex",
-                              flexDirection: "column",
+                              display: 'flex',
+                              flexDirection: 'column',
                               gap: 1,
                             }}
                           >
@@ -961,7 +961,7 @@ export default function NewProductionOrderPage() {
                                 updateCustomAction(
                                   stageIndex,
                                   actionIndex,
-                                  "actionName",
+                                  'actionName',
                                   e.target.value,
                                 )
                               }
@@ -974,7 +974,7 @@ export default function NewProductionOrderPage() {
                                 updateCustomAction(
                                   stageIndex,
                                   actionIndex,
-                                  "outputNextStep",
+                                  'outputNextStep',
                                   e.target.value,
                                 )
                               }
@@ -1007,7 +1007,7 @@ export default function NewProductionOrderPage() {
                           type="number"
                           size="small"
                           sx={{ width: 120 }}
-                          value={action.durationDays || ""}
+                          value={action.durationDays || ''}
                           onChange={(e) =>
                             handleActionDurationChange(
                               stageIndex,
@@ -1022,8 +1022,8 @@ export default function NewProductionOrderPage() {
                       <TableCell>
                         <Box
                           sx={{
-                            display: "flex",
-                            flexDirection: "column",
+                            display: 'flex',
+                            flexDirection: 'column',
                             gap: 1,
                             minWidth: 140,
                           }}
@@ -1037,7 +1037,7 @@ export default function NewProductionOrderPage() {
                               updateActionDate(
                                 stageIndex,
                                 actionIndex,
-                                "scheduledStart",
+                                'scheduledStart',
                                 e.target.value,
                               )
                             }
@@ -1053,7 +1053,7 @@ export default function NewProductionOrderPage() {
                               updateActionDate(
                                 stageIndex,
                                 actionIndex,
-                                "scheduledEnd",
+                                'scheduledEnd',
                                 e.target.value,
                               )
                             }
@@ -1069,9 +1069,9 @@ export default function NewProductionOrderPage() {
               <Box
                 sx={{
                   p: 2,
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  bgcolor: "action.hover",
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  bgcolor: 'action.hover',
                 }}
               >
                 <Button
@@ -1088,7 +1088,7 @@ export default function NewProductionOrderPage() {
       ))}
       <Button
         variant="outlined"
-        sx={{ py: 2, border: "1px dashed", borderColor: "divider" }}
+        sx={{ py: 2, border: '1px dashed', borderColor: 'divider' }}
         onClick={handleAddCustomStage}
       >
         + Add Custom Stage
@@ -1097,7 +1097,7 @@ export default function NewProductionOrderPage() {
   );
 
   const renderStep3 = () => (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Alert severity="info" sx={{ borderRadius: 2 }}>
         Assign a responsible person for each stage and each action item. The
         stage responsible person oversees the entire stage, while action item
@@ -1115,10 +1115,10 @@ export default function NewProductionOrderPage() {
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 2,
-                    width: "100%",
+                    width: '100%',
                   }}
                 >
                   <FactoryIcon color="primary" />
@@ -1130,7 +1130,7 @@ export default function NewProductionOrderPage() {
                       {
                         stage.selectedActionItems.filter((a) => a.selected)
                           .length
-                      }{" "}
+                      }{' '}
                       action items
                     </Typography>
                   </Box>
@@ -1146,7 +1146,7 @@ export default function NewProductionOrderPage() {
                   >
                     <PersonIcon
                       fontSize="small"
-                      sx={{ verticalAlign: "text-bottom", mr: 0.5 }}
+                      sx={{ verticalAlign: 'text-bottom', mr: 0.5 }}
                     />
                     Stage Responsible Person
                   </Typography>
@@ -1164,7 +1164,7 @@ export default function NewProductionOrderPage() {
                       </MenuItem>
                       {employees.map((emp) => (
                         <MenuItem key={emp.user.id} value={emp.user.id}>
-                          {emp.user.name} ({emp.user.role.replace(/_/g, " ")})
+                          {emp.user.name} ({emp.user.role.replace(/_/g, ' ')})
                         </MenuItem>
                       ))}
                     </Select>
@@ -1179,7 +1179,7 @@ export default function NewProductionOrderPage() {
 
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ bgcolor: "action.hover" }}>
+                    <TableRow sx={{ bgcolor: 'action.hover' }}>
                       <TableCell sx={{ fontWeight: 600, width: 80 }}>
                         Step
                       </TableCell>
@@ -1202,7 +1202,7 @@ export default function NewProductionOrderPage() {
                               <Chip
                                 label={action.stepId}
                                 size="small"
-                                sx={{ fontWeight: 600, fontSize: "0.7rem" }}
+                                sx={{ fontWeight: 600, fontSize: '0.7rem' }}
                               />
                             </TableCell>
                             <TableCell>
@@ -1238,7 +1238,7 @@ export default function NewProductionOrderPage() {
                                       value={emp.user.id}
                                     >
                                       {emp.user.name} (
-                                      {emp.user.role.replace(/_/g, " ")})
+                                      {emp.user.role.replace(/_/g, ' ')})
                                     </MenuItem>
                                   ))}
                                 </Select>
@@ -1257,7 +1257,7 @@ export default function NewProductionOrderPage() {
   );
 
   const renderStep4 = () => (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Alert
         severity="success"
         icon={<CheckCircleIcon />}
@@ -1269,11 +1269,11 @@ export default function NewProductionOrderPage() {
       {/* Product & Timeline Summary */}
       <Card
         elevation={0}
-        sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}
+        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
       >
         <CardHeader
           title="Product & Timeline"
-          titleTypographyProps={{ variant: "h6", fontWeight: 600 }}
+          titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
         />
         <CardContent>
           <Grid container spacing={2}>
@@ -1303,12 +1303,12 @@ export default function NewProductionOrderPage() {
               </Typography>
               <Typography fontWeight={600}>
                 {scheduledStart
-                  ? new Date(scheduledStart).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
+                  ? new Date(scheduledStart).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
                     })
-                  : "—"}
+                  : '—'}
               </Typography>
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
@@ -1317,12 +1317,12 @@ export default function NewProductionOrderPage() {
               </Typography>
               <Typography fontWeight={600}>
                 {scheduledEnd
-                  ? new Date(scheduledEnd).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
+                  ? new Date(scheduledEnd).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
                     })
-                  : "—"}
+                  : '—'}
               </Typography>
             </Grid>
             {notes && (
@@ -1340,13 +1340,13 @@ export default function NewProductionOrderPage() {
       {/* Stages & Actions Summary */}
       <Card
         elevation={0}
-        sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}
+        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}
       >
         <CardHeader
           title={`Production Stages (${
             selectedStages.filter((s) => s.selected).length
           } stages, ${getSelectedActionCount()} action items)`}
-          titleTypographyProps={{ variant: "h6", fontWeight: 600 }}
+          titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
         />
         <CardContent sx={{ pt: 0 }}>
           {selectedStages
@@ -1355,8 +1355,8 @@ export default function NewProductionOrderPage() {
               <Box key={stage.stageName} sx={{ mb: 3 }}>
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: 1,
                     mb: 1,
                   }}
@@ -1384,7 +1384,7 @@ export default function NewProductionOrderPage() {
                             <Chip
                               label={action.stepId}
                               size="small"
-                              sx={{ fontWeight: 600, fontSize: "0.65rem" }}
+                              sx={{ fontWeight: 600, fontSize: '0.65rem' }}
                             />
                           </TableCell>
                           <TableCell sx={{ py: 0.5 }}>
@@ -1412,9 +1412,9 @@ export default function NewProductionOrderPage() {
   );
 
   return (
-    <Box sx={{ py: 3, maxWidth: 1200, mx: "auto" }}>
+    <Box sx={{ py: 3, maxWidth: 1200, mx: 'auto' }}>
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <IconButton onClick={() => router.back()}>
           <ArrowBackIcon />
         </IconButton>
@@ -1434,8 +1434,8 @@ export default function NewProductionOrderPage() {
         sx={{
           p: 3,
           mb: 3,
-          border: "1px solid",
-          borderColor: "divider",
+          border: '1px solid',
+          borderColor: 'divider',
           borderRadius: 2,
         }}
       >
@@ -1468,10 +1468,10 @@ export default function NewProductionOrderPage() {
         elevation={0}
         sx={{
           p: 2,
-          display: "flex",
-          justifyContent: "space-between",
-          border: "1px solid",
-          borderColor: "divider",
+          display: 'flex',
+          justifyContent: 'space-between',
+          border: '1px solid',
+          borderColor: 'divider',
           borderRadius: 2,
         }}
       >
@@ -1479,7 +1479,7 @@ export default function NewProductionOrderPage() {
           onClick={() => setActiveStep((prev) => prev - 1)}
           disabled={activeStep === 0}
           startIcon={<ArrowBackIcon />}
-          sx={{ textTransform: "none" }}
+          sx={{ textTransform: 'none' }}
         >
           Back
         </Button>
@@ -1497,14 +1497,14 @@ export default function NewProductionOrderPage() {
               )
             }
             sx={{
-              bgcolor: "#16A34A",
-              "&:hover": { bgcolor: "#15803D" },
-              textTransform: "none",
+              bgcolor: '#16A34A',
+              '&:hover': { bgcolor: '#15803D' },
+              textTransform: 'none',
               fontWeight: 600,
               px: 4,
             }}
           >
-            {submitting ? "Creating..." : "Create Production Order"}
+            {submitting ? 'Creating...' : 'Create Production Order'}
           </Button>
         ) : (
           <Button
@@ -1512,7 +1512,7 @@ export default function NewProductionOrderPage() {
             onClick={() => setActiveStep((prev) => prev + 1)}
             disabled={!canProceed()}
             endIcon={<ArrowForwardIcon />}
-            sx={{ textTransform: "none", fontWeight: 600 }}
+            sx={{ textTransform: 'none', fontWeight: 600 }}
           >
             Next
           </Button>

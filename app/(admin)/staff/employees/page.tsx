@@ -70,7 +70,6 @@ interface Employee {
   id: string;
   employeeNumber: string;
   phone: string;
-  department: string;
   position?: string;
   isActive: boolean;
   dateHired: string;
@@ -79,6 +78,12 @@ interface Employee {
     isActive: boolean;
     name: string;
     email: string;
+  };
+  appRole: {
+    name: string;
+  };
+  department: {
+    name: string;
   };
 }
 
@@ -135,7 +140,7 @@ export default function EmployeesPage() {
       setEmployees(data?.employees || []);
       setTotal(data?.pagination?.total || 0);
 
-      console.log(employees, 'employees');
+      // console.log(employees, 'employees');
     } catch (error) {
       console.error('Error fetching employees:', error);
     } finally {
@@ -441,11 +446,11 @@ export default function EmployeesPage() {
                     </StyledTableCell>
                     <StyledTableCell>
                       <Chip
-                        label={employee.department.replace(/_/g, ' ')}
+                        label={employee.department.name.replace(/_/g, ' ')}
                         size="small"
                         sx={{
-                          bgcolor: `${getDepartmentColor(employee.department)}15`,
-                          color: getDepartmentColor(employee.department),
+                          bgcolor: `${getDepartmentColor(employee.department.name)}15`,
+                          color: getDepartmentColor(employee.department.name),
                           fontWeight: 500,
                           fontSize: 11,
                         }}
@@ -458,7 +463,7 @@ export default function EmployeesPage() {
                     </StyledTableCell> */}
                     <StyledTableCell>
                       <Chip
-                        label={employee.user?.role.replace(/_/g, ' ') || '—'}
+                        label={employee.appRole.name.replace(/_/g, ' ') || '—'}
                         size="small"
                         variant="outlined"
                         sx={{ fontSize: 11 }}
@@ -466,11 +471,15 @@ export default function EmployeesPage() {
                     </StyledTableCell>
                     <StyledTableCell>
                       <Chip
-                        label={employee.isActive ? 'Active' : 'Inactive'}
+                        label={employee.user?.isActive ? 'Active' : 'Inactive'}
                         size="small"
                         sx={{
-                          bgcolor: employee.isActive ? '#dcfce7' : '#fee2e2',
-                          color: employee.isActive ? '#166534' : '#991b1b',
+                          bgcolor: employee?.user?.isActive
+                            ? '#dcfce7'
+                            : '#fee2e2',
+                          color: employee?.user?.isActive
+                            ? '#166534'
+                            : '#991b1b',
                           fontWeight: 600,
                           fontSize: 11,
                         }}

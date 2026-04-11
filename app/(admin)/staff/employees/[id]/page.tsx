@@ -27,14 +27,14 @@ interface Employee {
   department: string;
   departmentId: string | null;
   position?: string;
-  isActive: boolean;
   notes?: string;
+  appRoleId: string | null;
+
   user: {
     id: string;
     name: string;
     email: string;
     role: string;
-    appRoleId: string | null;
     isActive: boolean;
   };
 }
@@ -70,8 +70,8 @@ export default function EditEmployeePage({
     const loadData = async () => {
       try {
         const [rolesRes, deptsRes] = await Promise.all([
-          fetch("/api/settings/roles"),
-          fetch("/api/settings/departments")
+          fetch('/api/settings/roles'),
+          fetch('/api/settings/departments'),
         ]);
 
         if (rolesRes.ok) {
@@ -84,7 +84,7 @@ export default function EditEmployeePage({
           setDbDepartments(deptsData);
         }
       } catch (e) {
-        console.error("Failed to load settings data", e);
+        console.error('Failed to load settings data', e);
       }
     };
     loadData();
@@ -110,8 +110,8 @@ export default function EditEmployeePage({
         address: data.address || '',
         departmentId: data.departmentId || '',
         position: data.position || '',
-        appRoleId: data.user.appRoleId || '',
-        isActive: data.isActive,
+        appRoleId: data.appRoleId || '',
+        isActive: data.user.isActive,
         notes: data.notes || '',
       });
     } catch (err: any) {
@@ -213,14 +213,6 @@ export default function EditEmployeePage({
               {employee?.employeeNumber} • {employee?.user.email}
             </Typography>
           </Box>
-          {/* <Button
-            variant="outlined"
-            startIcon={<LockReset />}
-            onClick={handleResetPassword}
-            sx={{ borderColor: '#0F172A', color: '#0F172A' }}
-          >
-            Reset Password
-          </Button> */}
         </Box>
       </Box>
 
@@ -319,17 +311,6 @@ export default function EditEmployeePage({
                 ))}
               </TextField>
             </Grid>
-
-            {/* <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                label="Position/Job Title"
-                variant="standard"
-                value={formData.position}
-                onChange={(e) => handleChange('position', e.target.value)}
-                disabled={saving}
-              />
-            </Grid> */}
 
             <Grid item xs={12} md={6}>
               <TextField

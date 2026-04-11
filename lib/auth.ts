@@ -219,8 +219,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
           include: {
-            employee: true, // ✅ Include employee data
-            appRole: true,  // ✅ Include appRole data
+            employee: {
+              include: { appRole: true },
+            },
           },
         });
 
@@ -239,8 +240,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
-          mustChangePassword: user.employee?.mustChangePassword || false, // ✅ Add this
-          permissions: user.appRole?.permissions || [], // ✅ Add this
+          mustChangePassword: user.employee?.mustChangePassword || false,
+          permissions: user.employee?.appRole?.permissions || [],
         };
       },
     }),
@@ -262,14 +263,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string },
-            include: { employee: true, appRole: true },
+            include: { employee: { include: { appRole: true } } },
           });
 
           if (dbUser?.employee) {
             token.mustChangePassword = dbUser.employee.mustChangePassword;
-          }
-          if (dbUser?.appRole) {
-            token.permissions = dbUser.appRole.permissions;
+            token.permissions = dbUser.employee.appRole?.permissions ?? token.permissions;
           }
         } catch (error) {
           console.error('Error refreshing mustChangePassword flag:', error);
