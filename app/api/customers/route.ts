@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
             name,
             email: portalEmail,
             password: hashedPassword,
-            role: 'SALES_TEAM', // Default role for customers
+            role: 'CUSTOMER', // Default role for customers
             isActive: true,
             isVerified: true, // No email verification for customers
           },
