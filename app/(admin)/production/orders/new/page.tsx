@@ -1164,7 +1164,7 @@ export default function NewProductionOrderPage() {
                       </MenuItem>
                       {employees.map((emp) => (
                         <MenuItem key={emp.user.id} value={emp.user.id}>
-                          {emp.user.name} ({emp.user.role.replace(/_/g, ' ')})
+                          {emp.user.name}
                         </MenuItem>
                       ))}
                     </Select>
