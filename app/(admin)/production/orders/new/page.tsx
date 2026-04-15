@@ -1160,7 +1160,7 @@ export default function NewProductionOrderPage() {
                       }
                     >
                       <MenuItem value="">
-                        <em>Not assigned</em>
+                        <em>Not Assigned</em>
                       </MenuItem>
                       {employees.map((emp) => (
                         <MenuItem key={emp.user.id} value={emp.user.id}>
