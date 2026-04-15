@@ -521,20 +521,7 @@ export default function NewProductionOrderPage() {
         const hasSelectedStages = selectedStages.some(
           (s) => s.selected && s.selectedActionItems.some((a) => a.selected),
         );
-        if (!hasSelectedStages) return false;
-
-        for (const stage of selectedStages) {
-          if (stage.selected) {
-            if (!stage.scheduledStart || !stage.scheduledEnd) return false;
-            for (const action of stage.selectedActionItems) {
-              if (action.selected) {
-                if (!action.scheduledStart || !action.scheduledEnd)
-                  return false;
-              }
-            }
-          }
-        }
-        return true;
+        return hasSelectedStages;
       }
       case 2:
         return true; // Personnel assignment is optional
@@ -821,7 +808,8 @@ export default function NewProductionOrderPage() {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Alert severity="info" sx={{ borderRadius: 2 }}>
         Toggle entire stages on/off, or pick individual action items within each
-        stage. All stages are selected by default.
+        stage. All stages are selected by default. Stage dates, action item
+        dates, and durations are optional — you can fill them in later.
       </Alert>
 
       {selectedStages.map((stage, stageIndex) => (
@@ -1237,8 +1225,7 @@ export default function NewProductionOrderPage() {
                                       key={emp.user.id}
                                       value={emp.user.id}
                                     >
-                                      {emp.user.name} (
-                                      {emp.user.role.replace(/_/g, ' ')})
+                                      {emp.user.name}
                                     </MenuItem>
                                   ))}
                                 </Select>
