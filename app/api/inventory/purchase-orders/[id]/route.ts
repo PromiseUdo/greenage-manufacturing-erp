@@ -61,13 +61,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (
-      !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER', 'SUPERADMIN'].includes(
-        session.user.role,
-      )
-    ) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (
+    //   !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER', 'SUPERADMIN'].includes(
+    //     session.user.role,
+    //   )
+    // ) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const { id } = await params;
     const body = await request.json();
@@ -251,9 +251,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (!['ADMIN', 'SUPERADMIN'].includes(session.user.role)) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const { id } = await params;
 

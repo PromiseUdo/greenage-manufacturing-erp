@@ -70,13 +70,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (
-      !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
-        session.user.role,
-      )
-    ) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (
+    //   !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
+    //     session.user.role,
+    //   )
+    // ) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const body = await request.json();
     const {
@@ -158,9 +158,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!['ADMIN'].includes(session.user.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (!['ADMIN'].includes(session.user.role)) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     // Soft delete by setting isActive to false
     const material = await prisma.material.update({

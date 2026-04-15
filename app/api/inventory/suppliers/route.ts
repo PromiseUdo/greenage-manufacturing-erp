@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching suppliers:', error);
     return NextResponse.json(
       { error: 'Failed to fetch suppliers' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -81,9 +81,9 @@ export async function POST(request: NextRequest) {
 
     console.log(session, 'current session');
 
-    if (!['ADMIN', 'STORE_KEEPER'].includes(session.user.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (!['ADMIN', 'STORE_KEEPER'].includes(session.user.role)) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const body = await request.json();
     const { name, contactPerson, email, phone, address, paymentTerms } = body;
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     if (!name || !phone) {
       return NextResponse.json(
         { error: 'Name and phone are required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating supplier:', error);
     return NextResponse.json(
       { error: 'Failed to create supplier' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

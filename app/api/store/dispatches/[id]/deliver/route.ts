@@ -16,19 +16,19 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (
-      !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER', 'DISPATCH_OFFICER'].includes(
-        session.user.role,
-      )
-    ) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (
+    //   !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER', 'DISPATCH_OFFICER'].includes(
+    //     session.user.role,
+    //   )
+    // ) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const dispatch = await prisma.storeDispatch.findUnique({
       where: { id },
       include: {
         customer: true,
-      }
+      },
     });
 
     if (!dispatch) {
@@ -39,7 +39,12 @@ export async function POST(
     }
 
     // Only allow marking as delivered if it's already fulfilled (PENDING, IN_TRANSIT, etc)
-    const validStatuses = ['PENDING' as any, 'IN_TRANSIT' as any, DispatchStatus.PENDING, DispatchStatus.IN_TRANSIT];
+    const validStatuses = [
+      'PENDING' as any,
+      'IN_TRANSIT' as any,
+      DispatchStatus.PENDING,
+      DispatchStatus.IN_TRANSIT,
+    ];
     if (!validStatuses.includes(dispatch.status)) {
       return NextResponse.json(
         { error: 'Only fulfilled dispatches can be marked as delivered' },

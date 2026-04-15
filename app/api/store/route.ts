@@ -55,9 +55,8 @@ export async function GET(request: NextRequest) {
       prisma.storeItem.count({ where }),
     ]);
 
-
     console.log(storeItems, 'storeItems');
-    
+
     return NextResponse.json({
       storeItems,
       pagination: {
@@ -84,13 +83,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (
-      !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
-        session?.user?.role,
-      )
-    ) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (
+    //   !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
+    //     session?.user?.role,
+    //   )
+    // ) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const body = await request.json();
     const {
@@ -132,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     // Handle "External" productId
     let finalProductId = productId;
-    if (productId === "External") {
+    if (productId === 'External') {
       finalProductId = null;
     }
 
@@ -144,7 +143,7 @@ export async function POST(request: NextRequest) {
 
       if (!product) {
         return NextResponse.json(
-          { error: "Product not found" },
+          { error: 'Product not found' },
           { status: 400 },
         );
       }

@@ -87,9 +87,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!['ADMIN', 'STORE_KEEPER'].includes(session.user.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (!['ADMIN', 'STORE_KEEPER'].includes(session.user.role)) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     // Fetch the tool group with all its tools
     const toolGroup = await prisma.toolGroup.findUnique({

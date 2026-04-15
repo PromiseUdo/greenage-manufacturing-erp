@@ -16,13 +16,13 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (
-      !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
-        session.user.role,
-      )
-    ) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (
+    //   !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
+    //     session.user.role,
+    //   )
+    // ) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     // Find the dispatch request
     const dispatch = await prisma.storeDispatch.findUnique({
@@ -38,7 +38,9 @@ export async function POST(
 
     if (dispatch.status !== ('REQUESTED' as any)) {
       return NextResponse.json(
-        { error: 'Only REQUESTED dispatches can be fulfilled via this endpoint' },
+        {
+          error: 'Only REQUESTED dispatches can be fulfilled via this endpoint',
+        },
         { status: 400 },
       );
     }

@@ -32,10 +32,7 @@ export async function GET(request: NextRequest) {
       where.AND = [
         ...(where.AND || []),
         {
-          OR: [
-            { groupId: null },
-            { groupId: { isSet: false } },
-          ],
+          OR: [{ groupId: null }, { groupId: { isSet: false } }],
         },
       ];
     }
@@ -76,7 +73,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching purchase orders:', error);
     return NextResponse.json(
       { error: 'Failed to fetch purchase orders' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -88,13 +85,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (
-      !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
-        session.user.role
-      )
-    ) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (
+    //   !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
+    //     session.user.role
+    //   )
+    // ) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const body = await request.json();
     const { supplierId, items, currency, tax, discount, notes, groupId } = body;
@@ -102,14 +99,14 @@ export async function POST(request: NextRequest) {
     if (!supplierId || !items || items.length === 0) {
       return NextResponse.json(
         { error: 'Supplier and at least one item are required' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Calculate totals
     const subtotal = items.reduce(
       (sum: number, item: any) => sum + (item.quantity * item.unitCost || 0),
-      0
+      0,
     );
     const totalAmount = subtotal + (tax || 0) - (discount || 0);
 
@@ -176,7 +173,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating purchase order:', error);
     return NextResponse.json(
       { error: 'Failed to create purchase order' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
