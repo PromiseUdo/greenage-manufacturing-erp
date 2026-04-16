@@ -151,17 +151,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate employee number
-    const lastEmployee = await prisma.employee.findFirst({
-      orderBy: { createdAt: 'desc' },
-      select: { employeeNumber: true },
-    });
-
-    const empCount = lastEmployee
-      ? parseInt(lastEmployee.employeeNumber.split('-')[1]) + 1
-      : 1;
-    const employeeNumber = `EMP-${empCount.toString().padStart(4, '0')}`;
-
     const dbRole = await prisma.role.findUnique({ where: { id: appRoleId } });
     if (!dbRole) {
       return NextResponse.json({ error: 'Role not found' }, { status: 404 });
@@ -183,49 +172,89 @@ export async function POST(request: NextRequest) {
       `${name.split(' ')[0].toLowerCase()}${new Date().getFullYear()}`;
     const hashedPassword = await bcrypt.hash(defaultPassword, 12);
 
-    // Create User and Employee in transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Create User account
-      const user = await tx.user.create({
-        data: {
-          name,
-          email,
-          password: hashedPassword,
-          role: 'EMPLOYEE',
-          isActive: true,
-          isVerified: true, // No email verification for staff
-        },
+    // Create User and Employee in transaction, retrying on employeeNumber collision
+    const MAX_RETRIES = 5;
+    let result: { employee: any; defaultPassword: string } | null = null;
+
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      // Derive next employee number from the highest existing suffix.
+      // Done outside the transaction so retries re-read the latest state.
+      const lastEmployee = await prisma.employee.findFirst({
+        orderBy: { employeeNumber: 'desc' },
+        select: { employeeNumber: true },
       });
 
-      // Create Employee record (linked to User)
-      const employee = await tx.employee.create({
-        data: {
-          employeeNumber,
-          userId: user.id, // Link to User
-          appRoleId: dbRole.id,
-          phone,
-          address,
-          departmentId: dbDepartment.id,
-          position,
-          mustChangePassword: true,
-          createdBy: session.user.name || session.user.email || 'Admin',
-          notes,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
+      const lastNum = lastEmployee
+        ? parseInt(lastEmployee.employeeNumber.replace(/^EMP-0*/, '') || '0', 10)
+        : 0;
+      const employeeNumber = `EMP-${(lastNum + 1 + attempt).toString().padStart(4, '0')}`;
+
+      try {
+        result = await prisma.$transaction(async (tx) => {
+          // Create User account
+          const user = await tx.user.create({
+            data: {
+              name,
+              email,
+              password: hashedPassword,
+              role: 'EMPLOYEE',
               isActive: true,
+              isVerified: true, // No email verification for staff
             },
-          },
-        },
-      });
+          });
 
-      return { employee, defaultPassword };
-    });
+          // Create Employee record (linked to User)
+          const employee = await tx.employee.create({
+            data: {
+              employeeNumber,
+              userId: user.id,
+              appRoleId: dbRole.id,
+              phone,
+              address,
+              departmentId: dbDepartment.id,
+              position,
+              mustChangePassword: true,
+              createdBy: session.user.name || session.user.email || 'Admin',
+              notes,
+            },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                  isActive: true,
+                },
+              },
+            },
+          });
+
+          return { employee, defaultPassword };
+        });
+
+        // Transaction succeeded — exit retry loop
+        break;
+      } catch (err: any) {
+        const isNumberCollision =
+          err?.code === 'P2002' &&
+          (err?.meta?.target as string[])?.includes('employeeNumber');
+
+        if (isNumberCollision && attempt < MAX_RETRIES - 1) {
+          // Another request claimed this number concurrently — retry with a higher suffix
+          continue;
+        }
+
+        throw err; // Re-throw email conflicts and other real errors
+      }
+    }
+
+    if (!result) {
+      return NextResponse.json(
+        { error: 'Failed to generate a unique employee number. Please try again.' },
+        { status: 500 },
+      );
+    }
 
     // Log activity
     await prisma.activityLog.create({
@@ -235,7 +264,7 @@ export async function POST(request: NextRequest) {
         module: 'Staff Management',
         details: {
           employeeId: result.employee.id,
-          employeeNumber,
+          employeeNumber: result.employee.employeeNumber,
           name,
           department: dbDepartment.name,
           role: dbRole.name,
