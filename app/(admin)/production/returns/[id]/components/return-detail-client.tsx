@@ -1552,7 +1552,7 @@ export default function ProductionReturnDetailClient({
               {workers.map((w) => (
                 <MenuItem key={w.id} value={w.id}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Avatar
+                    {/* <Avatar
                       sx={{
                         width: 24,
                         height: 24,
@@ -1561,12 +1561,12 @@ export default function ProductionReturnDetailClient({
                       }}
                     >
                       {w.name.charAt(0)}
-                    </Avatar>
+                    </Avatar> */}
                     <Box>
                       <Typography variant="body2">{w.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      {/* <Typography variant="caption" color="text.secondary">
                         {ROLE_LABEL[w.role] ?? w.role}
-                      </Typography>
+                      </Typography> */}
                     </Box>
                   </Box>
                 </MenuItem>
@@ -1971,6 +1971,7 @@ function UnitRepairSection({
   const allDone = tasks.length > 0 && completedCount === tasks.length;
   const canManage = [
     'ADMIN',
+    'SUPERADMIN',
     'PRODUCTION_MANAGER',
     'OPERATION_MANAGER',
   ].includes(currentUser?.role ?? '');
@@ -2047,14 +2048,52 @@ function UnitRepairSection({
             py: 4,
             textAlign: 'center',
             border: '1px dashed',
-            borderColor: 'divider',
+            borderColor:
+              unit.status === 'IN_REPAIR' && canManage ? '#D97706' : 'divider',
             borderRadius: 2,
+            bgcolor:
+              unit.status === 'IN_REPAIR' && canManage
+                ? '#FFFBEB'
+                : 'transparent',
           }}
         >
-          <BuildIcon sx={{ fontSize: 32, color: 'text.disabled', mb: 0.5 }} />
-          <Typography variant="body2" color="text.secondary">
-            No repair tasks yet. Add tasks to track the repair process.
+          <BuildIcon
+            sx={{
+              fontSize: 32,
+              color:
+                unit.status === 'IN_REPAIR' && canManage
+                  ? '#D97706'
+                  : 'text.disabled',
+              mb: 0.5,
+            }}
+          />
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: unit.status === 'IN_REPAIR' && canManage ? 2 : 0 }}
+          >
+            No repair tasks yet.
+            {unit.status === 'IN_REPAIR' && canManage
+              ? ' Define what needs to be done to complete this repair.'
+              : ' Awaiting task assignment.'}
           </Typography>
+          {unit.status === 'IN_REPAIR' && canManage && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onAddTask}
+              sx={{
+                bgcolor: '#D97706',
+                '&:hover': { bgcolor: '#B45309' },
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.8rem',
+                borderRadius: 2,
+              }}
+            >
+              Add First Repair Task
+            </Button>
+          )}
         </Box>
       ) : (
         <Stack spacing={1}>
