@@ -67,10 +67,17 @@ export function filterNavItems(
 export function getFilteredNavigation(
   role: string | undefined,
   permissions: string[],
+  appRoleName?: string,
 ) {
   if (role === 'SUPERADMIN') return navigation;
 
-  const visibleGroups = navigation.filter((group) => !group.superAdminOnly);
+  const visibleGroups = navigation.filter((group) => {
+    if (group.superAdminOnly) return false;
+    if (group.allowedRoles) {
+      return !!(appRoleName && group.allowedRoles.includes(appRoleName));
+    }
+    return true;
+  });
 
   return visibleGroups
     .map((group) => ({
@@ -83,6 +90,7 @@ export function getFilteredNavigation(
 export const navigation: {
   section: string;
   superAdminOnly?: boolean;
+  allowedRoles?: string[];
   items: NavItem[];
 }[] = [
   {
@@ -228,6 +236,7 @@ export const navigation: {
             label: 'Materials',
             path: '/inventory/materials',
             icon: CategoryIcon,
+
             permission: 'inventory:read',
           },
           {
@@ -330,7 +339,7 @@ export const navigation: {
   },
   {
     section: 'Administration',
-    superAdminOnly: true,
+    allowedRoles: ['Operations'],
     items: [
       {
         label: 'Staff',

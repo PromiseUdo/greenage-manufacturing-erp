@@ -242,6 +242,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           role: user.role,
           mustChangePassword: user.employee?.mustChangePassword || false,
           permissions: user.employee?.appRole?.permissions || [],
+          appRoleName: user.employee?.appRole?.name,
         };
       },
     }),
@@ -253,8 +254,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id as string;
         token.role = user.role;
-        token.mustChangePassword = user.mustChangePassword; // ✅ Set on login
+        token.mustChangePassword = user.mustChangePassword;
         token.permissions = user.permissions;
+        token.appRoleName = user.appRoleName;
       }
 
       // ✅ On update trigger (when password is changed), refresh the flag
@@ -269,6 +271,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (dbUser?.employee) {
             token.mustChangePassword = dbUser.employee.mustChangePassword;
             token.permissions = dbUser.employee.appRole?.permissions ?? token.permissions;
+            token.appRoleName = dbUser.employee.appRole?.name ?? token.appRoleName;
           }
         } catch (error) {
           console.error('Error refreshing mustChangePassword flag:', error);
@@ -283,8 +286,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as UserRole;
-        session.user.mustChangePassword = token.mustChangePassword as boolean; // ✅ Add to session
-        session.user.permissions = (token.permissions as string[]) || []; // ✅ Add to session
+        session.user.mustChangePassword = token.mustChangePassword as boolean;
+        session.user.permissions = (token.permissions as string[]) || [];
+        session.user.appRoleName = token.appRoleName as string | undefined;
       }
       return session;
     },

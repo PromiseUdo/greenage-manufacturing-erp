@@ -34,8 +34,9 @@ declare module 'next-auth' {
     email: string;
     name: string;
     role: UserRole;
-    mustChangePassword?: boolean; // ✅ Add this
-    permissions?: string[]; // ✅ Add this
+    mustChangePassword?: boolean;
+    permissions?: string[];
+    appRoleName?: string;
   }
 
   interface Session {
@@ -44,8 +45,9 @@ declare module 'next-auth' {
       email: string;
       name: string;
       role: UserRole;
-      mustChangePassword?: boolean; // ✅ Add this
-      permissions?: string[]; // ✅ Add this
+      mustChangePassword?: boolean;
+      permissions?: string[];
+      appRoleName?: string;
     } & DefaultSession['user'];
   }
 }
@@ -54,7 +56,8 @@ declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
     role: UserRole;
-    mustChangePassword?: boolean; // ✅ Add this
-    permissions?: string[]; // ✅ Add this
+    mustChangePassword?: boolean;
+    permissions?: string[];
+    appRoleName?: string;
   }
 }

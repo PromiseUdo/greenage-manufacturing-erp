@@ -264,6 +264,7 @@ export default function Sidebar() {
         {getFilteredNavigation(
           session?.user?.role,
           session?.user?.permissions ?? [],
+          session?.user?.appRoleName,
         ).map((group) => (
           <Box key={group.section} sx={{ mb: 4 }}>
             {!collapsed && (
