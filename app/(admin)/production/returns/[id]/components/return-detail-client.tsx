@@ -495,6 +495,7 @@ export default function ProductionReturnDetailClient({
     : 0;
   const isScrapped = activeUnit?.status === 'SCRAPPED';
   const isManager = [
+    'SUPERADMIN',
     'ADMIN',
     'PRODUCTION_MANAGER',
     'OPERATION_MANAGER',
