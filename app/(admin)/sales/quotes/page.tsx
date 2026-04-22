@@ -39,7 +39,7 @@ import {
   Add,
   MoreVert,
   Visibility,
-  CheckCircle,
+  Edit,
   Description,
   Receipt,
   Delete,
@@ -535,6 +535,22 @@ export default function QuotesPage() {
               primaryTypographyProps={{ variant: "body2" }}
             />
           </MenuItem>
+          {!selectedQuote?.isAccepted && (
+            <MenuItem
+              onClick={() => {
+                router.push(`/sales/quotes/${selectedQuote?.id}/edit`);
+                setAnchorEl(null);
+              }}
+            >
+              <ListItemIcon>
+                <Edit fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Edit Quote"
+                primaryTypographyProps={{ variant: "body2" }}
+              />
+            </MenuItem>
+          )}
           <MenuItem
             sx={{
               "&:hover": {

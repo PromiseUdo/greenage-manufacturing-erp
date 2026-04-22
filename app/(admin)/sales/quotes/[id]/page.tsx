@@ -26,7 +26,7 @@ import Grid from "@mui/material/GridLegacy";
 import {
   ArrowBack,
   CheckCircle,
-  Print,
+  Edit,
   ShoppingCart,
   Receipt,
   Download,
@@ -539,10 +539,25 @@ export default function QuoteDetailPage({
               fontWeight: 600,
               textTransform: "none",
             }}
-            // sx={{ borderColor: '#CBD5E1', color: '#0F172A', fontWeight: 600 }}
           >
             {isDownloading ? "Generating..." : "Download PDF"}
           </Button>
+          {!quote?.isAccepted && (
+            <Button
+              variant="outlined"
+              startIcon={<Edit />}
+              onClick={() => router.push(`/sales/quotes/${resolvedParams.id}/edit`)}
+              sx={{
+                borderColor: "#CBD5E1",
+                color: "#0F172A",
+                fontWeight: 600,
+                textTransform: "none",
+                "&:hover": { bgcolor: "#F8FAFC" },
+              }}
+            >
+              Edit Quote
+            </Button>
+          )}
           {!quote?.isAccepted && (
             <Button
               variant="contained"
