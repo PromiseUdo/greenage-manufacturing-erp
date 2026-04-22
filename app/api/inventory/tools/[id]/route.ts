@@ -21,9 +21,17 @@ export async function GET(
     const tool = await prisma.tool.findUnique({
       where: { id: id },
       include: {
+        toolGroup: {
+          select: { id: true, name: true, groupNumber: true, totalQuantity: true, availableQuantity: true },
+        },
+        maintenanceHistory: {
+          orderBy: { startDate: 'desc' },
+          take: 5,
+        },
         _count: {
           select: {
             lendings: true,
+            maintenanceHistory: true,
           },
         },
       },

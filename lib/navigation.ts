@@ -18,6 +18,8 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import BlockIcon from '@mui/icons-material/Block';
 
 import SettingsIcon from '@mui/icons-material/Settings';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -105,8 +107,20 @@ export const navigation: {
       {
         label: 'Products',
         icon: Inventory2Icon,
-        path: '/products',
-        permission: 'products:read',
+        children: [
+          {
+            label: 'Active Products',
+            path: '/products',
+            icon: CheckCircleIcon,
+            permission: 'products:read',
+          },
+          {
+            label: 'Inactive Products',
+            path: '/products/inactive',
+            icon: BlockIcon,
+            permission: 'products:read',
+          },
+        ],
       },
       {
         label: 'Production',

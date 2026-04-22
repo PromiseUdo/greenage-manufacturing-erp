@@ -20,8 +20,12 @@ import {
   Chip,
   MenuItem,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
-import { Search, Add, Edit, AssignmentReturn } from "@mui/icons-material";
+import { Search, Add, Edit, AssignmentReturn, Delete } from "@mui/icons-material";
 import { styled, tableCellClasses } from "@mui/material";
 
 type ProductReturn = any; // Will be properly typed when we integrate Prisma types on the client if needed
@@ -93,6 +97,22 @@ export default function ReturnsClient({ data, isProductionView = false }: Return
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [deleteTarget, setDeleteTarget] = useState<ProductReturn | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/returns/${deleteTarget.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setDeleteTarget(null);
+        router.refresh();
+      }
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const filteredData = data.filter((item) => {
     const matchesSearch =
@@ -357,15 +377,29 @@ export default function ReturnsClient({ data, isProductionView = false }: Return
                             }}
                             sx={{
                               color: "#64748B",
-                              "&:hover": {
-                                backgroundColor: "#F1F5F9",
-                                color: "#0F172A",
-                              },
+                              "&:hover": { backgroundColor: "#F1F5F9", color: "#0F172A" },
                             }}
                           >
                             <Edit fontSize="small" />
                           </IconButton>
                         </Tooltip>
+                        {!isProductionView && (
+                          <Tooltip title="Delete Return">
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTarget(item);
+                              }}
+                              sx={{
+                                color: "#64748B",
+                                "&:hover": { backgroundColor: "#FEE2E2", color: "#dc2626" },
+                              }}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </StyledTableCell>
                     </StyledTableRow>
                   );
@@ -392,6 +426,34 @@ export default function ReturnsClient({ data, isProductionView = false }: Return
           />
         </Paper>
       )}
+
+      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Delete Return</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            Are you sure you want to delete return{" "}
+            <strong>{deleteTarget?.returnNumber}</strong>? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDeleteTarget(null)} sx={{ color: "#64748b" }}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleDelete}
+            disabled={deleting}
+            sx={{
+              bgcolor: "#dc2626",
+              fontWeight: 600,
+              textTransform: "none",
+              "&:hover": { bgcolor: "#b91c1c" },
+            }}
+          >
+            {deleting ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
