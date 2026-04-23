@@ -60,138 +60,206 @@ const COMPANY_LOGO_URL = "/greenage_logo_black.png";
 //   ],
 // });
 
+const C = {
+  darkGreen: "#003D34",
+  brandGreen: "#1FA43B",
+  mintGreen: "#D3F2AF",
+  black: "#000000",
+  mutedGreen: "#326444",
+  lightMint: "#EBF9DE",
+  border: "#C8E6C9",
+  gray: "#64748B",
+};
+
 const pdfStyles = StyleSheet.create({
   page: {
-    padding: 40,
-    // fontFamily: 'Helvetica',
+    paddingTop: 36,
+    paddingBottom: 50,
+    paddingHorizontal: 40,
     fontSize: 10,
     fontFamily: "Roboto",
-    // fontSize: 10,
-    color: "#334155",
+    color: C.black,
+    backgroundColor: "#FFFFFF",
   },
+
+  // ── Header ──
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 30,
+    alignItems: "flex-start",
+    marginBottom: 6,
   },
   logoSection: { flexDirection: "column" },
-  logo: { width: 120, height: "auto", marginBottom: 10 },
-  companyName: {
-    fontSize: 18,
-    fontWeight: 700,
-    color: "#0F172A",
-    textTransform: "uppercase",
-  },
-  companyDetails: { fontSize: 9, color: "#64748B", lineHeight: 1.4 },
+  logo: { width: 110, height: "auto", marginBottom: 8 },
+  companyDetails: { fontSize: 8.5, color: C.gray, lineHeight: 1.5 },
 
   quoteTitleBox: { alignItems: "flex-end" },
   quoteTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 700,
-    color: "#0F172A",
+    color: C.darkGreen,
     textTransform: "uppercase",
+    letterSpacing: 1,
   },
-  quoteMeta: { marginTop: 10, textAlign: "right" },
-  metaRow: { flexDirection: "row", marginBottom: 4 },
-  metaLabel: {
-    width: 80,
-    color: "#64748B",
-    textAlign: "right",
-    marginRight: 10,
-  },
-  metaValue: { fontWeight: 700, color: "#0F172A", textAlign: "right" },
+  quoteMeta: { marginTop: 8, textAlign: "right" },
+  metaRow: { flexDirection: "row", marginBottom: 3 },
+  metaLabel: { width: 65, color: C.gray, textAlign: "right", marginRight: 8, fontSize: 9 },
+  metaValue: { fontWeight: 700, color: C.black, textAlign: "right", fontSize: 9 },
 
-  divider: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
-    marginVertical: 20,
+  // Brand accent stripe below header
+  accentStripe: {
+    height: 3,
+    backgroundColor: C.brandGreen,
+    marginBottom: 14,
   },
 
-  customerSection: { flexDirection: "row", marginBottom: 30 },
-  customerCol: { width: "50%" },
-  sectionTitle: {
-    fontSize: 9,
+  // ── Customer section ──
+  customerSection: { flexDirection: "row", marginBottom: 20 },
+  customerCol: { width: "55%" },
+  sectionLabel: {
+    fontSize: 8,
     fontWeight: 700,
-    color: "#94A3B8",
+    color: C.mutedGreen,
     textTransform: "uppercase",
-    marginBottom: 5,
-  },
-  customerName: {
-    fontSize: 12,
-    fontWeight: 700,
-    color: "#0F172A",
+    letterSpacing: 0.8,
     marginBottom: 4,
   },
-  customerText: { fontSize: 10, color: "#475569", marginBottom: 2 },
+  customerName: { fontSize: 12, fontWeight: 700, color: C.darkGreen, marginBottom: 3 },
+  customerText: { fontSize: 9, color: "#475569", marginBottom: 2 },
 
-  table: { marginTop: 10 },
+  // ── Table ──
+  tableWrapper: {
+    borderWidth: 1,
+    borderColor: C.border,
+    borderStyle: "solid",
+    marginTop: 4,
+  },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#0F172A",
-    padding: 8,
-    alignItems: "center",
+    backgroundColor: C.darkGreen,
+    paddingVertical: 7,
+    paddingHorizontal: 0,
   },
   tableHeaderCell: { color: "#FFFFFF", fontWeight: 700, fontSize: 9 },
 
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
-    padding: 10,
+    borderBottomColor: C.border,
+    borderBottomStyle: "solid",
+    paddingVertical: 8,
     alignItems: "center",
   },
-  col1: { width: "50%" }, // Product
-  col2: { width: "15%", textAlign: "center" }, // Qty
-  col3: { width: "15%", textAlign: "right" }, // Unit Price
-  col4: { width: "20%", textAlign: "right" }, // Total
-
-  totalsSection: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: 20,
+  tableRowAlt: {
+    backgroundColor: C.lightMint,
   },
-  totalsBox: { width: "40%" },
+
+  // cell column widths + vertical borders
+  col1: {
+    width: "50%",
+    paddingHorizontal: 9,
+    borderRightWidth: 1,
+    borderRightColor: C.border,
+    borderRightStyle: "solid",
+  },
+  col2: {
+    width: "13%",
+    textAlign: "center",
+    paddingHorizontal: 6,
+    borderRightWidth: 1,
+    borderRightColor: C.border,
+    borderRightStyle: "solid",
+  },
+  col3: {
+    width: "18%",
+    textAlign: "right",
+    paddingHorizontal: 6,
+    borderRightWidth: 1,
+    borderRightColor: C.border,
+    borderRightStyle: "solid",
+  },
+  col4: { width: "19%", textAlign: "right", paddingHorizontal: 9 },
+
+  // ── Totals ──
+  totalsSection: { flexDirection: "row", justifyContent: "flex-end", marginTop: 14 },
+  totalsBox: { width: "42%" },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 8,
-    paddingBottom: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 2,
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    borderBottomColor: C.border,
+    borderBottomStyle: "solid",
   },
-  totalLabel: { color: "#64748B" },
-  totalValue: { color: "#0F172A", fontWeight: 700 },
+  totalLabel: { color: C.gray, fontSize: 9.5 },
+  totalValue: { color: C.black, fontWeight: 700, fontSize: 9.5 },
   grandTotalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 8,
-    padding: 8,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 4,
+    marginTop: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    backgroundColor: C.darkGreen,
+    borderRadius: 3,
   },
-  grandTotalLabel: { fontSize: 12, fontWeight: 700, color: "#0F172A" },
-  grandTotalValue: { fontSize: 12, fontWeight: 700, color: "#10B981" },
+  grandTotalLabel: { fontSize: 11, fontWeight: 700, color: "#FFFFFF" },
+  grandTotalValue: { fontSize: 11, fontWeight: 700, color: C.mintGreen },
 
+  // ── Bank & Contact details ──
+  bottomSection: {
+    flexDirection: "row",
+    marginTop: 22,
+    borderTopWidth: 2,
+    borderTopColor: C.brandGreen,
+    borderTopStyle: "solid",
+    paddingTop: 12,
+  },
+  bottomCol: { width: "50%" },
+  bottomColRight: { width: "50%", paddingLeft: 20 },
+  bottomTitle: {
+    fontSize: 8.5,
+    fontWeight: 700,
+    color: C.darkGreen,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 6,
+  },
+  bottomRow: { flexDirection: "row", marginBottom: 3 },
+  bottomLabel: { fontSize: 8.5, color: C.gray, width: 90 },
+  bottomValue: { fontSize: 8.5, color: C.black, fontWeight: 700, flex: 1 },
+
+  // ── Footer ──
   footer: {
     position: "absolute",
-    bottom: 40,
+    bottom: 24,
     left: 40,
     right: 40,
-    textAlign: "center",
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
-    paddingTop: 20,
   },
-  footerText: { fontSize: 8, color: "#94A3B8", marginBottom: 4 },
+  footerStripe: {
+    height: 2,
+    backgroundColor: C.mintGreen,
+    marginBottom: 6,
+  },
+  footerText: { fontSize: 7.5, color: C.gray, textAlign: "center" },
 });
 
 // --- PDF Component ---
-const QuoteDocument = ({ quote }: { quote: any }) => {
-  const formatCurrency = (amount: number) =>
+const QuoteDocument = ({
+  quote,
+  companyDetails,
+}: {
+  quote: any;
+  companyDetails: any;
+}) => {
+  const fmt = (amount: number) =>
     new Intl.NumberFormat("en-NG", {
       style: "currency",
       currency: "NGN",
+      minimumFractionDigits: 2,
     }).format(amount);
+
+  const cd = companyDetails || {};
 
   return (
     <Document>
@@ -199,19 +267,23 @@ const QuoteDocument = ({ quote }: { quote: any }) => {
         {/* Header */}
         <View style={pdfStyles.header}>
           <View style={pdfStyles.logoSection}>
-            {/* Ensure this URL is accessible. If using Cloudinary, put full URL here */}
             {COMPANY_LOGO_URL && (
               <PdfImage style={pdfStyles.logo} src={COMPANY_LOGO_URL} />
             )}
-            {/* <Text style={pdfStyles.companyName}>Your Company Name</Text> */}
-            <Text style={pdfStyles.companyDetails}>
-              Greenage office, ECCIMA House, Garden Avenue, Enugu, Nigeria.
-            </Text>
-            <Text style={pdfStyles.companyDetails}>
-              contact@greenagetech.com
-            </Text>
-            <Text style={pdfStyles.companyDetails}>+234 906 000 3896</Text>
+            {cd.address && (
+              <Text style={pdfStyles.companyDetails}>{cd.address}</Text>
+            )}
+            {cd.email && (
+              <Text style={pdfStyles.companyDetails}>{cd.email}</Text>
+            )}
+            {cd.phone && (
+              <Text style={pdfStyles.companyDetails}>{cd.phone}</Text>
+            )}
+            {cd.website && (
+              <Text style={pdfStyles.companyDetails}>{cd.website}</Text>
+            )}
           </View>
+
           <View style={pdfStyles.quoteTitleBox}>
             <Text style={pdfStyles.quoteTitle}>Quote</Text>
             <View style={pdfStyles.quoteMeta}>
@@ -222,9 +294,25 @@ const QuoteDocument = ({ quote }: { quote: any }) => {
               <View style={pdfStyles.metaRow}>
                 <Text style={pdfStyles.metaLabel}>Date:</Text>
                 <Text style={pdfStyles.metaValue}>
-                  {new Date(quote.createdAt).toLocaleDateString()}
+                  {new Date(quote.createdAt).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
                 </Text>
               </View>
+              {quote.expiryDate && (
+                <View style={pdfStyles.metaRow}>
+                  <Text style={pdfStyles.metaLabel}>Expires:</Text>
+                  <Text style={pdfStyles.metaValue}>
+                    {new Date(quote.expiryDate).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </Text>
+                </View>
+              )}
               <View style={pdfStyles.metaRow}>
                 <Text style={pdfStyles.metaLabel}>Status:</Text>
                 <Text style={pdfStyles.metaValue}>{quote.status}</Text>
@@ -233,25 +321,29 @@ const QuoteDocument = ({ quote }: { quote: any }) => {
           </View>
         </View>
 
-        <View style={pdfStyles.divider} />
+        {/* Brand accent stripe */}
+        <View style={pdfStyles.accentStripe} />
 
         {/* Customer Info */}
         <View style={pdfStyles.customerSection}>
           <View style={pdfStyles.customerCol}>
-            <Text style={pdfStyles.sectionTitle}>Quotation For:</Text>
+            <Text style={pdfStyles.sectionLabel}>Quotation For:</Text>
             <Text style={pdfStyles.customerName}>{quote.customer.name}</Text>
-            <Text style={pdfStyles.customerText}>{quote.customer.phone}</Text>
-            <Text style={pdfStyles.customerText}>
-              {quote.customer.email || ""}
-            </Text>
-            <Text style={pdfStyles.customerText}>
-              {quote.customer.address || ""}
-            </Text>
+            {quote.customer.phone && (
+              <Text style={pdfStyles.customerText}>{quote.customer.phone}</Text>
+            )}
+            {quote.customer.email && (
+              <Text style={pdfStyles.customerText}>{quote.customer.email}</Text>
+            )}
+            {quote.customer.address && (
+              <Text style={pdfStyles.customerText}>{quote.customer.address}</Text>
+            )}
           </View>
         </View>
 
         {/* Table */}
-        <View style={pdfStyles.table}>
+        <View style={pdfStyles.tableWrapper}>
+          {/* Header row */}
           <View style={pdfStyles.tableHeader}>
             <Text style={[pdfStyles.tableHeaderCell, pdfStyles.col1]}>
               Item Description
@@ -265,86 +357,149 @@ const QuoteDocument = ({ quote }: { quote: any }) => {
             </Text>
           </View>
 
-          {/* Line Item Rows */}
+          {/* Line item rows */}
           {(quote.lineItems || []).map((li: any, i: number) => (
-            <View key={i} style={pdfStyles.tableRow}>
+            <View
+              key={i}
+              style={[
+                pdfStyles.tableRow,
+                i % 2 !== 0 ? pdfStyles.tableRowAlt : {},
+              ]}
+            >
               <View style={pdfStyles.col1}>
-                <Text
-                  style={{ fontWeight: 700, fontSize: 10, color: "#0F172A" }}
-                >
-                  {li.storeItem?.name || "Item"}
+                <Text style={{ fontWeight: 700, fontSize: 10, color: C.darkGreen }}>
+                  {li.storeItem?.name || li.description || "Item"}
                 </Text>
-                <Text style={{ fontSize: 9, color: "#64748B", marginTop: 2 }}>
-                  Code: {li.storeItem?.itemNumber || "N/A"} •{" "}
-                  {li.storeItem?.category || ""}
-                </Text>
+                {(li.storeItem?.itemNumber || li.storeItem?.category) && (
+                  <Text style={{ fontSize: 8.5, color: C.gray, marginTop: 2 }}>
+                    {li.storeItem?.itemNumber
+                      ? `Code: ${li.storeItem.itemNumber}`
+                      : ""}
+                    {li.storeItem?.itemNumber && li.storeItem?.category
+                      ? "  •  "
+                      : ""}
+                    {li.storeItem?.category || ""}
+                  </Text>
+                )}
               </View>
               <Text style={[pdfStyles.col2, { fontSize: 10 }]}>
                 {li.quantity}
               </Text>
               <Text style={[pdfStyles.col3, { fontSize: 10 }]}>
-                {formatCurrency(li.unitPrice)}
+                {fmt(li.unitPrice)}
               </Text>
-              <Text style={[pdfStyles.col4, { fontSize: 10, fontWeight: 700 }]}>
-                {formatCurrency(li.unitPrice * li.quantity)}
+              <Text
+                style={[pdfStyles.col4, { fontSize: 10, fontWeight: 700 }]}
+              >
+                {fmt(li.unitPrice * li.quantity)}
               </Text>
             </View>
           ))}
         </View>
 
         {/* Totals */}
-
         <View style={pdfStyles.totalsSection}>
           <View style={pdfStyles.totalsBox}>
             <View style={pdfStyles.totalRow}>
               <Text style={pdfStyles.totalLabel}>Subtotal</Text>
               <Text style={pdfStyles.totalValue}>
-                {formatCurrency(quote.totalAmount)}
+                {fmt(quote.totalAmount)}
               </Text>
             </View>
 
-            {/* Discount Row */}
             {quote.discountAmount > 0 && (
               <View style={pdfStyles.totalRow}>
                 <Text style={[pdfStyles.totalLabel, { color: "#B91C1C" }]}>
                   Discount
                 </Text>
                 <Text style={[pdfStyles.totalValue, { color: "#B91C1C" }]}>
-                  -{formatCurrency(quote.discountAmount)}
+                  -{fmt(quote.discountAmount)}
                 </Text>
               </View>
             )}
 
-            {/* Tax Row */}
             {quote.taxAmount > 0 && (
               <View style={pdfStyles.totalRow}>
                 <Text style={pdfStyles.totalLabel}>Tax (VAT)</Text>
-                <Text style={pdfStyles.totalValue}>
-                  {formatCurrency(quote.taxAmount)}
-                </Text>
+                <Text style={pdfStyles.totalValue}>{fmt(quote.taxAmount)}</Text>
               </View>
             )}
 
             <View style={pdfStyles.grandTotalRow}>
               <Text style={pdfStyles.grandTotalLabel}>Grand Total</Text>
               <Text style={pdfStyles.grandTotalValue}>
-                {formatCurrency(quote.finalAmount)}
+                {fmt(quote.finalAmount)}
               </Text>
             </View>
           </View>
         </View>
 
+        {/* Bank & Contact details */}
+        {(cd.bankAccountName || cd.address) && (
+          <View style={pdfStyles.bottomSection}>
+            {cd.bankAccountName && (
+              <View style={pdfStyles.bottomCol}>
+                <Text style={pdfStyles.bottomTitle}>Bank Details</Text>
+                {cd.bankAccountName && (
+                  <View style={pdfStyles.bottomRow}>
+                    <Text style={pdfStyles.bottomLabel}>Account Name:</Text>
+                    <Text style={pdfStyles.bottomValue}>{cd.bankAccountName}</Text>
+                  </View>
+                )}
+                {cd.bankAccountNumber && (
+                  <View style={pdfStyles.bottomRow}>
+                    <Text style={pdfStyles.bottomLabel}>Account Number:</Text>
+                    <Text style={pdfStyles.bottomValue}>{cd.bankAccountNumber}</Text>
+                  </View>
+                )}
+                {cd.bankName && (
+                  <View style={pdfStyles.bottomRow}>
+                    <Text style={pdfStyles.bottomLabel}>Bank Name:</Text>
+                    <Text style={pdfStyles.bottomValue}>{cd.bankName}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            <View style={pdfStyles.bottomColRight}>
+              <Text style={pdfStyles.bottomTitle}>Contact Details</Text>
+              {cd.address && (
+                <View style={pdfStyles.bottomRow}>
+                  <Text style={pdfStyles.bottomLabel}>Address:</Text>
+                  <Text style={pdfStyles.bottomValue}>{cd.address}</Text>
+                </View>
+              )}
+              {cd.phone && (
+                <View style={pdfStyles.bottomRow}>
+                  <Text style={pdfStyles.bottomLabel}>Phone:</Text>
+                  <Text style={pdfStyles.bottomValue}>{cd.phone}</Text>
+                </View>
+              )}
+              {cd.email && (
+                <View style={pdfStyles.bottomRow}>
+                  <Text style={pdfStyles.bottomLabel}>Email:</Text>
+                  <Text style={pdfStyles.bottomValue}>{cd.email}</Text>
+                </View>
+              )}
+              {cd.website && (
+                <View style={pdfStyles.bottomRow}>
+                  <Text style={pdfStyles.bottomLabel}>Website:</Text>
+                  <Text style={pdfStyles.bottomValue}>{cd.website}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
         {/* Footer */}
         <View style={pdfStyles.footer}>
-          <Text style={{ fontSize: 10, fontWeight: 700, marginBottom: 5 }}>
-            Terms & Conditions
-          </Text>
+          <View style={pdfStyles.footerStripe} />
           <Text style={pdfStyles.footerText}>
-            1. This quote is valid for 30 days. 2. Payment terms: 50% upfront,
-            50% on delivery. 3. Goods sold are in good condition.
+            {quote.terms ||
+              "This quote is valid for 30 days. Payment terms: 50% upfront, 50% on delivery."}
           </Text>
-          <Text style={{ marginTop: 10, fontSize: 8, color: "#CBD5E1" }}>
-            Generated by Greenage Technologies
+          <Text style={[pdfStyles.footerText, { marginTop: 3, color: "#B0BEC5" }]}>
+            Generated by Greenage Technologies · {new Date().toLocaleDateString("en-GB")}
           </Text>
         </View>
       </Page>
@@ -389,6 +544,8 @@ export default function QuoteDetailPage({
   const [success, setSuccess] = useState("");
   const [quote, setQuote] = useState<any>(null);
 
+  const [companyDetails, setCompanyDetails] = useState<any>(null);
+
   // PDF Download State
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -398,6 +555,10 @@ export default function QuoteDetailPage({
 
   useEffect(() => {
     fetchQuote();
+    fetch("/api/settings/company")
+      .then((r) => r.json())
+      .then(setCompanyDetails)
+      .catch(() => {});
   }, [resolvedParams.id]);
 
   const fetchQuote = async () => {
@@ -418,7 +579,9 @@ export default function QuoteDetailPage({
     setIsDownloading(true);
     try {
       // Generate Blob
-      const blob = await pdf(<QuoteDocument quote={quote} />).toBlob();
+      const blob = await pdf(
+        <QuoteDocument quote={quote} companyDetails={companyDetails} />,
+      ).toBlob();
 
       // Create Link and Click
       const url = URL.createObjectURL(blob);

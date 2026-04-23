@@ -60,77 +60,157 @@ import {
 
 const COMPANY_LOGO_URL = "/greenage_logo_black.png";
 
+const C = {
+  darkGreen: "#003D34",
+  brandGreen: "#1FA43B",
+  mintGreen: "#D3F2AF",
+  black: "#000000",
+  mutedGreen: "#326444",
+  lightMint: "#EBF9DE",
+  border: "#C8E6C9",
+  gray: "#64748B",
+};
+
 const pdfStyles = StyleSheet.create({
   page: {
-    padding: 40,
+    paddingTop: 36,
+    paddingBottom: 50,
+    paddingHorizontal: 40,
     fontFamily: "Roboto",
     fontSize: 10,
-    color: "#334155",
+    color: C.black,
+    backgroundColor: "#FFFFFF",
   },
+
+  // ── Header ──
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 40,
+    alignItems: "flex-start",
+    marginBottom: 6,
   },
-  logo: { width: 140, height: "auto" },
-  invoiceInfo: { textAlign: "right" },
-  title: { fontSize: 24, fontWeight: 700, color: "#0F172A", letterSpacing: 1 },
-  metaText: { fontSize: 9, color: "#64748B", marginTop: 2 },
+  logoSection: { flexDirection: "column" },
+  logo: { width: 110, height: "auto", marginBottom: 8 },
+  companyDetails: { fontSize: 8.5, color: C.gray, lineHeight: 1.5 },
 
-  section: { flexDirection: "row", marginBottom: 30 },
-  addressBox: { flex: 1 },
+  invoiceInfo: { alignItems: "flex-end" },
+  title: {
+    fontSize: 26,
+    fontWeight: 700,
+    color: C.darkGreen,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  metaText: { fontSize: 9, color: C.gray, marginTop: 3 },
+  metaDue: { fontSize: 9, fontWeight: 700, color: "#B91C1C", marginTop: 3 },
+
+  // Brand accent stripe
+  accentStripe: {
+    height: 3,
+    backgroundColor: C.brandGreen,
+    marginBottom: 14,
+  },
+
+  // ── Bill To ──
+  section: { flexDirection: "row", marginBottom: 20 },
+  addressBox: { width: "55%" },
   sectionLabel: {
     fontSize: 8,
     fontWeight: 700,
-    color: "#94A3B8",
+    color: C.mutedGreen,
     textTransform: "uppercase",
+    letterSpacing: 0.8,
     marginBottom: 4,
   },
-  addressText: { fontSize: 10, lineHeight: 1.4, color: "#1E293B" },
+  customerName: { fontSize: 12, fontWeight: 700, color: C.darkGreen, marginBottom: 3 },
+  addressText: { fontSize: 9.5, lineHeight: 1.5, color: "#475569" },
 
-  table: { marginTop: 10 },
+  // ── Table ──
+  tableWrapper: {
+    borderWidth: 1,
+    borderColor: C.border,
+    borderStyle: "solid",
+    marginTop: 4,
+  },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#0F172A",
-    padding: 8,
-    borderRadius: 4,
+    backgroundColor: C.darkGreen,
+    paddingVertical: 7,
   },
   tableHeaderCell: { color: "#FFFFFF", fontWeight: 700, fontSize: 9 },
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
-    padding: 10,
+    borderBottomColor: C.border,
+    borderBottomStyle: "solid",
+    paddingVertical: 8,
     alignItems: "center",
   },
+  tableRowAlt: { backgroundColor: C.lightMint },
 
-  colDesc: { flex: 2 },
-  colQty: { flex: 0.5, textAlign: "center" },
-  colPrice: { flex: 1, textAlign: "right" },
-  colTotal: { flex: 1, textAlign: "right" },
+  colDesc: {
+    flex: 2,
+    paddingHorizontal: 9,
+    borderRightWidth: 1,
+    borderRightColor: C.border,
+    borderRightStyle: "solid",
+  },
+  colQty: {
+    flex: 0.5,
+    textAlign: "center",
+    paddingHorizontal: 6,
+    borderRightWidth: 1,
+    borderRightColor: C.border,
+    borderRightStyle: "solid",
+  },
+  colPrice: {
+    flex: 1,
+    textAlign: "right",
+    paddingHorizontal: 6,
+    borderRightWidth: 1,
+    borderRightColor: C.border,
+    borderRightStyle: "solid",
+  },
+  colTotal: { flex: 1, textAlign: "right", paddingHorizontal: 9 },
 
+  // ── Totals ──
   totalsContainer: {
     flexDirection: "row",
     justifyContent: "flex-end",
-    marginTop: 20,
+    marginTop: 14,
   },
-  totalsBox: { width: 200 },
+  totalsBox: { width: "42%" },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    borderBottomStyle: "solid",
   },
+  totalLabel: { fontSize: 9.5, color: C.gray },
+  totalValue: { fontSize: 9.5, color: C.black, fontWeight: 700 },
   grandTotal: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 4,
-    borderTopWidth: 2,
-    borderTopColor: "#0F172A",
+    marginTop: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 8,
+    backgroundColor: C.darkGreen,
+    borderRadius: 3,
+  },
+  grandTotalLabel: { fontSize: 11, fontWeight: 700, color: "#FFFFFF" },
+  grandTotalValue: { fontSize: 11, fontWeight: 700, color: C.mintGreen },
+  balanceRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 2,
   },
 
+  // ── Paid stamp ──
   statusStamp: {
     position: "absolute",
     top: 150,
@@ -139,73 +219,140 @@ const pdfStyles = StyleSheet.create({
     borderWidth: 2,
     borderRadius: 4,
     transform: "rotate(15deg)",
-    opacity: 0.4,
+    opacity: 0.35,
     fontSize: 20,
     fontWeight: 700,
   },
+
+  // ── Bank & Contact ──
+  bottomSection: {
+    flexDirection: "row",
+    marginTop: 22,
+    borderTopWidth: 2,
+    borderTopColor: C.brandGreen,
+    borderTopStyle: "solid",
+    paddingTop: 12,
+  },
+  bottomCol: { width: "50%" },
+  bottomColRight: { width: "50%", paddingLeft: 20 },
+  bottomTitle: {
+    fontSize: 8.5,
+    fontWeight: 700,
+    color: C.darkGreen,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 6,
+  },
+  bottomRow: { flexDirection: "row", marginBottom: 3 },
+  bottomLabel: { fontSize: 8.5, color: C.gray, width: 90 },
+  bottomValue: { fontSize: 8.5, color: C.black, fontWeight: 700, flex: 1 },
+
+  // ── Footer ──
+  footer: {
+    position: "absolute",
+    bottom: 24,
+    left: 40,
+    right: 40,
+  },
+  footerStripe: {
+    height: 2,
+    backgroundColor: C.mintGreen,
+    marginBottom: 6,
+  },
+  footerText: { fontSize: 7.5, color: C.gray, textAlign: "center" },
 });
 
-const InvoiceDocument = ({ invoice, formatCurrency, formatDate }: any) => {
+const InvoiceDocument = ({ invoice, companyDetails }: any) => {
   const isPaid = invoice.status === "PAID";
+  const cd = companyDetails || {};
+
+  const fmt = (amount: number) =>
+    new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 2,
+    }).format(amount ?? 0);
+
+  const fmtDate = (d: any) =>
+    d
+      ? new Date(d).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : "—";
 
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
-        {/* Paid Stamp */}
+        {/* Paid stamp */}
         {isPaid && (
           <View
             style={[
               pdfStyles.statusStamp,
-              { borderColor: "#10B981", color: "#10B981" },
+              { borderColor: C.brandGreen, color: C.brandGreen },
             ]}
           >
             <Text>PAID IN FULL</Text>
           </View>
         )}
 
+        {/* Header */}
         <View style={pdfStyles.header}>
-          <View>
+          <View style={pdfStyles.logoSection}>
             <PdfImage src={COMPANY_LOGO_URL} style={pdfStyles.logo} />
-            <Text style={[pdfStyles.addressText, { marginTop: 10 }]}>
-              Greenage office, ECCIMA House, Garden Avenue, Enugu, Nigeria.{" "}
-            </Text>
-            <Text style={pdfStyles.addressText}>contact@greenagetech.com</Text>
+            {cd.address && (
+              <Text style={pdfStyles.companyDetails}>{cd.address}</Text>
+            )}
+            {cd.email && (
+              <Text style={pdfStyles.companyDetails}>{cd.email}</Text>
+            )}
+            {cd.phone && (
+              <Text style={pdfStyles.companyDetails}>{cd.phone}</Text>
+            )}
+            {cd.website && (
+              <Text style={pdfStyles.companyDetails}>{cd.website}</Text>
+            )}
           </View>
+
           <View style={pdfStyles.invoiceInfo}>
             <Text style={pdfStyles.title}>INVOICE</Text>
             <Text style={pdfStyles.metaText}>
               Invoice #: {invoice.invoiceNumber}
             </Text>
             <Text style={pdfStyles.metaText}>
-              Date: {formatDate(invoice.issueDate)}
+              Date: {fmtDate(invoice.issueDate)}
             </Text>
-            <Text
-              style={[
-                pdfStyles.metaText,
-                { fontWeight: 700, color: "#EF4444" },
-              ]}
-            >
-              Due: {formatDate(invoice.dueDate)}
+            <Text style={pdfStyles.metaDue}>
+              Due: {fmtDate(invoice.dueDate)}
             </Text>
           </View>
         </View>
 
+        {/* Brand accent stripe */}
+        <View style={pdfStyles.accentStripe} />
+
+        {/* Bill To */}
         <View style={pdfStyles.section}>
           <View style={pdfStyles.addressBox}>
             <Text style={pdfStyles.sectionLabel}>Bill To:</Text>
-            <Text
-              style={[pdfStyles.addressText, { fontWeight: 700, fontSize: 12 }]}
-            >
-              {invoice.customer.name}
-            </Text>
-            <Text style={pdfStyles.addressText}>
-              {invoice.customer.address}
-            </Text>
-            <Text style={pdfStyles.addressText}>{invoice.customer.phone}</Text>
+            <Text style={pdfStyles.customerName}>{invoice.customer.name}</Text>
+            {invoice.customer.address && (
+              <Text style={pdfStyles.addressText}>
+                {invoice.customer.address}
+              </Text>
+            )}
+            {invoice.customer.phone && (
+              <Text style={pdfStyles.addressText}>{invoice.customer.phone}</Text>
+            )}
+            {invoice.customer.email && (
+              <Text style={pdfStyles.addressText}>{invoice.customer.email}</Text>
+            )}
           </View>
         </View>
 
-        <View style={pdfStyles.table}>
+        {/* Table */}
+        <View style={pdfStyles.tableWrapper}>
           <View style={pdfStyles.tableHeader}>
             <Text style={[pdfStyles.tableHeaderCell, pdfStyles.colDesc]}>
               Description
@@ -221,85 +368,164 @@ const InvoiceDocument = ({ invoice, formatCurrency, formatDate }: any) => {
             </Text>
           </View>
 
-          {invoice.lineItems?.map((lineItem: any, index: number) => (
-            <View key={index} style={pdfStyles.tableRow}>
+          {invoice.lineItems?.map((li: any, i: number) => (
+            <View
+              key={i}
+              style={[pdfStyles.tableRow, i % 2 !== 0 ? pdfStyles.tableRowAlt : {}]}
+            >
               <View style={pdfStyles.colDesc}>
-                <Text style={{ fontWeight: 700 }}>
-                  {lineItem.storeItem?.name || lineItem.product?.name || "Item"}
+                <Text style={{ fontWeight: 700, fontSize: 10, color: C.darkGreen }}>
+                  {li.storeItem?.name || li.product?.name || "Item"}
                 </Text>
-                <Text style={{ fontSize: 8, color: "#64748B", marginTop: 2 }}>
-                  {lineItem.storeItem?.itemNumber ||
-                    lineItem.product?.productNumber ||
-                    ""}
-                  {lineItem.storeItem?.category
-                    ? ` • ${lineItem.storeItem.category}`
-                    : ""}
-                </Text>
+                {(li.storeItem?.itemNumber || li.storeItem?.category) && (
+                  <Text style={{ fontSize: 8.5, color: C.gray, marginTop: 2 }}>
+                    {li.storeItem?.itemNumber
+                      ? `Code: ${li.storeItem.itemNumber}`
+                      : ""}
+                    {li.storeItem?.itemNumber && li.storeItem?.category
+                      ? "  •  "
+                      : ""}
+                    {li.storeItem?.category || ""}
+                  </Text>
+                )}
               </View>
-              <Text style={pdfStyles.colQty}>{lineItem.quantity}</Text>
-              <Text style={pdfStyles.colPrice}>
-                {formatCurrency(lineItem.unitPrice)}
+              <Text style={[pdfStyles.colQty, { fontSize: 10 }]}>
+                {li.quantity}
               </Text>
-              <Text style={[pdfStyles.colTotal, { fontWeight: 700 }]}>
-                {formatCurrency(lineItem.totalAmount)}
+              <Text style={[pdfStyles.colPrice, { fontSize: 10 }]}>
+                {fmt(li.unitPrice)}
+              </Text>
+              <Text style={[pdfStyles.colTotal, { fontSize: 10, fontWeight: 700 }]}>
+                {fmt(li.totalAmount)}
               </Text>
             </View>
           ))}
         </View>
 
+        {/* Totals */}
         <View style={pdfStyles.totalsContainer}>
           <View style={pdfStyles.totalsBox}>
             <View style={pdfStyles.totalRow}>
-              <Text style={pdfStyles.metaText}>Subtotal</Text>
-              <Text style={pdfStyles.addressText}>
-                {formatCurrency(invoice.totalAmount)}
-              </Text>
+              <Text style={pdfStyles.totalLabel}>Subtotal</Text>
+              <Text style={pdfStyles.totalValue}>{fmt(invoice.totalAmount)}</Text>
             </View>
-            <View style={pdfStyles.totalRow}>
-              <Text style={pdfStyles.metaText}>Tax (VAT)</Text>
-              <Text style={pdfStyles.addressText}>
-                {formatCurrency(invoice.taxAmount)}
-              </Text>
-            </View>
+
+            {invoice.taxAmount > 0 && (
+              <View style={pdfStyles.totalRow}>
+                <Text style={pdfStyles.totalLabel}>Tax (VAT)</Text>
+                <Text style={pdfStyles.totalValue}>{fmt(invoice.taxAmount)}</Text>
+              </View>
+            )}
+
             {invoice.discountAmount > 0 && (
               <View style={pdfStyles.totalRow}>
-                <Text style={[pdfStyles.metaText, { color: "#EF4444" }]}>
+                <Text style={[pdfStyles.totalLabel, { color: "#B91C1C" }]}>
                   Discount
                 </Text>
-                <Text style={[pdfStyles.addressText, { color: "#EF4444" }]}>
-                  -{formatCurrency(invoice.discountAmount)}
+                <Text style={[pdfStyles.totalValue, { color: "#B91C1C" }]}>
+                  -{fmt(invoice.discountAmount)}
                 </Text>
               </View>
             )}
+
             <View style={pdfStyles.grandTotal}>
-              <Text style={{ fontWeight: 700 }}>Grand Total</Text>
-              <Text style={{ fontWeight: 700, color: "#0F172A" }}>
-                {formatCurrency(invoice.finalAmount)}
+              <Text style={pdfStyles.grandTotalLabel}>Grand Total</Text>
+              <Text style={pdfStyles.grandTotalValue}>
+                {fmt(invoice.finalAmount)}
               </Text>
             </View>
-            <View style={[pdfStyles.totalRow, { marginTop: 10 }]}>
-              <Text style={pdfStyles.metaText}>Amount Paid</Text>
-              <Text style={pdfStyles.addressText}>
-                {formatCurrency(invoice.paidAmount)}
+
+            <View style={[pdfStyles.totalRow, { marginTop: 8 }]}>
+              <Text style={pdfStyles.totalLabel}>Amount Paid</Text>
+              <Text style={[pdfStyles.totalValue, { color: C.brandGreen }]}>
+                {fmt(invoice.paidAmount)}
               </Text>
             </View>
-            <View
-              style={[
-                pdfStyles.totalRow,
-                { borderTopWidth: 1, borderTopColor: "#E2E8F0", paddingTop: 5 },
-              ]}
-            >
-              <Text style={{ fontWeight: 700 }}>Balance Due</Text>
+
+            <View style={pdfStyles.balanceRow}>
+              <Text style={{ fontSize: 10, fontWeight: 700, color: C.black }}>
+                Balance Due
+              </Text>
               <Text
                 style={{
+                  fontSize: 10,
                   fontWeight: 700,
-                  color: invoice.balanceAmount > 0 ? "#EF4444" : "#10B981",
+                  color: invoice.balanceAmount > 0 ? "#B91C1C" : C.brandGreen,
                 }}
               >
-                {formatCurrency(invoice.balanceAmount)}
+                {fmt(invoice.balanceAmount)}
               </Text>
             </View>
           </View>
+        </View>
+
+        {/* Bank & Contact details */}
+        {(cd.bankAccountName || cd.address) && (
+          <View style={pdfStyles.bottomSection}>
+            {cd.bankAccountName && (
+              <View style={pdfStyles.bottomCol}>
+                <Text style={pdfStyles.bottomTitle}>Bank Details</Text>
+                {cd.bankAccountName && (
+                  <View style={pdfStyles.bottomRow}>
+                    <Text style={pdfStyles.bottomLabel}>Account Name:</Text>
+                    <Text style={pdfStyles.bottomValue}>{cd.bankAccountName}</Text>
+                  </View>
+                )}
+                {cd.bankAccountNumber && (
+                  <View style={pdfStyles.bottomRow}>
+                    <Text style={pdfStyles.bottomLabel}>Account Number:</Text>
+                    <Text style={pdfStyles.bottomValue}>{cd.bankAccountNumber}</Text>
+                  </View>
+                )}
+                {cd.bankName && (
+                  <View style={pdfStyles.bottomRow}>
+                    <Text style={pdfStyles.bottomLabel}>Bank Name:</Text>
+                    <Text style={pdfStyles.bottomValue}>{cd.bankName}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
+            <View style={pdfStyles.bottomColRight}>
+              <Text style={pdfStyles.bottomTitle}>Contact Details</Text>
+              {cd.address && (
+                <View style={pdfStyles.bottomRow}>
+                  <Text style={pdfStyles.bottomLabel}>Address:</Text>
+                  <Text style={pdfStyles.bottomValue}>{cd.address}</Text>
+                </View>
+              )}
+              {cd.phone && (
+                <View style={pdfStyles.bottomRow}>
+                  <Text style={pdfStyles.bottomLabel}>Phone:</Text>
+                  <Text style={pdfStyles.bottomValue}>{cd.phone}</Text>
+                </View>
+              )}
+              {cd.email && (
+                <View style={pdfStyles.bottomRow}>
+                  <Text style={pdfStyles.bottomLabel}>Email:</Text>
+                  <Text style={pdfStyles.bottomValue}>{cd.email}</Text>
+                </View>
+              )}
+              {cd.website && (
+                <View style={pdfStyles.bottomRow}>
+                  <Text style={pdfStyles.bottomLabel}>Website:</Text>
+                  <Text style={pdfStyles.bottomValue}>{cd.website}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Footer */}
+        <View style={pdfStyles.footer}>
+          <View style={pdfStyles.footerStripe} />
+          <Text style={pdfStyles.footerText}>
+            Thank you for your business. Please make payment by the due date.
+          </Text>
+          <Text style={[pdfStyles.footerText, { marginTop: 3, color: "#B0BEC5" }]}>
+            Generated by Greenage Technologies ·{" "}
+            {new Date().toLocaleDateString("en-GB")}
+          </Text>
         </View>
       </Page>
     </Document>
@@ -355,17 +581,14 @@ export default function InvoiceDetailPage({
   const [paymentNotes, setPaymentNotes] = useState("");
 
   const [isDownloading, setIsDownloading] = useState(false);
+  const [companyDetails, setCompanyDetails] = useState<any>(null);
 
   const handleDownloadPdf = async () => {
     if (!invoice) return;
     setIsDownloading(true);
     try {
       const blob = await pdf(
-        <InvoiceDocument
-          invoice={invoice}
-          formatCurrency={formatCurrency}
-          formatDate={formatDate}
-        />,
+        <InvoiceDocument invoice={invoice} companyDetails={companyDetails} />,
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
@@ -385,6 +608,10 @@ export default function InvoiceDetailPage({
 
   useEffect(() => {
     fetchInvoice();
+    fetch("/api/settings/company")
+      .then((r) => r.json())
+      .then(setCompanyDetails)
+      .catch(() => {});
   }, [resolvedParams.id]);
 
   const fetchInvoice = async () => {

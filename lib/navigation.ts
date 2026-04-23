@@ -115,7 +115,7 @@ export const navigation: {
             permission: 'products:read',
           },
           {
-            label: 'Inactive Products',
+            label: 'Draft Products',
             path: '/products/inactive',
             icon: BlockIcon,
             permission: 'products:read',
