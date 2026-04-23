@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
@@ -50,11 +52,18 @@ export async function GET(
 
     const doc = new jsPDF();
 
-    const primary: [number, number, number] = [15, 23, 42];
-    const accent: [number, number, number] = [100, 116, 139];
-    const green: [number, number, number] = [22, 163, 74];
-    const red: [number, number, number] = [220, 38, 38];
-    const lightGray: [number, number, number] = [248, 250, 252];
+    const logoPath = join(process.cwd(), 'public', 'greenage_logo_white.png');
+    const logoBase64 = readFileSync(logoPath).toString('base64');
+    const logoDataUrl = `data:image/png;base64,${logoBase64}`;
+
+    // ── Brand colours ──
+    const darkGreen: [number, number, number]  = [0, 61, 52];    // #003D34
+    const brandGreen: [number, number, number] = [31, 164, 59];  // #1FA43B
+    const mintGreen: [number, number, number]  = [211, 242, 175];// #D3F2AF
+    const black: [number, number, number]      = [0, 0, 0];      // #000000
+    const mutedLabel: [number, number, number] = [50, 100, 75];  // muted teal for field labels
+    const red: [number, number, number]        = [220, 38, 38];
+    const lightMint: [number, number, number]  = [235, 250, 222];// soft alternating row tint
 
     const isLowStock =
       material.currentStock > 0 &&
@@ -62,18 +71,21 @@ export async function GET(
     const isOutOfStock = material.currentStock === 0;
 
     // ── Header band ──
-    doc.setFillColor(...primary);
+    doc.setFillColor(...darkGreen);
     doc.rect(0, 0, 210, 44, 'F');
-    doc.setFillColor(234, 88, 12);
+    // Brand-green accent stripe at bottom of header
+    doc.setFillColor(...brandGreen);
     doc.rect(0, 41, 210, 3, 'F');
 
-    doc.setTextColor(255, 255, 255);
+    // Title in mint so it pops on the dark header
+    doc.setTextColor(...mintGreen);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.text('RAW MATERIAL DATASHEET', 15, 20);
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
+    doc.setTextColor(255, 255, 255);
     doc.text(`Part No: ${material.partNumber}`, 15, 29);
     doc.text(
       `Generated: ${new Date().toLocaleDateString('en-GB', {
@@ -85,15 +97,14 @@ export async function GET(
       36,
     );
 
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Greenage Technologies', 195, 20, { align: 'right' });
-    doc.setFontSize(8.5);
+    doc.addImage(logoDataUrl, 'PNG', 160, 5, 35, 14);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('Inventory Management', 195, 28, { align: 'right' });
+    doc.setTextColor(...mintGreen);
+    doc.text('Inventory Management', 195, 26, { align: 'right' });
 
     // ── Material name ──
-    doc.setTextColor(...primary);
+    doc.setTextColor(...darkGreen);
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.text(material.name, 15, 58);
@@ -101,7 +112,7 @@ export async function GET(
     const categoryLabel = material.category.replace(/_/g, ' ');
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...accent);
+    doc.setTextColor(...mutedLabel);
     doc.text(categoryLabel, 15, 65);
 
     // Stock status badge (right of name)
@@ -114,7 +125,7 @@ export async function GET(
       ? red
       : isLowStock
         ? [202, 138, 4]
-        : green;
+        : brandGreen;
     doc.setFillColor(...badgeColor);
     doc.roundedRect(155, 52, 40, 9, 2, 2, 'F');
     doc.setTextColor(255, 255, 255);
@@ -124,12 +135,15 @@ export async function GET(
 
     // ── Section helper ──
     const drawSectionHeader = (label: string, y: number) => {
-      doc.setFillColor(241, 245, 249);
+      // Mint green background with a left brand-green rule
+      doc.setFillColor(...mintGreen);
       doc.rect(15, y, 180, 7, 'F');
-      doc.setTextColor(...primary);
+      doc.setFillColor(...brandGreen);
+      doc.rect(15, y, 3, 7, 'F');
+      doc.setTextColor(...darkGreen);
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'bold');
-      doc.text(label, 18, y + 5);
+      doc.text(label, 21, y + 5);
     };
 
     const drawField = (
@@ -140,19 +154,19 @@ export async function GET(
     ) => {
       doc.setFontSize(7.5);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...accent);
+      doc.setTextColor(...mutedLabel);
       doc.text(label.toUpperCase(), x, y);
       doc.setFontSize(9.5);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...primary);
+      doc.setTextColor(...black);
       doc.text(value || '—', x, y + 6);
     };
 
     const formatCurrency = (n: number) =>
+      'NGN ' +
       new Intl.NumberFormat('en-NG', {
-        style: 'currency',
-        currency: 'NGN',
         minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
       }).format(n);
 
     // ── Basic Info ──
@@ -265,7 +279,7 @@ export async function GET(
     // ── Recent Batches Table ──
     y += 18;
     drawSectionHeader('RECENT RECEIPTS (LAST 20)', y);
-    y += 4;
+    y += 9;
 
     if (material.batches.length > 0) {
       autoTable(doc, {
@@ -282,13 +296,13 @@ export async function GET(
           }),
         ]),
         headStyles: {
-          fillColor: primary,
+          fillColor: darkGreen,
           textColor: [255, 255, 255],
           fontStyle: 'bold',
           fontSize: 7.5,
         },
-        bodyStyles: { fontSize: 8, textColor: [30, 41, 59] },
-        alternateRowStyles: { fillColor: lightGray },
+        bodyStyles: { fontSize: 8, textColor: [0, 0, 0] },
+        alternateRowStyles: { fillColor: lightMint },
         columnStyles: {
           0: { cellWidth: 50 },
           1: { cellWidth: 45 },
@@ -297,11 +311,13 @@ export async function GET(
         },
         margin: { left: 15, right: 15 },
         theme: 'grid',
+        tableLineColor: mintGreen,
+        tableLineWidth: 0.3,
       });
       y = (doc as any).lastAutoTable.finalY + 8;
     } else {
       doc.setFontSize(8.5);
-      doc.setTextColor(...accent);
+      doc.setTextColor(...mutedLabel);
       doc.text('No receipts recorded yet.', 15, y + 10);
       y += 18;
     }
@@ -310,11 +326,11 @@ export async function GET(
     // Start a new page if too close to the bottom
     if (y > 230) {
       doc.addPage();
-      y = 20;
+      y = 25;
     }
 
     drawSectionHeader('RECENT ISSUANCES (LAST 20)', y);
-    y += 4;
+    y += 9;
 
     if (material.issuances.length > 0) {
       autoTable(doc, {
@@ -332,13 +348,13 @@ export async function GET(
           }),
         ]),
         headStyles: {
-          fillColor: primary,
+          fillColor: darkGreen,
           textColor: [255, 255, 255],
           fontStyle: 'bold',
           fontSize: 7.5,
         },
-        bodyStyles: { fontSize: 8, textColor: [30, 41, 59] },
-        alternateRowStyles: { fillColor: lightGray },
+        bodyStyles: { fontSize: 8, textColor: [0, 0, 0] },
+        alternateRowStyles: { fillColor: lightMint },
         columnStyles: {
           0: { cellWidth: 38 },
           1: { cellWidth: 40 },
@@ -348,11 +364,13 @@ export async function GET(
         },
         margin: { left: 15, right: 15 },
         theme: 'grid',
+        tableLineColor: mintGreen,
+        tableLineWidth: 0.3,
       });
       y = (doc as any).lastAutoTable.finalY + 8;
     } else {
       doc.setFontSize(8.5);
-      doc.setTextColor(...accent);
+      doc.setTextColor(...mutedLabel);
       doc.text('No issuances recorded yet.', 15, y + 10);
     }
 
@@ -361,10 +379,14 @@ export async function GET(
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       const ph = doc.internal.pageSize.height;
-      doc.setFillColor(248, 250, 252);
+      // Dark green footer bar
+      doc.setFillColor(...darkGreen);
       doc.rect(0, ph - 14, 210, 14, 'F');
+      // Brand-green left accent on footer
+      doc.setFillColor(...brandGreen);
+      doc.rect(0, ph - 14, 3, 14, 'F');
       doc.setFontSize(7);
-      doc.setTextColor(...accent);
+      doc.setTextColor(...mintGreen);
       doc.text(
         `${material.partNumber}  ·  ${material.name}  ·  Page ${i} of ${pageCount}  ·  Generated ${new Date().toLocaleString('en-GB')}  ·  Greenage Technologies`,
         105,

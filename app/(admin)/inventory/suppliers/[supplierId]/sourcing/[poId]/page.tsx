@@ -158,8 +158,12 @@ export default function PurchaseOrderDetailPage({
   const [receiptConfirmOpen, setReceiptConfirmOpen] = useState(false);
   const [pendingReceiptItems, setPendingReceiptItems] = useState<
     {
-      materialId: string;
-      materialName: string;
+      itemType: string;
+      materialId?: string;
+      materialName?: string;
+      toolGroupId?: string;
+      toolGroupName?: string;
+      groupNumber?: string;
       quantity: number;
       unit: string;
     }[]
@@ -467,6 +471,10 @@ export default function PurchaseOrderDetailPage({
     }
   };
 
+  // Returns a unique key for any PO line item (material or tool)
+  const getItemKey = (item: any): string =>
+    item.materialId || item.toolGroupId || "";
+
   // Opens confirmation dialog with validated items
   const handleRecordReceipt = () => {
     if (!po) return;
@@ -475,38 +483,41 @@ export default function PurchaseOrderDetailPage({
       ? po.receivedItems
       : [];
 
-    // Build map of existing received quantities
+    // Build map of existing received quantities keyed by materialId or toolGroupId
     const receivedMap: Record<string, number> = {};
     existingReceived.forEach((r: any) => {
-      receivedMap[r.materialId] =
-        (receivedMap[r.materialId] || 0) + (r.receivedQty || 0);
+      const key = r.materialId || r.toolGroupId;
+      if (key) receivedMap[key] = (receivedMap[key] || 0) + (r.receivedQty || 0);
     });
 
     // Validate selected items
-    const itemsToReceive: {
-      materialId: string;
-      materialName: string;
-      quantity: number;
-      unit: string;
-    }[] = [];
+    const itemsToReceive: typeof pendingReceiptItems = [];
     for (const item of poItems) {
-      const mid = item.materialId;
-      if (!receivingChecked[mid]) continue;
-      const qty = receivingQtys[mid] || 0;
+      const key = getItemKey(item);
+      if (!receivingChecked[key]) continue;
+      const qty = receivingQtys[key] || 0;
       if (qty <= 0) continue;
-      const alreadyReceived = receivedMap[mid] || 0;
+      const alreadyReceived = receivedMap[key] || 0;
       const remaining = (item.quantity || 0) - alreadyReceived;
+      const displayName =
+        item.itemType === "tool"
+          ? item.toolGroupName || key
+          : item.materialName || key;
       if (qty > remaining) {
         setError(
-          `Cannot receive more than remaining ${remaining} for ${item.materialName || mid}`,
+          `Cannot receive more than remaining ${remaining} for ${displayName}`,
         );
         return;
       }
       itemsToReceive.push({
-        materialId: mid,
-        materialName: item.materialName || mid,
+        itemType: item.itemType || "material",
+        materialId: item.materialId,
+        materialName: item.materialName,
+        toolGroupId: item.toolGroupId,
+        toolGroupName: item.toolGroupName,
+        groupNumber: item.groupNumber,
         quantity: qty,
-        unit: item.unit || "pcs",
+        unit: item.unit || "unit",
       });
     }
 
@@ -2188,11 +2199,11 @@ export default function PurchaseOrderDetailPage({
             ? po.receivedItems
             : [];
 
-          // Build cumulative received map
+          // Build cumulative received map keyed by materialId or toolGroupId
           const receivedMap: Record<string, number> = {};
           existingReceived.forEach((r: any) => {
-            receivedMap[r.materialId] =
-              (receivedMap[r.materialId] || 0) + (r.receivedQty || 0);
+            const key = r.materialId || r.toolGroupId;
+            if (key) receivedMap[key] = (receivedMap[key] || 0) + (r.receivedQty || 0);
           });
 
           const totalOrdered = poItems.reduce(
@@ -2200,11 +2211,11 @@ export default function PurchaseOrderDetailPage({
             0,
           );
           const totalReceived = poItems.reduce(
-            (sum: number, i: any) => sum + (receivedMap[i.materialId] || 0),
+            (sum: number, i: any) => sum + (receivedMap[getItemKey(i)] || 0),
             0,
           );
           const allFullyReceived = poItems.every(
-            (i: any) => (receivedMap[i.materialId] || 0) >= (i.quantity || 0),
+            (i: any) => (receivedMap[getItemKey(i)] || 0) >= (i.quantity || 0),
           );
           const hasPartialReceipt = totalReceived > 0 && !allFullyReceived;
           const receivedPct =
@@ -2216,12 +2227,13 @@ export default function PurchaseOrderDetailPage({
           const selectedForGRN = poItems
             .filter(
               (i: any) =>
-                receivingChecked[i.materialId] &&
-                (receivingQtys[i.materialId] || 0) > 0,
+                receivingChecked[getItemKey(i)] &&
+                (receivingQtys[getItemKey(i)] || 0) > 0,
             )
             .map((i: any) => ({
+              itemType: i.itemType || "material",
               materialId: i.materialId,
-              quantity: receivingQtys[i.materialId] || 0,
+              quantity: receivingQtys[getItemKey(i)] || 0,
             }));
 
           return (
@@ -2376,26 +2388,26 @@ export default function PurchaseOrderDetailPage({
                               checked={
                                 poItems.length > 0 &&
                                 poItems.every(
-                                  (i: any) => receivingChecked[i.materialId],
+                                  (i: any) => receivingChecked[getItemKey(i)],
                                 )
                               }
                               indeterminate={
                                 poItems.some(
-                                  (i: any) => receivingChecked[i.materialId],
+                                  (i: any) => receivingChecked[getItemKey(i)],
                                 ) &&
                                 !poItems.every(
-                                  (i: any) => receivingChecked[i.materialId],
+                                  (i: any) => receivingChecked[getItemKey(i)],
                                 )
                               }
                               onChange={(e) => {
                                 const checked = e.target.checked;
                                 const next: Record<string, boolean> = {};
                                 poItems.forEach((i: any) => {
+                                  const key = getItemKey(i);
                                   const remaining =
                                     (i.quantity || 0) -
-                                    (receivedMap[i.materialId] || 0);
-                                  if (remaining > 0)
-                                    next[i.materialId] = checked;
+                                    (receivedMap[key] || 0);
+                                  if (remaining > 0) next[key] = checked;
                                 });
                                 setReceivingChecked(next);
                                 if (checked) {
@@ -2403,11 +2415,12 @@ export default function PurchaseOrderDetailPage({
                                     ...receivingQtys,
                                   };
                                   poItems.forEach((i: any) => {
+                                    const key = getItemKey(i);
                                     const remaining =
                                       (i.quantity || 0) -
-                                      (receivedMap[i.materialId] || 0);
-                                    if (remaining > 0 && !qtys[i.materialId])
-                                      qtys[i.materialId] = remaining;
+                                      (receivedMap[key] || 0);
+                                    if (remaining > 0 && !qtys[key])
+                                      qtys[key] = remaining;
                                   });
                                   setReceivingQtys(qtys);
                                 }
@@ -2421,7 +2434,7 @@ export default function PurchaseOrderDetailPage({
                               fontSize: 12,
                             }}
                           >
-                            Material
+                            Item
                           </TableCell>
                           <TableCell
                             align="right"
@@ -2477,9 +2490,16 @@ export default function PurchaseOrderDetailPage({
                       </TableHead>
                       <TableBody>
                         {poItems.map((item: any) => {
-                          const mid = item.materialId;
+                          const key = getItemKey(item);
+                          const isTool = item.itemType === "tool";
+                          const displayName = isTool
+                            ? item.toolGroupName || key
+                            : item.materialName || key;
+                          const subLabel = isTool
+                            ? item.groupNumber
+                            : item.partNumber;
                           const ordered = item.quantity || 0;
-                          const received = receivedMap[mid] || 0;
+                          const received = receivedMap[key] || 0;
                           const remaining = Math.max(0, ordered - received);
                           const itemPct =
                             ordered > 0
@@ -2489,11 +2509,11 @@ export default function PurchaseOrderDetailPage({
 
                           return (
                             <TableRow
-                              key={mid}
+                              key={key}
                               sx={{
                                 bgcolor: fullyReceived
                                   ? "#f0fdf4"
-                                  : receivingChecked[mid]
+                                  : receivingChecked[key]
                                     ? "#eff6ff"
                                     : "transparent",
                                 opacity: fullyReceived ? 0.75 : 1,
@@ -2502,41 +2522,50 @@ export default function PurchaseOrderDetailPage({
                               <TableCell padding="checkbox">
                                 <Checkbox
                                   size="small"
-                                  checked={!!receivingChecked[mid]}
+                                  checked={!!receivingChecked[key]}
                                   disabled={fullyReceived}
                                   onChange={(e) => {
                                     setReceivingChecked((prev) => ({
                                       ...prev,
-                                      [mid]: e.target.checked,
+                                      [key]: e.target.checked,
                                     }));
-                                    if (
-                                      e.target.checked &&
-                                      !receivingQtys[mid]
-                                    ) {
+                                    if (e.target.checked && !receivingQtys[key]) {
                                       setReceivingQtys((prev) => ({
                                         ...prev,
-                                        [mid]: remaining,
+                                        [key]: remaining,
                                       }));
                                     }
                                   }}
                                 />
                               </TableCell>
                               <TableCell>
-                                <Typography variant="body2" fontWeight={600}>
-                                  {item.materialName || mid}
-                                </Typography>
-                                {item.partNumber && (
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
-                                    {item.partNumber}
+                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                                  <Typography variant="body2" fontWeight={600}>
+                                    {displayName}
+                                  </Typography>
+                                  {isTool && (
+                                    <Chip
+                                      label="Tool"
+                                      size="small"
+                                      sx={{
+                                        fontSize: 10,
+                                        height: 18,
+                                        bgcolor: "#e0e7ff",
+                                        color: "#4338ca",
+                                        fontWeight: 600,
+                                      }}
+                                    />
+                                  )}
+                                </Box>
+                                {subLabel && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    {subLabel}
                                   </Typography>
                                 )}
                               </TableCell>
                               <TableCell align="right">
                                 <Typography variant="body2">
-                                  {ordered} {item.unit || "pcs"}
+                                  {ordered} {item.unit || "unit"}
                                 </Typography>
                               </TableCell>
                               <TableCell align="right">
@@ -2581,10 +2610,7 @@ export default function PurchaseOrderDetailPage({
                                     },
                                   }}
                                 />
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
+                                <Typography variant="caption" color="text.secondary">
                                   {itemPct.toFixed(0)}%
                                 </Typography>
                               </TableCell>
@@ -2600,23 +2626,20 @@ export default function PurchaseOrderDetailPage({
                                       color: "#16a34a",
                                     }}
                                   />
-                                ) : receivingChecked[mid] ? (
+                                ) : receivingChecked[key] ? (
                                   <TextField
                                     type="number"
                                     variant="standard"
                                     size="small"
-                                    value={receivingQtys[mid] || ""}
+                                    value={receivingQtys[key] || ""}
                                     onChange={(e) => {
                                       const val = Math.max(
                                         0,
-                                        Math.min(
-                                          remaining,
-                                          Number(e.target.value) || 0,
-                                        ),
+                                        Math.min(remaining, Number(e.target.value) || 0),
                                       );
                                       setReceivingQtys((prev) => ({
                                         ...prev,
-                                        [mid]: val,
+                                        [key]: val,
                                       }));
                                     }}
                                     inputProps={{
@@ -2626,10 +2649,7 @@ export default function PurchaseOrderDetailPage({
                                     }}
                                   />
                                 ) : (
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
+                                  <Typography variant="caption" color="text.secondary">
                                     —
                                   </Typography>
                                 )}
@@ -2691,7 +2711,7 @@ export default function PurchaseOrderDetailPage({
                         <TableHead>
                           <TableRow sx={{ bgcolor: "#f8fafc" }}>
                             <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>
-                              Material
+                              Item
                             </TableCell>
                             <TableCell
                               align="right"
@@ -2709,8 +2729,17 @@ export default function PurchaseOrderDetailPage({
                             <TableRow key={i}>
                               <TableCell>
                                 <Typography variant="body2">
-                                  {r.materialName || r.materialId}
+                                  {r.itemType === "tool"
+                                    ? r.toolGroupName || r.toolGroupId
+                                    : r.materialName || r.materialId}
                                 </Typography>
+                                {r.itemType === "tool" && (
+                                  <Chip
+                                    label="Tool"
+                                    size="small"
+                                    sx={{ fontSize: 10, height: 16, bgcolor: "#e0e7ff", color: "#4338ca", fontWeight: 600, ml: 0.5 }}
+                                  />
+                                )}
                               </TableCell>
                               <TableCell align="right">
                                 <Typography variant="body2" fontWeight={600}>
@@ -2927,7 +2956,7 @@ export default function PurchaseOrderDetailPage({
                               fontSize: 12,
                             }}
                           >
-                            Material
+                            Item
                           </TableCell>
                           <TableCell
                             align="right"
@@ -2951,12 +2980,23 @@ export default function PurchaseOrderDetailPage({
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {pendingReceiptItems.map((item) => (
-                          <TableRow key={item.materialId}>
+                        {pendingReceiptItems.map((item, idx) => (
+                          <TableRow key={item.materialId || item.toolGroupId || idx}>
                             <TableCell>
-                              <Typography variant="body2" fontWeight={600}>
-                                {item.materialName}
-                              </Typography>
+                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {item.itemType === "tool"
+                                    ? item.toolGroupName
+                                    : item.materialName}
+                                </Typography>
+                                {item.itemType === "tool" && (
+                                  <Chip
+                                    label="Tool"
+                                    size="small"
+                                    sx={{ fontSize: 10, height: 18, bgcolor: "#e0e7ff", color: "#4338ca", fontWeight: 600 }}
+                                  />
+                                )}
+                              </Box>
                             </TableCell>
                             <TableCell align="right">
                               <Typography
@@ -3146,8 +3186,8 @@ export default function PurchaseOrderDetailPage({
                   : [];
                 const compReceivedMap: Record<string, number> = {};
                 compReceived.forEach((r: any) => {
-                  compReceivedMap[r.materialId] =
-                    (compReceivedMap[r.materialId] || 0) + (r.receivedQty || 0);
+                  const key = r.materialId || r.toolGroupId;
+                  if (key) compReceivedMap[key] = (compReceivedMap[key] || 0) + (r.receivedQty || 0);
                 });
                 const compTotalOrdered = compItems.reduce(
                   (s: number, i: any) => s + (i.quantity || 0),
@@ -3155,7 +3195,7 @@ export default function PurchaseOrderDetailPage({
                 );
                 const compTotalReceived = compItems.reduce(
                   (s: number, i: any) =>
-                    s + (compReceivedMap[i.materialId] || 0),
+                    s + (compReceivedMap[i.materialId || i.toolGroupId] || 0),
                   0,
                 );
                 const receiptIncomplete =

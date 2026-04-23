@@ -17,12 +17,17 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  ToggleButton,
+  ToggleButtonGroup,
+  Chip,
 } from "@mui/material";
 import Grid from "@mui/material/GridLegacy";
 import {
   ArrowBack as ArrowBackIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
+  Build as ToolIcon,
+  Category as MaterialIcon,
 } from "@mui/icons-material";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
@@ -35,11 +40,28 @@ interface Material {
   unitCost?: number;
 }
 
+interface ToolGroup {
+  id: string;
+  name: string;
+  groupNumber: string;
+  category: string;
+  unitCost?: number;
+  totalQuantity: number;
+  availableQuantity: number;
+}
+
 interface POFormData {
   items: {
+    itemType: "material" | "tool";
+    // material fields
     materialId: string;
     materialName: string;
     partNumber: string;
+    // tool fields
+    toolGroupId: string;
+    toolGroupName: string;
+    groupNumber: string;
+    // shared
     unit: string;
     quantity: number;
     unitCost: number;
@@ -48,6 +70,19 @@ interface POFormData {
   discount: number;
   notes: string;
 }
+
+const emptyItem = (): POFormData["items"][number] => ({
+  itemType: "material",
+  materialId: "",
+  materialName: "",
+  partNumber: "",
+  toolGroupId: "",
+  toolGroupName: "",
+  groupNumber: "",
+  unit: "",
+  quantity: 1,
+  unitCost: 0,
+});
 
 export default function NewPurchaseOrderPage({
   params,
@@ -58,7 +93,9 @@ export default function NewPurchaseOrderPage({
   const router = useRouter();
   const searchParams = useSearchParams();
   const groupId = searchParams.get("groupId");
+
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [toolGroups, setToolGroups] = useState<ToolGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [supplierName, setSupplierName] = useState("");
@@ -77,19 +114,11 @@ export default function NewPurchaseOrderPage({
     control,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<POFormData>({
     defaultValues: {
-      items: [
-        {
-          materialId: "",
-          materialName: "",
-          partNumber: "",
-          unit: "",
-          quantity: 1,
-          unitCost: 0,
-        },
-      ],
+      items: [emptyItem()],
       tax: 0,
       discount: 0,
       notes: "",
@@ -114,16 +143,17 @@ export default function NewPurchaseOrderPage({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [materialsRes, supplierRes] = await Promise.all([
+        const [materialsRes, supplierRes, toolGroupsRes] = await Promise.all([
           fetch("/api/inventory/materials?limit=1000"),
           fetch(`/api/inventory/suppliers/${supplierId}`),
+          fetch("/api/inventory/tool-groups?limit=1000"),
         ]);
-        const [materialsData, supplierData] = await Promise.all([
-          materialsRes.json(),
-          supplierRes.json(),
-        ]);
+        const [materialsData, supplierData, toolGroupsData] = await Promise.all(
+          [materialsRes.json(), supplierRes.json(), toolGroupsRes.json()],
+        );
         setMaterials(materialsData.materials || []);
         setSupplierName(supplierData.name || "");
+        setToolGroups(toolGroupsData.toolGroups || []);
       } catch (err) {
         console.error("Error fetching data:", err);
       }
@@ -153,12 +183,7 @@ export default function NewPurchaseOrderPage({
       const material = await res.json();
       setMaterials((prev) => [...prev, material]);
       setNewMaterialDialog(false);
-      setNewMaterialData({
-        name: "",
-        partNumber: "",
-        unit: "pcs",
-        category: "OTHER",
-      });
+      setNewMaterialData({ name: "", partNumber: "", unit: "pcs", category: "OTHER" });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -171,10 +196,30 @@ export default function NewPurchaseOrderPage({
       setLoading(true);
       setError("");
 
-      const enrichedItems = data.items.map((item) => ({
-        ...item,
-        totalCost: item.quantity * item.unitCost,
-      }));
+      const enrichedItems = data.items.map((item) => {
+        if (item.itemType === "tool") {
+          return {
+            itemType: "tool",
+            toolGroupId: item.toolGroupId,
+            toolGroupName: item.toolGroupName,
+            groupNumber: item.groupNumber,
+            unit: item.unit || "unit",
+            quantity: item.quantity,
+            unitCost: item.unitCost,
+            totalCost: item.quantity * item.unitCost,
+          };
+        }
+        return {
+          itemType: "material",
+          materialId: item.materialId,
+          materialName: item.materialName,
+          partNumber: item.partNumber,
+          unit: item.unit,
+          quantity: item.quantity,
+          unitCost: item.unitCost,
+          totalCost: item.quantity * item.unitCost,
+        };
+      });
 
       const res = await fetch("/api/inventory/purchase-orders", {
         method: "POST",
@@ -218,7 +263,6 @@ export default function NewPurchaseOrderPage({
         >
           Back to Sourcing
         </Button>
-
         <Typography variant="h5" fontWeight={700}>
           New Purchase Order
         </Typography>
@@ -235,12 +279,7 @@ export default function NewPurchaseOrderPage({
 
       <Paper
         elevation={0}
-        sx={{
-          p: 4,
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 2,
-        }}
+        sx={{ p: 4, border: "1px solid", borderColor: "divider", borderRadius: 2 }}
       >
         <Box component="form" onSubmit={handleSubmit(handleFormSubmit)}>
           {/* Items Header */}
@@ -267,16 +306,7 @@ export default function NewPurchaseOrderPage({
               <Tooltip title="Add Item">
                 <IconButton
                   size="small"
-                  onClick={() =>
-                    append({
-                      materialId: "",
-                      materialName: "",
-                      partNumber: "",
-                      unit: "",
-                      quantity: 1,
-                      unitCost: 0,
-                    })
-                  }
+                  onClick={() => append(emptyItem())}
                   sx={{ bgcolor: "#f0f0f0" }}
                 >
                   <AddIcon />
@@ -286,156 +316,317 @@ export default function NewPurchaseOrderPage({
           </Box>
 
           {/* Items */}
-          {fields.map((field, index) => (
-            <Box
-              key={field.id}
-              sx={{
-                mb: 3,
-                p: 2.5,
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 2,
-                bgcolor: index % 2 === 0 ? "transparent" : "action.hover",
-              }}
-            >
+          {fields.map((field, index) => {
+            const itemType = watchedItems[index]?.itemType || "material";
+            return (
               <Box
+                key={field.id}
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  mb: 2,
+                  mb: 3,
+                  p: 2.5,
+                  border: "1px solid",
+                  borderColor: itemType === "tool" ? "#c7d2fe" : "divider",
+                  borderRadius: 2,
+                  bgcolor:
+                    itemType === "tool"
+                      ? "#eef2ff"
+                      : index % 2 === 0
+                        ? "transparent"
+                        : "action.hover",
                 }}
               >
-                <Typography variant="body2" fontWeight={600}>
-                  Item {index + 1}
-                </Typography>
-                {fields.length > 1 && (
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => remove(index)}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                )}
-              </Box>
-
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={5}>
-                  <Controller
-                    name={`items.${index}.materialId`}
-                    control={control}
-                    rules={{ required: "Material is required" }}
-                    render={({ field: formField }) => {
-                      const selectedMaterial =
-                        materials.find((m) => m.id === formField.value) || null;
-
-                      return (
-                        <Autocomplete<Material>
-                          options={materials}
-                          value={selectedMaterial}
-                          getOptionLabel={(o) => `${o.partNumber} – ${o.name}`}
-                          onChange={(_, value) => {
-                            formField.onChange(value?.id || "");
-                            if (value) {
-                              const itemsArr = watchedItems;
-                              itemsArr[index] = {
-                                ...itemsArr[index],
-                                materialId: value.id,
-                                materialName: value.name,
-                                partNumber: value.partNumber,
-                                unit: value.unit,
-                                unitCost: value.unitCost || 0,
-                              };
-                            }
+                {/* Row header: item number + type toggle + remove */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 2,
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Typography variant="body2" fontWeight={600}>
+                      Item {index + 1}
+                    </Typography>
+                    <Controller
+                      name={`items.${index}.itemType`}
+                      control={control}
+                      render={({ field: f }) => (
+                        <ToggleButtonGroup
+                          size="small"
+                          value={f.value}
+                          exclusive
+                          onChange={(_, val) => {
+                            if (!val) return;
+                            f.onChange(val);
+                            // Reset item-specific fields when switching type
+                            setValue(`items.${index}.materialId`, "");
+                            setValue(`items.${index}.materialName`, "");
+                            setValue(`items.${index}.partNumber`, "");
+                            setValue(`items.${index}.toolGroupId`, "");
+                            setValue(`items.${index}.toolGroupName`, "");
+                            setValue(`items.${index}.groupNumber`, "");
+                            setValue(`items.${index}.unit`, "");
+                            setValue(`items.${index}.unitCost`, 0);
                           }}
-                          disabled={loading}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Material"
-                              variant="standard"
-                              required
-                              error={!!errors.items?.[index]?.materialId}
-                              helperText={
-                                errors.items?.[index]?.materialId?.message
-                              }
-                            />
-                          )}
-                        />
-                      );
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={6} md={2}>
-                  <Controller
-                    name={`items.${index}.quantity`}
-                    control={control}
-                    rules={{
-                      required: "Required",
-                      min: { value: 1, message: "Min 1" },
-                    }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        label="Quantity"
-                        type="number"
-                        variant="standard"
-                        fullWidth
-                        disabled={loading}
-                        error={!!errors.items?.[index]?.quantity}
-                        helperText={errors.items?.[index]?.quantity?.message}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                          sx={{
+                            "& .MuiToggleButton-root": {
+                              py: 0.25,
+                              px: 1.25,
+                              fontSize: 11,
+                              fontWeight: 600,
+                              textTransform: "none",
+                              border: "1px solid #e2e8f0",
+                            },
+                            "& .Mui-selected": {
+                              bgcolor:
+                                f.value === "tool" ? "#4f46e5 !important" : "#0F172A !important",
+                              color: "white !important",
+                            },
+                          }}
+                        >
+                          <ToggleButton value="material">
+                            <MaterialIcon sx={{ fontSize: 13, mr: 0.5 }} />
+                            Material
+                          </ToggleButton>
+                          <ToggleButton value="tool">
+                            <ToolIcon sx={{ fontSize: 13, mr: 0.5 }} />
+                            Tool
+                          </ToggleButton>
+                        </ToggleButtonGroup>
+                      )}
+                    />
+                    {itemType === "tool" && (
+                      <Chip
+                        label="Tool Group"
+                        size="small"
+                        sx={{
+                          fontSize: 10,
+                          height: 20,
+                          bgcolor: "#e0e7ff",
+                          color: "#4338ca",
+                          fontWeight: 600,
+                        }}
                       />
                     )}
-                  />
-                </Grid>
-                <Grid item xs={6} md={2}>
-                  <Controller
-                    name={`items.${index}.unitCost`}
-                    control={control}
-                    rules={{ required: "Required" }}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        label="Unit Cost (₦)"
-                        type="number"
-                        variant="standard"
-                        fullWidth
-                        disabled={loading}
-                        error={!!errors.items?.[index]?.unitCost}
-                        helperText={errors.items?.[index]?.unitCost?.message}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    )}
-                  />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "flex-end",
-                      height: "100%",
-                    }}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      Line Total
-                    </Typography>
-                    <Typography variant="h6" fontWeight={700}>
-                      ₦
-                      {(
-                        (watchedItems[index]?.quantity || 0) *
-                        (watchedItems[index]?.unitCost || 0)
-                      ).toLocaleString("en-NG", {
-                        minimumFractionDigits: 2,
-                      })}
-                    </Typography>
                   </Box>
+                  {fields.length > 1 && (
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => remove(index)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                </Box>
+
+                <Grid container spacing={2}>
+                  {/* Item picker — material or tool group */}
+                  <Grid item xs={12} md={5}>
+                    {itemType === "material" ? (
+                      <Controller
+                        name={`items.${index}.materialId`}
+                        control={control}
+                        rules={{ required: "Material is required" }}
+                        render={({ field: formField }) => {
+                          const selected =
+                            materials.find((m) => m.id === formField.value) ||
+                            null;
+                          return (
+                            <Autocomplete<Material>
+                              options={materials}
+                              value={selected}
+                              getOptionLabel={(o) =>
+                                `${o.partNumber} – ${o.name}`
+                              }
+                              onChange={(_, value) => {
+                                formField.onChange(value?.id || "");
+                                if (value) {
+                                  setValue(
+                                    `items.${index}.materialName`,
+                                    value.name,
+                                  );
+                                  setValue(
+                                    `items.${index}.partNumber`,
+                                    value.partNumber,
+                                  );
+                                  setValue(
+                                    `items.${index}.unit`,
+                                    value.unit,
+                                  );
+                                  setValue(
+                                    `items.${index}.unitCost`,
+                                    value.unitCost || 0,
+                                  );
+                                }
+                              }}
+                              disabled={loading}
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  label="Material"
+                                  variant="standard"
+                                  required
+                                  error={!!errors.items?.[index]?.materialId}
+                                  helperText={
+                                    errors.items?.[index]?.materialId?.message
+                                  }
+                                />
+                              )}
+                            />
+                          );
+                        }}
+                      />
+                    ) : (
+                      <Controller
+                        name={`items.${index}.toolGroupId`}
+                        control={control}
+                        rules={{ required: "Tool group is required" }}
+                        render={({ field: formField }) => {
+                          const selected =
+                            toolGroups.find(
+                              (tg) => tg.id === formField.value,
+                            ) || null;
+                          return (
+                            <Autocomplete<ToolGroup>
+                              options={toolGroups}
+                              value={selected}
+                              getOptionLabel={(o) =>
+                                `${o.groupNumber} – ${o.name}`
+                              }
+                              renderOption={(props, option) => {
+                                const { key, ...rest } = props;
+                                return (
+                                  <li key={option.id} {...rest}>
+                                    <Box>
+                                      <Typography
+                                        variant="body2"
+                                        fontWeight={600}
+                                      >
+                                        {option.groupNumber} — {option.name}
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                      >
+                                        {option.category} • Available:{" "}
+                                        {option.availableQuantity}
+                                      </Typography>
+                                    </Box>
+                                  </li>
+                                );
+                              }}
+                              onChange={(_, value) => {
+                                formField.onChange(value?.id || "");
+                                if (value) {
+                                  setValue(
+                                    `items.${index}.toolGroupName`,
+                                    value.name,
+                                  );
+                                  setValue(
+                                    `items.${index}.groupNumber`,
+                                    value.groupNumber,
+                                  );
+                                  setValue(`items.${index}.unit`, "unit");
+                                  setValue(
+                                    `items.${index}.unitCost`,
+                                    value.unitCost || 0,
+                                  );
+                                }
+                              }}
+                              disabled={loading}
+                              renderInput={(params) => (
+                                <TextField
+                                  {...params}
+                                  label="Tool Group"
+                                  variant="standard"
+                                  required
+                                  error={!!errors.items?.[index]?.toolGroupId}
+                                  helperText={
+                                    errors.items?.[index]?.toolGroupId?.message
+                                  }
+                                />
+                              )}
+                            />
+                          );
+                        }}
+                      />
+                    )}
+                  </Grid>
+
+                  {/* Quantity */}
+                  <Grid item xs={6} md={2}>
+                    <Controller
+                      name={`items.${index}.quantity`}
+                      control={control}
+                      rules={{ required: "Required", min: { value: 1, message: "Min 1" } }}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          label="Quantity"
+                          type="number"
+                          variant="standard"
+                          fullWidth
+                          disabled={loading}
+                          error={!!errors.items?.[index]?.quantity}
+                          helperText={errors.items?.[index]?.quantity?.message}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  {/* Unit Cost */}
+                  <Grid item xs={6} md={2}>
+                    <Controller
+                      name={`items.${index}.unitCost`}
+                      control={control}
+                      rules={{ required: "Required" }}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          label="Unit Cost (₦)"
+                          type="number"
+                          variant="standard"
+                          fullWidth
+                          disabled={loading}
+                          error={!!errors.items?.[index]?.unitCost}
+                          helperText={errors.items?.[index]?.unitCost?.message}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  {/* Line Total */}
+                  <Grid item xs={12} md={3}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "flex-end",
+                        height: "100%",
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        Line Total
+                      </Typography>
+                      <Typography variant="h6" fontWeight={700}>
+                        ₦
+                        {(
+                          (watchedItems[index]?.quantity || 0) *
+                          (watchedItems[index]?.unitCost || 0)
+                        ).toLocaleString("en-NG", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </Typography>
+                    </Box>
+                  </Grid>
                 </Grid>
-              </Grid>
-            </Box>
-          ))}
+              </Box>
+            );
+          })}
 
           <Divider sx={{ my: 3 }} />
 
@@ -473,9 +664,7 @@ export default function NewPurchaseOrderPage({
                           variant="standard"
                           fullWidth
                           disabled={loading}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
+                          onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       )}
                     />
@@ -492,9 +681,7 @@ export default function NewPurchaseOrderPage({
                           variant="standard"
                           fullWidth
                           disabled={loading}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
+                          onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       )}
                     />
@@ -512,11 +699,7 @@ export default function NewPurchaseOrderPage({
                   }}
                 >
                   <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      mb: 0.5,
-                    }}
+                    sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
                   >
                     <Typography variant="body2" color="text.secondary">
                       Subtotal
@@ -530,11 +713,7 @@ export default function NewPurchaseOrderPage({
                   </Box>
                   {(watchedTax || 0) > 0 && (
                     <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 0.5,
-                      }}
+                      sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
                     >
                       <Typography variant="body2" color="text.secondary">
                         Tax
@@ -549,11 +728,7 @@ export default function NewPurchaseOrderPage({
                   )}
                   {(watchedDiscount || 0) > 0 && (
                     <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 0.5,
-                      }}
+                      sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}
                     >
                       <Typography variant="body2" color="text.secondary">
                         Discount
@@ -567,9 +742,7 @@ export default function NewPurchaseOrderPage({
                     </Box>
                   )}
                   <Divider sx={{ my: 1 }} />
-                  <Box
-                    sx={{ display: "flex", justifyContent: "space-between" }}
-                  >
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                     <Typography variant="subtitle1" fontWeight={700}>
                       Total
                     </Typography>

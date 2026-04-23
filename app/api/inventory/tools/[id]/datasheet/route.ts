@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
@@ -40,34 +42,43 @@ export async function GET(
 
     const doc = new jsPDF();
 
-    const primary: [number, number, number] = [15, 23, 42];
-    const accent: [number, number, number] = [100, 116, 139];
-    const lightGray: [number, number, number] = [248, 250, 252];
+    const logoPath = join(process.cwd(), 'public', 'greenage_logo_white.png');
+    const logoBase64 = readFileSync(logoPath).toString('base64');
+    const logoDataUrl = `data:image/png;base64,${logoBase64}`;
+
+    // ── Brand colours ──
+    const darkGreen: [number, number, number]  = [0, 61, 52];     // #003D34
+    const brandGreen: [number, number, number] = [31, 164, 59];   // #1FA43B
+    const mintGreen: [number, number, number]  = [211, 242, 175]; // #D3F2AF
+    const black: [number, number, number]      = [0, 0, 0];
+    const mutedLabel: [number, number, number] = [50, 100, 75];
+    const lightMint: [number, number, number]  = [235, 250, 222];
 
     const statusColors: Record<string, [number, number, number]> = {
-      AVAILABLE: [22, 163, 74],
-      IN_USE: [202, 138, 4],
+      AVAILABLE:         brandGreen,
+      IN_USE:            [202, 138, 4],
       UNDER_MAINTENANCE: [37, 99, 235],
-      RESERVED: [147, 51, 234],
-      DAMAGED: [220, 38, 38],
-      RETIRED: [100, 116, 139],
+      RESERVED:          [147, 51, 234],
+      DAMAGED:           [220, 38, 38],
+      RETIRED:           [100, 116, 139],
     };
     const badgeColor: [number, number, number] =
       statusColors[tool.status] ?? ([100, 116, 139] as [number, number, number]);
 
-    // ── Header ──
-    doc.setFillColor(...primary);
+    // ── Header band ──
+    doc.setFillColor(...darkGreen);
     doc.rect(0, 0, 210, 44, 'F');
-    doc.setFillColor(234, 88, 12);
+    doc.setFillColor(...brandGreen);
     doc.rect(0, 41, 210, 3, 'F');
 
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(...mintGreen);
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.text('TOOL DATASHEET', 15, 20);
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
+    doc.setTextColor(255, 255, 255);
     doc.text(`Tool ID: ${tool.toolId}`, 15, 29);
     doc.text(
       `Generated: ${new Date().toLocaleDateString('en-GB', {
@@ -79,15 +90,14 @@ export async function GET(
       36,
     );
 
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Greenage Technologies', 195, 20, { align: 'right' });
-    doc.setFontSize(8.5);
+    doc.addImage(logoDataUrl, 'PNG', 160, 5, 35, 14);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.text('Inventory Management', 195, 28, { align: 'right' });
+    doc.setTextColor(...mintGreen);
+    doc.text('Inventory Management', 195, 26, { align: 'right' });
 
     // ── Tool name + status badge ──
-    doc.setTextColor(...primary);
+    doc.setTextColor(...darkGreen);
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.text(tool.name, 15, 58);
@@ -95,7 +105,7 @@ export async function GET(
     const catLabel = tool.category.replace(/_/g, ' ');
     doc.setFontSize(8.5);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...accent);
+    doc.setTextColor(...mutedLabel);
     doc.text(catLabel, 15, 65);
 
     doc.setFillColor(...badgeColor);
@@ -107,30 +117,32 @@ export async function GET(
 
     // ── Helpers ──
     const drawSectionHeader = (label: string, y: number) => {
-      doc.setFillColor(241, 245, 249);
+      doc.setFillColor(...mintGreen);
       doc.rect(15, y, 180, 7, 'F');
-      doc.setTextColor(...primary);
+      doc.setFillColor(...brandGreen);
+      doc.rect(15, y, 3, 7, 'F');
+      doc.setTextColor(...darkGreen);
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'bold');
-      doc.text(label, 18, y + 5);
+      doc.text(label, 21, y + 5);
     };
 
     const drawField = (label: string, value: string, x: number, y: number) => {
       doc.setFontSize(7.5);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...accent);
+      doc.setTextColor(...mutedLabel);
       doc.text(label.toUpperCase(), x, y);
       doc.setFontSize(9.5);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...primary);
+      doc.setTextColor(...black);
       doc.text(value || '—', x, y + 6);
     };
 
     const formatCurrency = (n: number) =>
+      'NGN ' +
       new Intl.NumberFormat('en-NG', {
-        style: 'currency',
-        currency: 'NGN',
         minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
       }).format(n);
 
     // ── Tool Information ──
@@ -140,12 +152,7 @@ export async function GET(
 
     drawField('Tool ID', tool.toolId, 15, y);
     drawField('Category', catLabel, 75, y);
-    drawField(
-      'Condition',
-      tool.condition.replace(/_/g, ' '),
-      140,
-      y,
-    );
+    drawField('Condition', tool.condition.replace(/_/g, ' '), 140, y);
 
     y += 16;
     drawField('Serial Number', tool.serialNumber || '—', 15, y);
@@ -246,7 +253,7 @@ export async function GET(
     // ── Lending History Table ──
     y += 20;
     drawSectionHeader('LENDING HISTORY (LAST 20)', y);
-    y += 4;
+    y += 9;
 
     if (tool.lendings.length > 0) {
       autoTable(doc, {
@@ -268,16 +275,16 @@ export async function GET(
                 year: 'numeric',
               })
             : '—',
-          l.status,
+          l.status.replace(/_/g, ' '),
         ]),
         headStyles: {
-          fillColor: primary,
+          fillColor: darkGreen,
           textColor: [255, 255, 255],
           fontStyle: 'bold',
           fontSize: 7.5,
         },
-        bodyStyles: { fontSize: 8, textColor: [30, 41, 59] },
-        alternateRowStyles: { fillColor: lightGray },
+        bodyStyles: { fontSize: 8, textColor: [0, 0, 0] },
+        alternateRowStyles: { fillColor: lightMint },
         columnStyles: {
           0: { cellWidth: 35 },
           1: { cellWidth: 28 },
@@ -288,20 +295,25 @@ export async function GET(
         },
         margin: { left: 15, right: 15 },
         theme: 'grid',
+        tableLineColor: mintGreen,
+        tableLineWidth: 0.3,
       });
       y = (doc as any).lastAutoTable.finalY + 8;
     } else {
       doc.setFontSize(8.5);
-      doc.setTextColor(...accent);
+      doc.setTextColor(...mutedLabel);
       doc.text('No lending records yet.', 15, y + 10);
       y += 18;
     }
 
     // ── Maintenance History Table ──
-    if (y > 230) { doc.addPage(); y = 20; }
+    if (y > 230) {
+      doc.addPage();
+      y = 25;
+    }
 
     drawSectionHeader('MAINTENANCE HISTORY (LAST 20)', y);
-    y += 4;
+    y += 9;
 
     if (tool.maintenanceHistory.length > 0) {
       autoTable(doc, {
@@ -312,23 +324,27 @@ export async function GET(
           m.description || '—',
           m.performedBy,
           new Date(m.startDate).toLocaleDateString('en-GB', {
-            day: '2-digit', month: 'short', year: 'numeric',
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
           }),
           m.completedDate
             ? new Date(m.completedDate).toLocaleDateString('en-GB', {
-                day: '2-digit', month: 'short', year: 'numeric',
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
               })
             : '—',
           m.cost ? formatCurrency(m.cost) : '—',
         ]),
         headStyles: {
-          fillColor: primary,
+          fillColor: darkGreen,
           textColor: [255, 255, 255],
           fontStyle: 'bold',
           fontSize: 7.5,
         },
-        bodyStyles: { fontSize: 8, textColor: [30, 41, 59] },
-        alternateRowStyles: { fillColor: lightGray },
+        bodyStyles: { fontSize: 8, textColor: [0, 0, 0] },
+        alternateRowStyles: { fillColor: lightMint },
         columnStyles: {
           0: { cellWidth: 32 },
           1: { cellWidth: 45 },
@@ -339,10 +355,12 @@ export async function GET(
         },
         margin: { left: 15, right: 15 },
         theme: 'grid',
+        tableLineColor: mintGreen,
+        tableLineWidth: 0.3,
       });
     } else {
       doc.setFontSize(8.5);
-      doc.setTextColor(...accent);
+      doc.setTextColor(...mutedLabel);
       doc.text('No maintenance records yet.', 15, y + 10);
     }
 
@@ -351,10 +369,12 @@ export async function GET(
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       const ph = doc.internal.pageSize.height;
-      doc.setFillColor(248, 250, 252);
+      doc.setFillColor(...darkGreen);
       doc.rect(0, ph - 14, 210, 14, 'F');
+      doc.setFillColor(...brandGreen);
+      doc.rect(0, ph - 14, 3, 14, 'F');
       doc.setFontSize(7);
-      doc.setTextColor(...accent);
+      doc.setTextColor(...mintGreen);
       doc.text(
         `${tool.toolId}  ·  ${tool.name}  ·  Page ${i} of ${pageCount}  ·  Generated ${new Date().toLocaleString('en-GB')}  ·  Greenage Technologies`,
         105,

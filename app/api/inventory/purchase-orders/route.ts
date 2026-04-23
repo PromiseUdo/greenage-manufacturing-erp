@@ -103,6 +103,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate each item has the required id field for its type
+    for (const item of items) {
+      const type = item.itemType || 'material';
+      if (type === 'tool' && !item.toolGroupId) {
+        return NextResponse.json(
+          { error: 'Tool items require a toolGroupId' },
+          { status: 400 },
+        );
+      }
+      if (type === 'material' && !item.materialId) {
+        return NextResponse.json(
+          { error: 'Material items require a materialId' },
+          { status: 400 },
+        );
+      }
+    }
+
     // Calculate totals
     const subtotal = items.reduce(
       (sum: number, item: any) => sum + (item.quantity * item.unitCost || 0),
@@ -125,9 +142,10 @@ export async function POST(request: NextRequest) {
       .toString()
       .padStart(4, '0')}`;
 
-    // Enrich items with totalCost
+    // Enrich items with totalCost and ensure itemType is persisted
     const enrichedItems = items.map((item: any) => ({
       ...item,
+      itemType: item.itemType || 'material',
       totalCost: item.quantity * item.unitCost,
     }));
 
