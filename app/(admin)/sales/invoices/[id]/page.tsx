@@ -1,11 +1,11 @@
 // // src/app/dashboard/sales/invoices/[id]/page.tsx
 
-"use client";
-import "@/lib/pdf/fonts"; // 👈 MUST be before styles or <Document />
+'use client';
+import '@/lib/pdf/fonts'; // 👈 MUST be before styles or <Document />
 
-import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
-import { styled } from "@mui/material/styles";
+import { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
+import { styled } from '@mui/material/styles';
 import {
   Box,
   Typography,
@@ -30,8 +30,8 @@ import {
   TableRow,
   Stack,
   InputAdornment,
-} from "@mui/material";
-import Grid from "@mui/material/GridLegacy";
+} from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 
 import {
   ArrowBack,
@@ -44,7 +44,7 @@ import {
   CalendarMonth,
   CreditCard,
   Description,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 // Add these to your imports
 import {
@@ -56,19 +56,19 @@ import {
   StyleSheet,
   Image as PdfImage,
   Font,
-} from "@react-pdf/renderer";
+} from '@react-pdf/renderer';
 
-const COMPANY_LOGO_URL = "/greenage_logo_black.png";
+const COMPANY_LOGO_URL = '/greenage_logo_black.png';
 
 const C = {
-  darkGreen: "#003D34",
-  brandGreen: "#1FA43B",
-  mintGreen: "#D3F2AF",
-  black: "#000000",
-  mutedGreen: "#326444",
-  lightMint: "#EBF9DE",
-  border: "#C8E6C9",
-  gray: "#64748B",
+  darkGreen: '#003D34',
+  brandGreen: '#1FA43B',
+  mintGreen: '#D3F2AF',
+  black: '#000000',
+  mutedGreen: '#326444',
+  lightMint: '#EBF9DE',
+  border: '#C8E6C9',
+  gray: '#64748B',
 };
 
 const pdfStyles = StyleSheet.create({
@@ -76,33 +76,33 @@ const pdfStyles = StyleSheet.create({
     paddingTop: 36,
     paddingBottom: 50,
     paddingHorizontal: 40,
-    fontFamily: "Roboto",
+    fontFamily: 'Roboto',
     fontSize: 10,
     color: C.black,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
   },
 
   // ── Header ──
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 6,
   },
-  logoSection: { flexDirection: "column" },
-  logo: { width: 110, height: "auto", marginBottom: 8 },
+  logoSection: { flexDirection: 'column' },
+  logo: { width: 110, height: 'auto', marginBottom: 8 },
   companyDetails: { fontSize: 8.5, color: C.gray, lineHeight: 1.5 },
 
-  invoiceInfo: { alignItems: "flex-end" },
+  invoiceInfo: { alignItems: 'flex-end' },
   title: {
     fontSize: 26,
     fontWeight: 700,
     color: C.darkGreen,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 1,
   },
   metaText: { fontSize: 9, color: C.gray, marginTop: 3 },
-  metaDue: { fontSize: 9, fontWeight: 700, color: "#B91C1C", marginTop: 3 },
+  metaDue: { fontSize: 9, fontWeight: 700, color: '#B91C1C', marginTop: 3 },
 
   // Brand accent stripe
   accentStripe: {
@@ -112,99 +112,104 @@ const pdfStyles = StyleSheet.create({
   },
 
   // ── Bill To ──
-  section: { flexDirection: "row", marginBottom: 20 },
-  addressBox: { width: "55%" },
+  section: { flexDirection: 'row', marginBottom: 20 },
+  addressBox: { width: '55%' },
   sectionLabel: {
     fontSize: 8,
     fontWeight: 700,
     color: C.mutedGreen,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 4,
   },
-  customerName: { fontSize: 12, fontWeight: 700, color: C.darkGreen, marginBottom: 3 },
-  addressText: { fontSize: 9.5, lineHeight: 1.5, color: "#475569" },
+  customerName: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: C.darkGreen,
+    marginBottom: 3,
+  },
+  addressText: { fontSize: 9.5, lineHeight: 1.5, color: '#475569' },
 
   // ── Table ──
   tableWrapper: {
     borderWidth: 1,
-    borderColor: C.border,
-    borderStyle: "solid",
+    borderColor: C.black,
+    borderStyle: 'solid',
     marginTop: 4,
   },
   tableHeader: {
-    flexDirection: "row",
-    backgroundColor: C.darkGreen,
+    flexDirection: 'row',
+    backgroundColor: C.black,
     paddingVertical: 7,
   },
-  tableHeaderCell: { color: "#FFFFFF", fontWeight: 700, fontSize: 9 },
+  tableHeaderCell: { color: '#FFFFFF', fontWeight: 700, fontSize: 9 },
   tableRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
-    borderBottomStyle: "solid",
+    flexDirection: 'row',
+    // borderBottomWidth: 1,
+    // borderBottomColor: C.border,
+    // borderBottomStyle: 'solid',
     paddingVertical: 8,
-    alignItems: "center",
+    alignItems: 'center',
   },
   tableRowAlt: { backgroundColor: C.lightMint },
 
   colDesc: {
     flex: 2,
     paddingHorizontal: 9,
-    borderRightWidth: 1,
-    borderRightColor: C.border,
-    borderRightStyle: "solid",
+    // borderRightWidth: 1,
+    // borderRightColor: C.border,
+    // borderRightStyle: 'solid',
   },
   colQty: {
     flex: 0.5,
-    textAlign: "center",
+    textAlign: 'center',
     paddingHorizontal: 6,
-    borderRightWidth: 1,
-    borderRightColor: C.border,
-    borderRightStyle: "solid",
+    // borderRightWidth: 1,
+    // borderRightColor: C.border,
+    // borderRightStyle: 'solid',
   },
   colPrice: {
     flex: 1,
-    textAlign: "right",
+    textAlign: 'right',
     paddingHorizontal: 6,
-    borderRightWidth: 1,
-    borderRightColor: C.border,
-    borderRightStyle: "solid",
+    // borderRightWidth: 1,
+    // borderRightColor: C.border,
+    // borderRightStyle: 'solid',
   },
-  colTotal: { flex: 1, textAlign: "right", paddingHorizontal: 9 },
+  colTotal: { flex: 1, textAlign: 'right', paddingHorizontal: 9 },
 
   // ── Totals ──
   totalsContainer: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
     marginTop: 14,
   },
-  totalsBox: { width: "42%" },
+  totalsBox: { width: '42%' },
   totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingVertical: 5,
     paddingHorizontal: 2,
     borderBottomWidth: 1,
     borderBottomColor: C.border,
-    borderBottomStyle: "solid",
+    borderBottomStyle: 'solid',
   },
   totalLabel: { fontSize: 9.5, color: C.gray },
   totalValue: { fontSize: 9.5, color: C.black, fontWeight: 700 },
   grandTotal: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 6,
     paddingVertical: 7,
     paddingHorizontal: 8,
-    backgroundColor: C.darkGreen,
+    backgroundColor: C.black,
     borderRadius: 3,
   },
-  grandTotalLabel: { fontSize: 11, fontWeight: 700, color: "#FFFFFF" },
+  grandTotalLabel: { fontSize: 11, fontWeight: 700, color: '#FFFFFF' },
   grandTotalValue: { fontSize: 11, fontWeight: 700, color: C.mintGreen },
   balanceRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 6,
     paddingVertical: 5,
     paddingHorizontal: 2,
@@ -212,13 +217,13 @@ const pdfStyles = StyleSheet.create({
 
   // ── Paid stamp ──
   statusStamp: {
-    position: "absolute",
+    position: 'absolute',
     top: 150,
     right: 40,
     padding: 10,
     borderWidth: 2,
     borderRadius: 4,
-    transform: "rotate(15deg)",
+    transform: 'rotate(15deg)',
     opacity: 0.35,
     fontSize: 20,
     fontWeight: 700,
@@ -226,30 +231,30 @@ const pdfStyles = StyleSheet.create({
 
   // ── Bank & Contact ──
   bottomSection: {
-    flexDirection: "row",
+    flexDirection: 'row',
     marginTop: 22,
     borderTopWidth: 2,
     borderTopColor: C.brandGreen,
-    borderTopStyle: "solid",
+    borderTopStyle: 'solid',
     paddingTop: 12,
   },
-  bottomCol: { width: "50%" },
-  bottomColRight: { width: "50%", paddingLeft: 20 },
+  bottomCol: { width: '50%' },
+  bottomColRight: { width: '50%', paddingLeft: 20 },
   bottomTitle: {
     fontSize: 8.5,
     fontWeight: 700,
     color: C.darkGreen,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 0.6,
     marginBottom: 6,
   },
-  bottomRow: { flexDirection: "row", marginBottom: 3 },
+  bottomRow: { flexDirection: 'row', marginBottom: 3 },
   bottomLabel: { fontSize: 8.5, color: C.gray, width: 90 },
   bottomValue: { fontSize: 8.5, color: C.black, fontWeight: 700, flex: 1 },
 
   // ── Footer ──
   footer: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 24,
     left: 40,
     right: 40,
@@ -259,28 +264,28 @@ const pdfStyles = StyleSheet.create({
     backgroundColor: C.mintGreen,
     marginBottom: 6,
   },
-  footerText: { fontSize: 7.5, color: C.gray, textAlign: "center" },
+  footerText: { fontSize: 7.5, color: C.gray, textAlign: 'center' },
 });
 
 const InvoiceDocument = ({ invoice, companyDetails }: any) => {
-  const isPaid = invoice.status === "PAID";
+  const isPaid = invoice.status === 'PAID';
   const cd = companyDetails || {};
 
   const fmt = (amount: number) =>
-    new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
+    new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
       minimumFractionDigits: 2,
     }).format(amount ?? 0);
 
   const fmtDate = (d: any) =>
     d
-      ? new Date(d).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
+      ? new Date(d).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
         })
-      : "—";
+      : '—';
 
   return (
     <Document>
@@ -343,10 +348,14 @@ const InvoiceDocument = ({ invoice, companyDetails }: any) => {
               </Text>
             )}
             {invoice.customer.phone && (
-              <Text style={pdfStyles.addressText}>{invoice.customer.phone}</Text>
+              <Text style={pdfStyles.addressText}>
+                {invoice.customer.phone}
+              </Text>
             )}
             {invoice.customer.email && (
-              <Text style={pdfStyles.addressText}>{invoice.customer.email}</Text>
+              <Text style={pdfStyles.addressText}>
+                {invoice.customer.email}
+              </Text>
             )}
           </View>
         </View>
@@ -371,21 +380,26 @@ const InvoiceDocument = ({ invoice, companyDetails }: any) => {
           {invoice.lineItems?.map((li: any, i: number) => (
             <View
               key={i}
-              style={[pdfStyles.tableRow, i % 2 !== 0 ? pdfStyles.tableRowAlt : {}]}
+              style={[
+                pdfStyles.tableRow,
+                i % 2 !== 0 ? pdfStyles.tableRowAlt : {},
+              ]}
             >
               <View style={pdfStyles.colDesc}>
-                <Text style={{ fontWeight: 700, fontSize: 10, color: C.darkGreen }}>
-                  {li.storeItem?.name || li.product?.name || "Item"}
+                <Text
+                  style={{ fontWeight: 700, fontSize: 10, color: C.darkGreen }}
+                >
+                  {li.storeItem?.name || li.product?.name || 'Item'}
                 </Text>
                 {(li.storeItem?.itemNumber || li.storeItem?.category) && (
                   <Text style={{ fontSize: 8.5, color: C.gray, marginTop: 2 }}>
                     {li.storeItem?.itemNumber
                       ? `Code: ${li.storeItem.itemNumber}`
-                      : ""}
+                      : ''}
                     {li.storeItem?.itemNumber && li.storeItem?.category
-                      ? "  •  "
-                      : ""}
-                    {li.storeItem?.category || ""}
+                      ? '  •  '
+                      : ''}
+                    {li.storeItem?.category || ''}
                   </Text>
                 )}
               </View>
@@ -395,7 +409,9 @@ const InvoiceDocument = ({ invoice, companyDetails }: any) => {
               <Text style={[pdfStyles.colPrice, { fontSize: 10 }]}>
                 {fmt(li.unitPrice)}
               </Text>
-              <Text style={[pdfStyles.colTotal, { fontSize: 10, fontWeight: 700 }]}>
+              <Text
+                style={[pdfStyles.colTotal, { fontSize: 10, fontWeight: 700 }]}
+              >
                 {fmt(li.totalAmount)}
               </Text>
             </View>
@@ -407,22 +423,26 @@ const InvoiceDocument = ({ invoice, companyDetails }: any) => {
           <View style={pdfStyles.totalsBox}>
             <View style={pdfStyles.totalRow}>
               <Text style={pdfStyles.totalLabel}>Subtotal</Text>
-              <Text style={pdfStyles.totalValue}>{fmt(invoice.totalAmount)}</Text>
+              <Text style={pdfStyles.totalValue}>
+                {fmt(invoice.totalAmount)}
+              </Text>
             </View>
 
             {invoice.taxAmount > 0 && (
               <View style={pdfStyles.totalRow}>
                 <Text style={pdfStyles.totalLabel}>Tax (VAT)</Text>
-                <Text style={pdfStyles.totalValue}>{fmt(invoice.taxAmount)}</Text>
+                <Text style={pdfStyles.totalValue}>
+                  {fmt(invoice.taxAmount)}
+                </Text>
               </View>
             )}
 
             {invoice.discountAmount > 0 && (
               <View style={pdfStyles.totalRow}>
-                <Text style={[pdfStyles.totalLabel, { color: "#B91C1C" }]}>
+                <Text style={[pdfStyles.totalLabel, { color: '#B91C1C' }]}>
                   Discount
                 </Text>
-                <Text style={[pdfStyles.totalValue, { color: "#B91C1C" }]}>
+                <Text style={[pdfStyles.totalValue, { color: '#B91C1C' }]}>
                   -{fmt(invoice.discountAmount)}
                 </Text>
               </View>
@@ -450,7 +470,7 @@ const InvoiceDocument = ({ invoice, companyDetails }: any) => {
                 style={{
                   fontSize: 10,
                   fontWeight: 700,
-                  color: invoice.balanceAmount > 0 ? "#B91C1C" : C.brandGreen,
+                  color: invoice.balanceAmount > 0 ? '#B91C1C' : C.brandGreen,
                 }}
               >
                 {fmt(invoice.balanceAmount)}
@@ -468,13 +488,17 @@ const InvoiceDocument = ({ invoice, companyDetails }: any) => {
                 {cd.bankAccountName && (
                   <View style={pdfStyles.bottomRow}>
                     <Text style={pdfStyles.bottomLabel}>Account Name:</Text>
-                    <Text style={pdfStyles.bottomValue}>{cd.bankAccountName}</Text>
+                    <Text style={pdfStyles.bottomValue}>
+                      {cd.bankAccountName}
+                    </Text>
                   </View>
                 )}
                 {cd.bankAccountNumber && (
                   <View style={pdfStyles.bottomRow}>
                     <Text style={pdfStyles.bottomLabel}>Account Number:</Text>
-                    <Text style={pdfStyles.bottomValue}>{cd.bankAccountNumber}</Text>
+                    <Text style={pdfStyles.bottomValue}>
+                      {cd.bankAccountNumber}
+                    </Text>
                   </View>
                 )}
                 {cd.bankName && (
@@ -485,7 +509,7 @@ const InvoiceDocument = ({ invoice, companyDetails }: any) => {
                 )}
               </View>
             )}
-
+            {/* 
             <View style={pdfStyles.bottomColRight}>
               <Text style={pdfStyles.bottomTitle}>Contact Details</Text>
               {cd.address && (
@@ -512,7 +536,7 @@ const InvoiceDocument = ({ invoice, companyDetails }: any) => {
                   <Text style={pdfStyles.bottomValue}>{cd.website}</Text>
                 </View>
               )}
-            </View>
+            </View> */}
           </View>
         )}
 
@@ -522,9 +546,11 @@ const InvoiceDocument = ({ invoice, companyDetails }: any) => {
           <Text style={pdfStyles.footerText}>
             Thank you for your business. Please make payment by the due date.
           </Text>
-          <Text style={[pdfStyles.footerText, { marginTop: 3, color: "#B0BEC5" }]}>
-            Generated by Greenage Technologies ·{" "}
-            {new Date().toLocaleDateString("en-GB")}
+          <Text
+            style={[pdfStyles.footerText, { marginTop: 3, color: '#B0BEC5' }]}
+          >
+            Generated by Greenage Technologies ·{' '}
+            {new Date().toLocaleDateString('en-GB')}
           </Text>
         </View>
       </Page>
@@ -536,27 +562,27 @@ const InvoiceDocument = ({ invoice, companyDetails }: any) => {
 const SectionHeader = styled(Typography)(({ theme }) => ({
   fontSize: 14,
   fontWeight: 700,
-  color: "#0F172A",
-  textTransform: "uppercase",
-  letterSpacing: "0.5px",
+  color: '#0F172A',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
   marginBottom: theme.spacing(2),
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
 }));
 
 const MoneyText = styled(Typography)(({ theme }) => ({
-  fontFamily: "monospace",
+  fontFamily: 'monospace',
   fontWeight: 700,
-  letterSpacing: "-0.5px",
+  letterSpacing: '-0.5px',
 }));
 
 const InfoCard = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
   borderRadius: 12,
-  border: "1px solid #E2E8F0",
-  boxShadow: "none",
-  height: "100%",
+  border: '1px solid #E2E8F0',
+  boxShadow: 'none',
+  height: '100%',
 }));
 
 export default function InvoiceDetailPage({
@@ -569,16 +595,16 @@ export default function InvoiceDetailPage({
 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [invoice, setInvoice] = useState<any>(null);
 
   // Payment dialog states
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [paymentReference, setPaymentReference] = useState("");
-  const [paymentNotes, setPaymentNotes] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentReference, setPaymentReference] = useState('');
+  const [paymentNotes, setPaymentNotes] = useState('');
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [companyDetails, setCompanyDetails] = useState<any>(null);
@@ -592,15 +618,15 @@ export default function InvoiceDetailPage({
       ).toBlob();
 
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.download = `Invoice_${invoice.invoiceNumber}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      console.error("PDF generation failed", err);
-      setError("Failed to generate PDF");
+      console.error('PDF generation failed', err);
+      setError('Failed to generate PDF');
     } finally {
       setIsDownloading(false);
     }
@@ -608,7 +634,7 @@ export default function InvoiceDetailPage({
 
   useEffect(() => {
     fetchInvoice();
-    fetch("/api/settings/company")
+    fetch('/api/settings/company')
       .then((r) => r.json())
       .then(setCompanyDetails)
       .catch(() => {});
@@ -618,7 +644,7 @@ export default function InvoiceDetailPage({
     try {
       const res = await fetch(`/api/invoices/${resolvedParams.id}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch invoice");
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch invoice');
       setInvoice(data);
     } catch (err: any) {
       setError(err.message);
@@ -629,17 +655,17 @@ export default function InvoiceDetailPage({
 
   const handleRecordPayment = async () => {
     setProcessing(true);
-    setError("");
+    setError('');
     try {
       const amount = parseFloat(paymentAmount);
       if (!amount || amount <= 0)
-        throw new Error("Please enter a valid payment amount");
+        throw new Error('Please enter a valid payment amount');
       if (amount > invoice.balanceAmount)
-        throw new Error("Payment amount exceeds balance");
+        throw new Error('Payment amount exceeds balance');
 
       const res = await fetch(`/api/invoices/${resolvedParams.id}/payment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount,
           paymentMethod,
@@ -649,14 +675,14 @@ export default function InvoiceDetailPage({
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to record payment");
+      if (!res.ok) throw new Error(data.error || 'Failed to record payment');
 
       setSuccess(`Payment of ${formatCurrency(amount)} recorded successfully!`);
       setShowPaymentDialog(false);
-      setPaymentAmount("");
-      setPaymentMethod("");
-      setPaymentReference("");
-      setPaymentNotes("");
+      setPaymentAmount('');
+      setPaymentMethod('');
+      setPaymentReference('');
+      setPaymentNotes('');
       fetchInvoice();
     } catch (err: any) {
       setError(err.message);
@@ -666,35 +692,35 @@ export default function InvoiceDetailPage({
   };
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
+    new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
     }).format(amount);
   const formatDate = (date: string) =>
-    new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
   const isOverdue = () =>
-    invoice?.status !== "PAID" && new Date(invoice?.dueDate) < new Date();
+    invoice?.status !== 'PAID' && new Date(invoice?.dueDate) < new Date();
   const getPaymentProgress = () =>
     (invoice?.paidAmount / invoice?.finalAmount) * 100;
 
   if (loading)
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
         <CircularProgress size={32} />
       </Box>
     );
   if (error && !invoice) return <Alert severity="error">{error}</Alert>;
 
   const statusColors: Record<string, { bg: string; text: string }> = {
-    PENDING: { bg: "#fef3c7", text: "#92400e" },
-    PARTIALLY_PAID: { bg: "#dbeafe", text: "#1e40af" },
-    PAID: { bg: "#dcfce7", text: "#166534" },
-    OVERDUE: { bg: "#fee2e2", text: "#991b1b" },
-    CANCELLED: { bg: "#f3f4f6", text: "#6b7280" },
+    PENDING: { bg: '#fef3c7', text: '#92400e' },
+    PARTIALLY_PAID: { bg: '#dbeafe', text: '#1e40af' },
+    PAID: { bg: '#dcfce7', text: '#166534' },
+    OVERDUE: { bg: '#fee2e2', text: '#991b1b' },
+    CANCELLED: { bg: '#f3f4f6', text: '#6b7280' },
   };
 
   return (
@@ -704,30 +730,30 @@ export default function InvoiceDetailPage({
         <Button
           startIcon={<ArrowBack />}
           onClick={() => router.back()}
-          sx={{ mb: 1, color: "text.secondary", textTransform: "none" }}
+          sx={{ mb: 1, color: 'text.secondary', textTransform: 'none' }}
         >
           Back to List
         </Button>
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
           }}
         >
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Typography
                 variant="h4"
                 fontWeight={700}
-                sx={{ color: "#0F172A" }}
+                sx={{ color: '#0F172A' }}
               >
                 {invoice?.invoiceNumber}
               </Typography>
               <Chip
-                label={invoice?.status.replace("_", " ")}
+                label={invoice?.status.replace('_', ' ')}
                 icon={
-                  invoice?.status === "PAID" ? (
+                  invoice?.status === 'PAID' ? (
                     <CheckCircle fontSize="small" />
                   ) : undefined
                 }
@@ -743,7 +769,7 @@ export default function InvoiceDetailPage({
               Issued on {formatDate(invoice?.issueDate)}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", gap: 1.5 }}>
+          <Box sx={{ display: 'flex', gap: 1.5 }}>
             {/* <Button variant="outlined" startIcon={<Print />}>
               Print / PDF
             </Button> */}
@@ -756,24 +782,24 @@ export default function InvoiceDetailPage({
               onClick={handleDownloadPdf}
               disabled={isDownloading}
               sx={{
-                borderColor: "#CBD5E1",
-                color: "#334155",
+                borderColor: '#CBD5E1',
+                color: '#334155',
                 fontWeight: 600,
-                "&:hover": { borderColor: "#94A3B8", bgcolor: "#F8FAFC" },
+                '&:hover': { borderColor: '#94A3B8', bgcolor: '#F8FAFC' },
               }}
             >
-              {isDownloading ? "Generating..." : "Download PDF"}
+              {isDownloading ? 'Generating...' : 'Download PDF'}
             </Button>
 
-            {invoice?.status !== "PAID" && (
+            {invoice?.status !== 'PAID' && (
               <Button
                 variant="contained"
                 startIcon={<Payment />}
                 onClick={() => setShowPaymentDialog(true)}
                 sx={{
-                  bgcolor: "#0F172A",
+                  bgcolor: '#0F172A',
                   fontWeight: 600,
-                  "&:hover": { bgcolor: "#334155" },
+                  '&:hover': { bgcolor: '#334155' },
                 }}
               >
                 Record Payment
@@ -794,7 +820,7 @@ export default function InvoiceDetailPage({
           icon={<Warning />}
           sx={{ mb: 3, borderRadius: 2 }}
         >
-          <strong>Payment Overdue!</strong> This invoice was due on{" "}
+          <strong>Payment Overdue!</strong> This invoice was due on{' '}
           {formatDate(invoice.dueDate)}. Please follow up with the client.
         </Alert>
       )}
@@ -807,19 +833,19 @@ export default function InvoiceDetailPage({
             sx={{
               p: 0,
               borderRadius: 3,
-              border: "1px solid #E2E8F0",
-              overflow: "hidden",
+              border: '1px solid #E2E8F0',
+              overflow: 'hidden',
             }}
           >
             <Box
               sx={{
                 p: 3,
-                bgcolor: "#F8FAFC",
-                borderBottom: "1px solid #E2E8F0",
+                bgcolor: '#F8FAFC',
+                borderBottom: '1px solid #E2E8F0',
               }}
             >
               <Box
-                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+                sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}
               >
                 <Typography variant="subtitle2" fontWeight={600}>
                   Payment Progress
@@ -834,9 +860,9 @@ export default function InvoiceDetailPage({
                 sx={{
                   height: 8,
                   borderRadius: 4,
-                  bgcolor: "#E2E8F0",
-                  "& .MuiLinearProgress-bar": {
-                    bgcolor: invoice?.status === "PAID" ? "#10B981" : "#3B82F6",
+                  bgcolor: '#E2E8F0',
+                  '& .MuiLinearProgress-bar': {
+                    bgcolor: invoice?.status === 'PAID' ? '#10B981' : '#3B82F6',
                   },
                 }}
               />
@@ -846,7 +872,7 @@ export default function InvoiceDetailPage({
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+                  sx={{ textTransform: 'uppercase', letterSpacing: 1 }}
                 >
                   Total Invoice Value
                 </Typography>
@@ -858,11 +884,11 @@ export default function InvoiceDetailPage({
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+                  sx={{ textTransform: 'uppercase', letterSpacing: 1 }}
                 >
                   Amount Paid
                 </Typography>
-                <MoneyText variant="h5" sx={{ mt: 1, color: "#166534" }}>
+                <MoneyText variant="h5" sx={{ mt: 1, color: '#166534' }}>
                   {formatCurrency(invoice?.paidAmount)}
                 </MoneyText>
               </Grid>
@@ -872,13 +898,13 @@ export default function InvoiceDetailPage({
                 md={4}
                 sx={{
                   p: 3,
-                  bgcolor: invoice?.balanceAmount > 0 ? "#FEF2F2" : "#F0FDF4",
+                  bgcolor: invoice?.balanceAmount > 0 ? '#FEF2F2' : '#F0FDF4',
                 }}
               >
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+                  sx={{ textTransform: 'uppercase', letterSpacing: 1 }}
                 >
                   Balance Due
                 </Typography>
@@ -886,7 +912,7 @@ export default function InvoiceDetailPage({
                   variant="h5"
                   sx={{
                     mt: 1,
-                    color: invoice?.balanceAmount > 0 ? "#B91C1C" : "#166534",
+                    color: invoice?.balanceAmount > 0 ? '#B91C1C' : '#166534',
                   }}
                 >
                   {formatCurrency(invoice?.balanceAmount)}
@@ -907,7 +933,7 @@ export default function InvoiceDetailPage({
               {invoice?.customer.name}
             </Typography>
             <Stack spacing={1}>
-              <Box sx={{ display: "flex", gap: 1 }}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
                 <Typography
                   variant="body2"
                   color="text.secondary"
@@ -919,7 +945,7 @@ export default function InvoiceDetailPage({
                   {invoice?.customer.email}
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", gap: 1 }}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
                 <Typography
                   variant="body2"
                   color="text.secondary"
@@ -931,7 +957,7 @@ export default function InvoiceDetailPage({
                   {invoice?.customer.phone}
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", gap: 1 }}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
                 <Typography
                   variant="body2"
                   color="text.secondary"
@@ -940,7 +966,7 @@ export default function InvoiceDetailPage({
                   Addr:
                 </Typography>
                 <Typography variant="body2">
-                  {invoice?.customer.address || "N/A"}
+                  {invoice?.customer.address || 'N/A'}
                 </Typography>
               </Box>
             </Stack>
@@ -956,9 +982,9 @@ export default function InvoiceDetailPage({
             <Stack spacing={2}>
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  borderBottom: "1px dashed #E2E8F0",
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  borderBottom: '1px dashed #E2E8F0',
                   pb: 1,
                 }}
               >
@@ -968,16 +994,16 @@ export default function InvoiceDetailPage({
                 <Typography
                   variant="body2"
                   fontWeight={700}
-                  color={isOverdue() ? "error.main" : "text.primary"}
+                  color={isOverdue() ? 'error.main' : 'text.primary'}
                 >
                   {formatDate(invoice?.dueDate)}
                 </Typography>
               </Box>
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  borderBottom: "1px dashed #E2E8F0",
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  borderBottom: '1px dashed #E2E8F0',
                   pb: 1,
                 }}
               >
@@ -985,17 +1011,17 @@ export default function InvoiceDetailPage({
                   Payment Terms
                 </Typography>
                 <Typography variant="body2" fontWeight={600}>
-                  {invoice?.paymentTerms || "Immediate"}
+                  {invoice?.paymentTerms || 'Immediate'}
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="body2" color="text.secondary">
                   Related Quote
                 </Typography>
                 <Button
                   size="small"
                   variant="text"
-                  sx={{ minWidth: 0, p: 0, height: "auto" }}
+                  sx={{ minWidth: 0, p: 0, height: 'auto' }}
                   onClick={() =>
                     router.push(`/sales/quotes/${invoice?.quote.id}`)
                   }
@@ -1013,15 +1039,15 @@ export default function InvoiceDetailPage({
             elevation={0}
             sx={{
               borderRadius: 3,
-              border: "1px solid #E2E8F0",
-              overflow: "hidden",
+              border: '1px solid #E2E8F0',
+              overflow: 'hidden',
             }}
           >
             <Box
               sx={{
                 p: 2,
-                bgcolor: "#F8FAFC",
-                borderBottom: "1px solid #E2E8F0",
+                bgcolor: '#F8FAFC',
+                borderBottom: '1px solid #E2E8F0',
               }}
             >
               <SectionHeader sx={{ mb: 0 }}>
@@ -1031,28 +1057,28 @@ export default function InvoiceDetailPage({
             </Box>
             <TableContainer>
               <Table>
-                <TableHead sx={{ bgcolor: "#F8FAFC" }}>
+                <TableHead sx={{ bgcolor: '#F8FAFC' }}>
                   <TableRow>
                     <TableCell
-                      sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}
+                      sx={{ fontWeight: 600, color: '#64748B', fontSize: 12 }}
                     >
                       ITEM DESCRIPTION
                     </TableCell>
                     <TableCell
                       align="center"
-                      sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}
+                      sx={{ fontWeight: 600, color: '#64748B', fontSize: 12 }}
                     >
                       QTY
                     </TableCell>
                     <TableCell
                       align="right"
-                      sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}
+                      sx={{ fontWeight: 600, color: '#64748B', fontSize: 12 }}
                     >
                       UNIT PRICE
                     </TableCell>
                     <TableCell
                       align="right"
-                      sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}
+                      sx={{ fontWeight: 600, color: '#64748B', fontSize: 12 }}
                     >
                       TOTAL
                     </TableCell>
@@ -1065,15 +1091,15 @@ export default function InvoiceDetailPage({
                         <Typography variant="body2" fontWeight={600}>
                           {lineItem.storeItem?.name ||
                             lineItem.product?.name ||
-                            "Item"}
+                            'Item'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {lineItem.storeItem?.itemNumber ||
                             lineItem.product?.productNumber ||
-                            ""}
+                            ''}
                           {lineItem.storeItem?.category
                             ? ` • ${lineItem.storeItem.category}`
-                            : ""}
+                            : ''}
                         </Typography>
                         {(lineItem.quantityBackordered || 0) > 0 && (
                           <Chip
@@ -1081,8 +1107,8 @@ export default function InvoiceDetailPage({
                             size="small"
                             sx={{
                               mt: 1,
-                              bgcolor: "#fef3c7",
-                              color: "#92400e",
+                              bgcolor: '#fef3c7',
+                              color: '#92400e',
                               fontWeight: 600,
                               fontSize: 10,
                               height: 20,
@@ -1110,16 +1136,16 @@ export default function InvoiceDetailPage({
             {/* Totals Section */}
             <Box
               sx={{
-                display: "flex",
-                justifyContent: "flex-end",
+                display: 'flex',
+                justifyContent: 'flex-end',
                 p: 3,
-                bgcolor: "#F8FAFC",
+                bgcolor: '#F8FAFC',
               }}
             >
-              <Box sx={{ width: "100%", maxWidth: 360 }}>
+              <Box sx={{ width: '100%', maxWidth: 360 }}>
                 <Stack spacing={1}>
                   <Box
-                    sx={{ display: "flex", justifyContent: "space-between" }}
+                    sx={{ display: 'flex', justifyContent: 'space-between' }}
                   >
                     <Typography variant="body2" color="text.secondary">
                       Subtotal
@@ -1129,7 +1155,7 @@ export default function InvoiceDetailPage({
                     </MoneyText>
                   </Box>
                   <Box
-                    sx={{ display: "flex", justifyContent: "space-between" }}
+                    sx={{ display: 'flex', justifyContent: 'space-between' }}
                   >
                     <Typography variant="body2" color="text.secondary">
                       Tax (VAT)
@@ -1140,7 +1166,7 @@ export default function InvoiceDetailPage({
                   </Box>
                   {invoice?.discountAmount > 0 && (
                     <Box
-                      sx={{ display: "flex", justifyContent: "space-between" }}
+                      sx={{ display: 'flex', justifyContent: 'space-between' }}
                     >
                       <Typography variant="body2" color="error.main">
                         Discount
@@ -1153,9 +1179,9 @@ export default function InvoiceDetailPage({
                   <Divider sx={{ my: 1 }} />
                   <Box
                     sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
                     }}
                   >
                     <Typography variant="subtitle1" fontWeight={700}>
@@ -1178,39 +1204,47 @@ export default function InvoiceDetailPage({
               elevation={0}
               sx={{
                 borderRadius: 3,
-                border: "1px solid #E2E8F0",
-                overflow: "hidden",
+                border: '1px solid #E2E8F0',
+                overflow: 'hidden',
                 mt: 1,
               }}
             >
               <Box
                 sx={{
                   p: 2,
-                  bgcolor: "#F8FAFC",
-                  borderBottom: "1px solid #E2E8F0",
+                  bgcolor: '#F8FAFC',
+                  borderBottom: '1px solid #E2E8F0',
                 }}
               >
-                <SectionHeader sx={{ mb: 0 }}>
-                  Payment History
-                </SectionHeader>
+                <SectionHeader sx={{ mb: 0 }}>Payment History</SectionHeader>
               </Box>
               <TableContainer>
                 <Table>
-                  <TableHead sx={{ bgcolor: "#F8FAFC" }}>
+                  <TableHead sx={{ bgcolor: '#F8FAFC' }}>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: '#64748B', fontSize: 12 }}
+                      >
                         DATE
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: '#64748B', fontSize: 12 }}
+                      >
                         AMOUNT
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: '#64748B', fontSize: 12 }}
+                      >
                         METHOD
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: '#64748B', fontSize: 12 }}
+                      >
                         REFERENCE
                       </TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: "#64748B", fontSize: 12 }}>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: '#64748B', fontSize: 12 }}
+                      >
                         RECORDED BY
                       </TableCell>
                     </TableRow>
@@ -1219,33 +1253,40 @@ export default function InvoiceDetailPage({
                     {invoice.payments.map((payment: any) => (
                       <TableRow key={payment.id} hover>
                         <TableCell>
-                          <Typography variant="body2" sx={{ color: "#334155" }}>
+                          <Typography variant="body2" sx={{ color: '#334155' }}>
                             {formatDate(payment.paymentDate)}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {new Date(payment.paymentDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(payment.paymentDate).toLocaleTimeString(
+                              [],
+                              { hour: '2-digit', minute: '2-digit' },
+                            )}
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" fontWeight={600} sx={{ color: "#166534" }}>
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            sx={{ color: '#166534' }}
+                          >
                             {formatCurrency(payment.amount)}
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Chip 
-                            label={payment.paymentMethod || "N/A"} 
-                            size="small" 
-                            variant="outlined" 
+                          <Chip
+                            label={payment.paymentMethod || 'N/A'}
+                            size="small"
+                            variant="outlined"
                           />
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">
-                            {payment.reference || "-"}
+                            {payment.reference || '-'}
                           </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2">
-                            {payment.recordedBy?.name || "Unknown"}
+                            {payment.recordedBy?.name || 'Unknown'}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -1266,7 +1307,7 @@ export default function InvoiceDetailPage({
         fullWidth
       >
         <DialogTitle
-          sx={{ fontWeight: 700, borderBottom: "1px solid #E2E8F0" }}
+          sx={{ fontWeight: 700, borderBottom: '1px solid #E2E8F0' }}
         >
           Record Payment
         </DialogTitle>
@@ -1274,9 +1315,9 @@ export default function InvoiceDetailPage({
           <Alert
             severity="info"
             variant="outlined"
-            sx={{ mb: 3, border: "1px solid #BFDBFE", bgcolor: "#EFF6FF" }}
+            sx={{ mb: 3, border: '1px solid #BFDBFE', bgcolor: '#EFF6FF' }}
           >
-            Balance Due:{" "}
+            Balance Due:{' '}
             <strong>{formatCurrency(invoice?.balanceAmount)}</strong>
           </Alert>
 
@@ -1305,7 +1346,7 @@ export default function InvoiceDetailPage({
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                 >
-                  {["Cash", "Bank Transfer", "Card", "Cheque", "POS"].map(
+                  {['Cash', 'Bank Transfer', 'Card', 'Cheque', 'POS'].map(
                     (m) => (
                       <MenuItem key={m} value={m}>
                         {m}
@@ -1336,12 +1377,12 @@ export default function InvoiceDetailPage({
           </Stack>
         </DialogContent>
         <DialogActions
-          sx={{ p: 3, borderTop: "1px solid #E2E8F0", bgcolor: "#F8FAFC" }}
+          sx={{ p: 3, borderTop: '1px solid #E2E8F0', bgcolor: '#F8FAFC' }}
         >
           <Button
             onClick={() => setShowPaymentDialog(false)}
             disabled={processing}
-            sx={{ color: "text.secondary" }}
+            sx={{ color: 'text.secondary' }}
           >
             Cancel
           </Button>
@@ -1349,9 +1390,9 @@ export default function InvoiceDetailPage({
             variant="contained"
             onClick={handleRecordPayment}
             disabled={processing || !paymentAmount || !paymentMethod}
-            sx={{ bgcolor: "#10B981", "&:hover": { bgcolor: "#059669" } }}
+            sx={{ bgcolor: '#10B981', '&:hover': { bgcolor: '#059669' } }}
           >
-            {processing ? "Processing..." : "Confirm Payment"}
+            {processing ? 'Processing...' : 'Confirm Payment'}
           </Button>
         </DialogActions>
       </Dialog>

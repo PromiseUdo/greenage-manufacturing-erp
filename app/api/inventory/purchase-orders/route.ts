@@ -106,9 +106,9 @@ export async function POST(request: NextRequest) {
     // Validate each item has the required id field for its type
     for (const item of items) {
       const type = item.itemType || 'material';
-      if (type === 'tool' && !item.toolGroupId) {
+      if (type === 'tool' && !item.toolGroupId && !item.toolId) {
         return NextResponse.json(
-          { error: 'Tool items require a toolGroupId' },
+          { error: 'Tool items require a toolGroupId (grouped) or toolId (standalone)' },
           { status: 400 },
         );
       }

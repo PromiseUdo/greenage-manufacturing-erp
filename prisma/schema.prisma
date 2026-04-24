@@ -1289,6 +1289,7 @@ model Tool {
   
   status          ToolStatus @default(AVAILABLE)
   currentHolder   String?
+  currentStock    Int       @default(1)
   
   lastMaintenance DateTime?
   nextMaintenance DateTime?

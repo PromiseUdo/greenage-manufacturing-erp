@@ -1,11 +1,11 @@
 // src/app/dashboard/sales/quotes/[id]/page.tsx
 
-"use client";
+'use client';
 
-import "@/lib/pdf/fonts"; // 👈 MUST be before styles or <Document />
+import '@/lib/pdf/fonts'; // 👈 MUST be before styles or <Document />
 
-import { useState, useEffect, use } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Typography,
@@ -20,8 +20,8 @@ import {
   DialogActions,
   TextField,
   Divider,
-} from "@mui/material";
-import Grid from "@mui/material/GridLegacy";
+} from '@mui/material';
+import Grid from '@mui/material/GridLegacy';
 
 import {
   ArrowBack,
@@ -30,8 +30,8 @@ import {
   ShoppingCart,
   Receipt,
   Download,
-} from "@mui/icons-material";
-import { styled } from "@mui/material/styles";
+} from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
 
 // --- PDF Imports ---
 import {
@@ -43,13 +43,13 @@ import {
   StyleSheet,
   Image as PdfImage,
   Font,
-} from "@react-pdf/renderer";
-import { formatPrice } from "@/lib/utils";
+} from '@react-pdf/renderer';
+import { formatPrice } from '@/lib/utils';
 
 // --- Configuration ---
 // REPLACE THIS with your specific Cloudinary URL or public folder path (e.g., '/logo.png')
 // For PDFs, absolute URLs (Cloudinary) are often more reliable than relative public paths.
-const COMPANY_LOGO_URL = "/greenage_logo_black.png";
+const COMPANY_LOGO_URL = '/greenage_logo_black.png';
 
 // // --- PDF Styles ---
 // Font.register({
@@ -61,14 +61,14 @@ const COMPANY_LOGO_URL = "/greenage_logo_black.png";
 // });
 
 const C = {
-  darkGreen: "#003D34",
-  brandGreen: "#1FA43B",
-  mintGreen: "#D3F2AF",
-  black: "#000000",
-  mutedGreen: "#326444",
-  lightMint: "#EBF9DE",
-  border: "#C8E6C9",
-  gray: "#64748B",
+  darkGreen: '#003D34',
+  brandGreen: '#1FA43B',
+  mintGreen: '#D3F2AF',
+  black: '#000000',
+  mutedGreen: '#326444',
+  lightMint: '#EBF9DE',
+  border: '#C8E6C9',
+  gray: '#64748B',
 };
 
 const pdfStyles = StyleSheet.create({
@@ -77,34 +77,45 @@ const pdfStyles = StyleSheet.create({
     paddingBottom: 50,
     paddingHorizontal: 40,
     fontSize: 10,
-    fontFamily: "Roboto",
+    fontFamily: 'Roboto',
     color: C.black,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
   },
 
   // ── Header ──
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 6,
   },
-  logoSection: { flexDirection: "column" },
-  logo: { width: 110, height: "auto", marginBottom: 8 },
+  logoSection: { flexDirection: 'column' },
+  logo: { width: 110, height: 'auto', marginBottom: 8 },
   companyDetails: { fontSize: 8.5, color: C.gray, lineHeight: 1.5 },
 
-  quoteTitleBox: { alignItems: "flex-end" },
+  quoteTitleBox: { alignItems: 'flex-end' },
   quoteTitle: {
     fontSize: 26,
     fontWeight: 700,
     color: C.darkGreen,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  quoteMeta: { marginTop: 8, textAlign: "right" },
-  metaRow: { flexDirection: "row", marginBottom: 3 },
-  metaLabel: { width: 65, color: C.gray, textAlign: "right", marginRight: 8, fontSize: 9 },
-  metaValue: { fontWeight: 700, color: C.black, textAlign: "right", fontSize: 9 },
+  quoteMeta: { marginTop: 8, textAlign: 'right' },
+  metaRow: { flexDirection: 'row', marginBottom: 3 },
+  metaLabel: {
+    width: 65,
+    color: C.gray,
+    textAlign: 'right',
+    marginRight: 8,
+    fontSize: 9,
+  },
+  metaValue: {
+    fontWeight: 700,
+    color: C.black,
+    textAlign: 'right',
+    fontSize: 9,
+  },
 
   // Brand accent stripe below header
   accentStripe: {
@@ -114,41 +125,46 @@ const pdfStyles = StyleSheet.create({
   },
 
   // ── Customer section ──
-  customerSection: { flexDirection: "row", marginBottom: 20 },
-  customerCol: { width: "55%" },
+  customerSection: { flexDirection: 'row', marginBottom: 20 },
+  customerCol: { width: '55%' },
   sectionLabel: {
     fontSize: 8,
     fontWeight: 700,
     color: C.mutedGreen,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 4,
   },
-  customerName: { fontSize: 12, fontWeight: 700, color: C.darkGreen, marginBottom: 3 },
-  customerText: { fontSize: 9, color: "#475569", marginBottom: 2 },
+  customerName: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: C.darkGreen,
+    marginBottom: 3,
+  },
+  customerText: { fontSize: 9, color: '#475569', marginBottom: 2 },
 
   // ── Table ──
   tableWrapper: {
     borderWidth: 1,
-    borderColor: C.border,
-    borderStyle: "solid",
+    borderColor: C.black,
+    borderStyle: 'solid',
     marginTop: 4,
   },
   tableHeader: {
-    flexDirection: "row",
-    backgroundColor: C.darkGreen,
+    flexDirection: 'row',
+    backgroundColor: C.black,
     paddingVertical: 7,
     paddingHorizontal: 0,
   },
-  tableHeaderCell: { color: "#FFFFFF", fontWeight: 700, fontSize: 9 },
+  tableHeaderCell: { color: '#FFFFFF', fontWeight: 700, fontSize: 9 },
 
   tableRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
-    borderBottomStyle: "solid",
+    borderBottomColor: C.black,
+    borderBottomStyle: 'solid',
     paddingVertical: 8,
-    alignItems: "center",
+    alignItems: 'center',
   },
   tableRowAlt: {
     backgroundColor: C.lightMint,
@@ -156,82 +172,86 @@ const pdfStyles = StyleSheet.create({
 
   // cell column widths + vertical borders
   col1: {
-    width: "50%",
+    width: '50%',
     paddingHorizontal: 9,
-    borderRightWidth: 1,
-    borderRightColor: C.border,
-    borderRightStyle: "solid",
+    // borderRightWidth: 1,
+    // borderRightColor: C.border,
+    // borderRightStyle: 'solid',
   },
   col2: {
-    width: "13%",
-    textAlign: "center",
+    width: '13%',
+    textAlign: 'center',
     paddingHorizontal: 6,
-    borderRightWidth: 1,
-    borderRightColor: C.border,
-    borderRightStyle: "solid",
+    // borderRightWidth: 1,
+    // borderRightColor: C.border,
+    // borderRightStyle: 'solid',
   },
   col3: {
-    width: "18%",
-    textAlign: "right",
+    width: '18%',
+    textAlign: 'right',
     paddingHorizontal: 6,
-    borderRightWidth: 1,
-    borderRightColor: C.border,
-    borderRightStyle: "solid",
+    // borderRightWidth: 1,
+    // borderRightColor: C.border,
+    // borderRightStyle: 'solid',
   },
-  col4: { width: "19%", textAlign: "right", paddingHorizontal: 9 },
+  col4: { width: '19%', textAlign: 'right', paddingHorizontal: 9 },
 
   // ── Totals ──
-  totalsSection: { flexDirection: "row", justifyContent: "flex-end", marginTop: 14 },
-  totalsBox: { width: "42%" },
+  totalsSection: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 14,
+  },
+  totalsBox: { width: '42%' },
   totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingVertical: 5,
     paddingHorizontal: 2,
     borderBottomWidth: 1,
     borderBottomColor: C.border,
-    borderBottomStyle: "solid",
+    borderBottomStyle: 'solid',
   },
   totalLabel: { color: C.gray, fontSize: 9.5 },
   totalValue: { color: C.black, fontWeight: 700, fontSize: 9.5 },
   grandTotalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 6,
     paddingVertical: 7,
     paddingHorizontal: 8,
-    backgroundColor: C.darkGreen,
+    backgroundColor: C.black,
     borderRadius: 3,
   },
-  grandTotalLabel: { fontSize: 11, fontWeight: 700, color: "#FFFFFF" },
+  grandTotalLabel: { fontSize: 11, fontWeight: 700, color: '#FFFFFF' },
   grandTotalValue: { fontSize: 11, fontWeight: 700, color: C.mintGreen },
 
   // ── Bank & Contact details ──
   bottomSection: {
-    flexDirection: "row",
+    flexDirection: 'row',
     marginTop: 22,
     borderTopWidth: 2,
     borderTopColor: C.brandGreen,
-    borderTopStyle: "solid",
+    borderTopStyle: 'solid',
     paddingTop: 12,
   },
-  bottomCol: { width: "50%" },
-  bottomColRight: { width: "50%", paddingLeft: 20 },
+  bottomCol: { width: '50%' },
+  bottomColRight: { width: '50%', paddingLeft: 20 },
   bottomTitle: {
     fontSize: 8.5,
     fontWeight: 700,
     color: C.darkGreen,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 0.6,
     marginBottom: 6,
   },
-  bottomRow: { flexDirection: "row", marginBottom: 3 },
+  bottomRow: { flexDirection: 'row', marginBottom: 3 },
   bottomLabel: { fontSize: 8.5, color: C.gray, width: 90 },
   bottomValue: { fontSize: 8.5, color: C.black, fontWeight: 700, flex: 1 },
 
   // ── Footer ──
   footer: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 24,
     left: 40,
     right: 40,
@@ -241,7 +261,7 @@ const pdfStyles = StyleSheet.create({
     backgroundColor: C.mintGreen,
     marginBottom: 6,
   },
-  footerText: { fontSize: 7.5, color: C.gray, textAlign: "center" },
+  footerText: { fontSize: 7.5, color: C.gray, textAlign: 'center' },
 });
 
 // --- PDF Component ---
@@ -253,9 +273,9 @@ const QuoteDocument = ({
   companyDetails: any;
 }) => {
   const fmt = (amount: number) =>
-    new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
+    new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
       minimumFractionDigits: 2,
     }).format(amount);
 
@@ -294,10 +314,10 @@ const QuoteDocument = ({
               <View style={pdfStyles.metaRow}>
                 <Text style={pdfStyles.metaLabel}>Date:</Text>
                 <Text style={pdfStyles.metaValue}>
-                  {new Date(quote.createdAt).toLocaleDateString("en-GB", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
+                  {new Date(quote.createdAt).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
                   })}
                 </Text>
               </View>
@@ -305,10 +325,10 @@ const QuoteDocument = ({
                 <View style={pdfStyles.metaRow}>
                   <Text style={pdfStyles.metaLabel}>Expires:</Text>
                   <Text style={pdfStyles.metaValue}>
-                    {new Date(quote.expiryDate).toLocaleDateString("en-GB", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
+                    {new Date(quote.expiryDate).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
                     })}
                   </Text>
                 </View>
@@ -336,7 +356,9 @@ const QuoteDocument = ({
               <Text style={pdfStyles.customerText}>{quote.customer.email}</Text>
             )}
             {quote.customer.address && (
-              <Text style={pdfStyles.customerText}>{quote.customer.address}</Text>
+              <Text style={pdfStyles.customerText}>
+                {quote.customer.address}
+              </Text>
             )}
           </View>
         </View>
@@ -367,18 +389,20 @@ const QuoteDocument = ({
               ]}
             >
               <View style={pdfStyles.col1}>
-                <Text style={{ fontWeight: 700, fontSize: 10, color: C.darkGreen }}>
-                  {li.storeItem?.name || li.description || "Item"}
+                <Text
+                  style={{ fontWeight: 700, fontSize: 10, color: C.darkGreen }}
+                >
+                  {li.storeItem?.name || li.description || 'Item'}
                 </Text>
                 {(li.storeItem?.itemNumber || li.storeItem?.category) && (
                   <Text style={{ fontSize: 8.5, color: C.gray, marginTop: 2 }}>
                     {li.storeItem?.itemNumber
                       ? `Code: ${li.storeItem.itemNumber}`
-                      : ""}
+                      : ''}
                     {li.storeItem?.itemNumber && li.storeItem?.category
-                      ? "  •  "
-                      : ""}
-                    {li.storeItem?.category || ""}
+                      ? '  •  '
+                      : ''}
+                    {li.storeItem?.category || ''}
                   </Text>
                 )}
               </View>
@@ -388,9 +412,7 @@ const QuoteDocument = ({
               <Text style={[pdfStyles.col3, { fontSize: 10 }]}>
                 {fmt(li.unitPrice)}
               </Text>
-              <Text
-                style={[pdfStyles.col4, { fontSize: 10, fontWeight: 700 }]}
-              >
+              <Text style={[pdfStyles.col4, { fontSize: 10, fontWeight: 700 }]}>
                 {fmt(li.unitPrice * li.quantity)}
               </Text>
             </View>
@@ -402,17 +424,15 @@ const QuoteDocument = ({
           <View style={pdfStyles.totalsBox}>
             <View style={pdfStyles.totalRow}>
               <Text style={pdfStyles.totalLabel}>Subtotal</Text>
-              <Text style={pdfStyles.totalValue}>
-                {fmt(quote.totalAmount)}
-              </Text>
+              <Text style={pdfStyles.totalValue}>{fmt(quote.totalAmount)}</Text>
             </View>
 
             {quote.discountAmount > 0 && (
               <View style={pdfStyles.totalRow}>
-                <Text style={[pdfStyles.totalLabel, { color: "#B91C1C" }]}>
+                <Text style={[pdfStyles.totalLabel, { color: '#B91C1C' }]}>
                   Discount
                 </Text>
-                <Text style={[pdfStyles.totalValue, { color: "#B91C1C" }]}>
+                <Text style={[pdfStyles.totalValue, { color: '#B91C1C' }]}>
                   -{fmt(quote.discountAmount)}
                 </Text>
               </View>
@@ -443,13 +463,17 @@ const QuoteDocument = ({
                 {cd.bankAccountName && (
                   <View style={pdfStyles.bottomRow}>
                     <Text style={pdfStyles.bottomLabel}>Account Name:</Text>
-                    <Text style={pdfStyles.bottomValue}>{cd.bankAccountName}</Text>
+                    <Text style={pdfStyles.bottomValue}>
+                      {cd.bankAccountName}
+                    </Text>
                   </View>
                 )}
                 {cd.bankAccountNumber && (
                   <View style={pdfStyles.bottomRow}>
                     <Text style={pdfStyles.bottomLabel}>Account Number:</Text>
-                    <Text style={pdfStyles.bottomValue}>{cd.bankAccountNumber}</Text>
+                    <Text style={pdfStyles.bottomValue}>
+                      {cd.bankAccountNumber}
+                    </Text>
                   </View>
                 )}
                 {cd.bankName && (
@@ -460,7 +484,7 @@ const QuoteDocument = ({
                 )}
               </View>
             )}
-
+            {/* 
             <View style={pdfStyles.bottomColRight}>
               <Text style={pdfStyles.bottomTitle}>Contact Details</Text>
               {cd.address && (
@@ -487,7 +511,7 @@ const QuoteDocument = ({
                   <Text style={pdfStyles.bottomValue}>{cd.website}</Text>
                 </View>
               )}
-            </View>
+            </View> */}
           </View>
         )}
 
@@ -496,10 +520,13 @@ const QuoteDocument = ({
           <View style={pdfStyles.footerStripe} />
           <Text style={pdfStyles.footerText}>
             {quote.terms ||
-              "This quote is valid for 30 days. Payment terms: 50% upfront, 50% on delivery."}
+              'This quote is valid for 30 days. Payment terms: 50% upfront, 50% on delivery.'}
           </Text>
-          <Text style={[pdfStyles.footerText, { marginTop: 3, color: "#B0BEC5" }]}>
-            Generated by Greenage Technologies · {new Date().toLocaleDateString("en-GB")}
+          <Text
+            style={[pdfStyles.footerText, { marginTop: 3, color: '#B0BEC5' }]}
+          >
+            Generated by Greenage Technologies ·{' '}
+            {new Date().toLocaleDateString('en-GB')}
           </Text>
         </View>
       </Page>
@@ -511,24 +538,24 @@ const QuoteDocument = ({
 
 // ... (Re-use your existing styles)
 const statusColors: Record<string, { bg: string; text: string }> = {
-  DRAFT: { bg: "#f3f4f6", text: "#6b7280" },
-  SENT: { bg: "#dbeafe", text: "#1e40af" },
-  ACCEPTED: { bg: "#dcfce7", text: "#166534" },
-  REJECTED: { bg: "#fee2e2", text: "#991b1b" },
-  EXPIRED: { bg: "#fef3c7", text: "#92400e" },
-  CONVERTED: { bg: "#e0e7ff", text: "#4338ca" },
+  DRAFT: { bg: '#f3f4f6', text: '#6b7280' },
+  SENT: { bg: '#dbeafe', text: '#1e40af' },
+  ACCEPTED: { bg: '#dcfce7', text: '#166534' },
+  REJECTED: { bg: '#fee2e2', text: '#991b1b' },
+  EXPIRED: { bg: '#fef3c7', text: '#92400e' },
+  CONVERTED: { bg: '#e0e7ff', text: '#4338ca' },
 };
 
 const SectionHeader = styled(Typography)(({ theme }) => ({
   fontSize: 14,
   fontWeight: 700,
-  color: "#0F172A",
-  textTransform: "uppercase",
-  letterSpacing: "0.5px",
+  color: '#0F172A',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
   marginBottom: theme.spacing(2),
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
 }));
 
 export default function QuoteDetailPage({
@@ -540,8 +567,8 @@ export default function QuoteDetailPage({
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [quote, setQuote] = useState<any>(null);
 
   const [companyDetails, setCompanyDetails] = useState<any>(null);
@@ -555,7 +582,7 @@ export default function QuoteDetailPage({
 
   useEffect(() => {
     fetchQuote();
-    fetch("/api/settings/company")
+    fetch('/api/settings/company')
       .then((r) => r.json())
       .then(setCompanyDetails)
       .catch(() => {});
@@ -565,7 +592,7 @@ export default function QuoteDetailPage({
     try {
       const res = await fetch(`/api/quotes/${resolvedParams.id}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch quote");
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch quote');
       setQuote(data);
     } catch (err: any) {
       setError(err.message);
@@ -585,15 +612,15 @@ export default function QuoteDetailPage({
 
       // Create Link and Click
       const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
       link.download = `Quote_${quote.quoteNumber}.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (e) {
-      console.error("PDF Generation Error", e);
-      setError("Failed to generate PDF");
+      console.error('PDF Generation Error', e);
+      setError('Failed to generate PDF');
     } finally {
       setIsDownloading(false);
     }
@@ -603,12 +630,12 @@ export default function QuoteDetailPage({
     try {
       setAccepting(true);
       const res = await fetch(`/api/quotes/${resolvedParams.id}/accept`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dueInDays }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to accept");
+      if (!res.ok) throw new Error(data.error || 'Failed to accept');
 
       setSuccess(
         `Quote accepted! Invoice ${data.invoice.invoiceNumber} created.`,
@@ -623,49 +650,49 @@ export default function QuoteDetailPage({
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
   if (loading)
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 20 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 20 }}>
         <CircularProgress size={40} />
       </Box>
     );
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: "auto" }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
       {/* Breadcrumbs & Actions Header */}
       <Box
         sx={{
           mb: 4,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-start',
         }}
       >
         <Box>
           <Button
             startIcon={<ArrowBack />}
             onClick={() => router.back()}
-            sx={{ mb: 1, textTransform: "none", color: "text.secondary" }}
+            sx={{ mb: 1, textTransform: 'none', color: 'text.secondary' }}
           >
             Back to Quotes
           </Button>
-          <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-            <Typography variant="h5" fontWeight={700} sx={{ color: "#0F172A" }}>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Typography variant="h5" fontWeight={700} sx={{ color: '#0F172A' }}>
               {quote?.quoteNumber}
             </Typography>
             <Chip
@@ -684,7 +711,7 @@ export default function QuoteDetailPage({
           </Typography>
         </Box>
 
-        <Box sx={{ display: "flex", gap: 1.5 }}>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
           <Button
             variant="contained"
             onClick={handleDownloadPdf}
@@ -697,25 +724,27 @@ export default function QuoteDetailPage({
               )
             }
             sx={{
-              bgcolor: "#0F172A",
-              "&:hover": { bgcolor: "#1E293B" },
+              bgcolor: '#0F172A',
+              '&:hover': { bgcolor: '#1E293B' },
               fontWeight: 600,
-              textTransform: "none",
+              textTransform: 'none',
             }}
           >
-            {isDownloading ? "Generating..." : "Download PDF"}
+            {isDownloading ? 'Generating...' : 'Download PDF'}
           </Button>
           {!quote?.isAccepted && (
             <Button
               variant="outlined"
               startIcon={<Edit />}
-              onClick={() => router.push(`/sales/quotes/${resolvedParams.id}/edit`)}
+              onClick={() =>
+                router.push(`/sales/quotes/${resolvedParams.id}/edit`)
+              }
               sx={{
-                borderColor: "#CBD5E1",
-                color: "#0F172A",
+                borderColor: '#CBD5E1',
+                color: '#0F172A',
                 fontWeight: 600,
-                textTransform: "none",
-                "&:hover": { bgcolor: "#F8FAFC" },
+                textTransform: 'none',
+                '&:hover': { bgcolor: '#F8FAFC' },
               }}
             >
               Edit Quote
@@ -727,8 +756,8 @@ export default function QuoteDetailPage({
               startIcon={<CheckCircle />}
               onClick={() => setAcceptDialogOpen(true)}
               sx={{
-                bgcolor: "#10b981",
-                "&:hover": { bgcolor: "#059669" },
+                bgcolor: '#10b981',
+                '&:hover': { bgcolor: '#059669' },
                 fontWeight: 600,
               }}
             >
@@ -758,16 +787,16 @@ export default function QuoteDetailPage({
             sx={{
               p: 3,
               borderRadius: 3,
-              border: "1px solid",
-              borderColor: "divider",
+              border: '1px solid',
+              borderColor: 'divider',
               mb: 3,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
               <SectionHeader>Line Items</SectionHeader>
             </Box>
 
-            <Box sx={{ overflowX: "auto" }}>
+            <Box sx={{ overflowX: 'auto' }}>
               {quote?.lineItems?.length > 0 ? (
                 <>
                   {quote.lineItems.map((li: any, i: number) => (
@@ -775,22 +804,22 @@ export default function QuoteDetailPage({
                       key={li.id || i}
                       sx={{
                         p: 2,
-                        bgcolor: i % 2 === 0 ? "#F8FAFC" : "transparent",
+                        bgcolor: i % 2 === 0 ? '#F8FAFC' : 'transparent',
                         borderRadius: 2,
                         mb: 1,
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
                       }}
                     >
                       <Box>
                         <Typography variant="body2" fontWeight={600}>
-                          {li.storeItem?.name || "Item"}
+                          {li.storeItem?.name || 'Item'}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {li.storeItem?.itemNumber || "N/A"}
+                          {li.storeItem?.itemNumber || 'N/A'}
                           {li.backorderStatus &&
-                            li.backorderStatus !== "NONE" && (
+                            li.backorderStatus !== 'NONE' && (
                               <Chip
                                 label={li.backorderStatus}
                                 size="small"
@@ -799,19 +828,19 @@ export default function QuoteDetailPage({
                                   fontSize: 10,
                                   height: 20,
                                   bgcolor:
-                                    li.backorderStatus === "FULFILLED"
-                                      ? "#dcfce7"
-                                      : "#fef3c7",
+                                    li.backorderStatus === 'FULFILLED'
+                                      ? '#dcfce7'
+                                      : '#fef3c7',
                                   color:
-                                    li.backorderStatus === "FULFILLED"
-                                      ? "#166534"
-                                      : "#92400e",
+                                    li.backorderStatus === 'FULFILLED'
+                                      ? '#166534'
+                                      : '#92400e',
                                 }}
                               />
                             )}
                         </Typography>
                       </Box>
-                      <Box sx={{ textAlign: "right" }}>
+                      <Box sx={{ textAlign: 'right' }}>
                         <Typography variant="body2" fontWeight={600}>
                           {li.quantity} × {formatCurrency(li.unitPrice)}
                         </Typography>
@@ -848,10 +877,10 @@ export default function QuoteDetailPage({
             </Box>
 
             {/* Main Content Area -> Line Items Paper */}
-            <Box sx={{ ml: "auto", maxWidth: 300 }}>
+            <Box sx={{ ml: 'auto', maxWidth: 300 }}>
               {/* Subtotal */}
               <Box
-                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+                sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}
               >
                 <Typography variant="body2" color="text.secondary">
                   Subtotal
@@ -865,8 +894,8 @@ export default function QuoteDetailPage({
               {quote?.discountAmount > 0 && (
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     mb: 1,
                   }}
                 >
@@ -883,8 +912,8 @@ export default function QuoteDetailPage({
               {quote?.taxAmount > 0 && (
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     mb: 1,
                   }}
                 >
@@ -898,7 +927,7 @@ export default function QuoteDetailPage({
               )}
 
               <Box
-                sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}
+                sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}
               >
                 <Typography variant="h6" fontWeight={700}>
                   Grand Total
@@ -917,8 +946,8 @@ export default function QuoteDetailPage({
               sx={{
                 p: 3,
                 borderRadius: 3,
-                border: "1px solid",
-                borderColor: "divider",
+                border: '1px solid',
+                borderColor: 'divider',
               }}
             >
               <SectionHeader>Technical Specifications</SectionHeader>
@@ -949,12 +978,12 @@ export default function QuoteDetailPage({
             sx={{
               p: 3,
               borderRadius: 3,
-              border: "1px solid",
-              borderColor: "divider",
+              border: '1px solid',
+              borderColor: 'divider',
               mb: 3,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <SectionHeader> Customer</SectionHeader>
             </Box>
             <Typography variant="body1" fontWeight={600}>
@@ -974,16 +1003,16 @@ export default function QuoteDetailPage({
             sx={{
               p: 3,
               borderRadius: 3,
-              border: "1px solid",
-              borderColor: "divider",
+              border: '1px solid',
+              borderColor: 'divider',
               mb: 3,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <SectionHeader>Logistics</SectionHeader>
             </Box>
             <Box
-              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}
             >
               <Typography variant="caption" color="text.secondary">
                 Est. Delivery
@@ -1001,21 +1030,21 @@ export default function QuoteDetailPage({
               sx={{
                 p: 3,
                 borderRadius: 3,
-                bgcolor: "#F1F5F9",
-                border: "1px solid",
-                borderColor: "divider",
+                bgcolor: '#F1F5F9',
+                border: '1px solid',
+                borderColor: 'divider',
               }}
             >
               <SectionHeader> Related Links</SectionHeader>
               <Box
-                sx={{ display: "flex", flexDirection: "column", gap: 1, mt: 1 }}
+                sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}
               >
                 {quote?.order && (
                   <Button
                     size="small"
                     variant="text"
                     startIcon={<ShoppingCart />}
-                    sx={{ justifyContent: "flex-start", color: "#0F172A" }}
+                    sx={{ justifyContent: 'flex-start', color: '#0F172A' }}
                     onClick={() =>
                       router.push(`/sales/orders/${quote.order.id}`)
                     }
@@ -1028,7 +1057,7 @@ export default function QuoteDetailPage({
                     size="small"
                     variant="text"
                     startIcon={<Receipt />}
-                    sx={{ justifyContent: "flex-start", color: "#0F172A" }}
+                    sx={{ justifyContent: 'flex-start', color: '#0F172A' }}
                     onClick={() =>
                       router.push(`/sales/invoices/${quote.invoice.id}`)
                     }
@@ -1069,7 +1098,7 @@ export default function QuoteDetailPage({
         <DialogActions sx={{ p: 3 }}>
           <Button
             onClick={() => setAcceptDialogOpen(false)}
-            sx={{ color: "text.secondary" }}
+            sx={{ color: 'text.secondary' }}
           >
             Cancel
           </Button>
@@ -1077,9 +1106,9 @@ export default function QuoteDetailPage({
             onClick={handleAcceptQuote}
             variant="contained"
             disabled={accepting}
-            sx={{ bgcolor: "#0F172A" }}
+            sx={{ bgcolor: '#0F172A' }}
           >
-            {accepting ? "Processing..." : "Confirm & Generate Invoice"}
+            {accepting ? 'Processing...' : 'Confirm & Generate Invoice'}
           </Button>
         </DialogActions>
       </Dialog>

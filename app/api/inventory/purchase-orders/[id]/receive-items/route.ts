@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
-// Returns the unique key for an item — materialId for materials, toolGroupId for tools.
+// Returns the unique key for an item — materialId for materials, toolId (or legacy toolGroupId) for tools.
 function itemKey(item: any): string {
-  return item.materialId || item.toolGroupId || '';
+  return item.materialId || item.toolId || item.toolGroupId || '';
 }
 
 export async function POST(
@@ -94,14 +94,171 @@ export async function POST(
         const type = item.itemType || 'material';
 
         if (type === 'tool') {
-          // Increment ToolGroup totalQuantity and availableQuantity
-          await tx.toolGroup.update({
-            where: { id: item.toolGroupId },
-            data: {
-              totalQuantity: { increment: item.quantity },
-              availableQuantity: { increment: item.quantity },
-            },
-          });
+          if (item.toolGroupId) {
+            // Grouped tool: fetch the group to continue its unit numbering sequence
+            const group = await tx.toolGroup.findUnique({
+              where: { id: item.toolGroupId },
+              select: {
+                groupNumber: true,
+                totalQuantity: true,
+                name: true,
+                category: true,
+                description: true,
+                manufacturer: true,
+                unitCost: true,
+              },
+            });
+
+            if (group) {
+              // Create N new individual Tool records continuing from current count
+              const toolsToCreate = [];
+              for (let i = 0; i < item.quantity; i++) {
+                const seqNum = (group.totalQuantity || 0) + i + 1;
+                toolsToCreate.push({
+                  toolId: `${group.groupNumber}-${String(seqNum).padStart(3, '0')}`,
+                  name: group.name,
+                  toolGroupId: item.toolGroupId,
+                  category: group.category,
+                  description: group.description,
+                  manufacturer: group.manufacturer,
+                  purchaseCost: group.unitCost,
+                  status: 'AVAILABLE' as const,
+                  condition: 'GOOD' as const,
+                });
+              }
+
+              await tx.tool.createMany({ data: toolsToCreate });
+
+              // Increment the group's aggregate counters
+              await tx.toolGroup.update({
+                where: { id: item.toolGroupId },
+                data: {
+                  totalQuantity: { increment: item.quantity },
+                  availableQuantity: { increment: item.quantity },
+                },
+              });
+            }
+          } else if (item.toolId) {
+            const existingTool = await tx.tool.findUnique({
+              where: { id: item.toolId },
+              select: {
+                name: true,
+                category: true,
+                description: true,
+                manufacturer: true,
+                purchaseCost: true,
+                condition: true,
+                location: true,
+                status: true,
+                currentStock: true,
+              },
+            });
+
+            if (existingTool) {
+              const isPlaceholder = existingTool.currentStock === 0;
+
+              if (isPlaceholder && item.quantity === 1) {
+                // Brand new tool, single unit first receipt — stays standalone
+                await tx.tool.update({
+                  where: { id: item.toolId },
+                  data: {
+                    currentStock: 1,
+                    status: 'AVAILABLE',
+                  },
+                });
+              } else {
+                // Either: placeholder receiving qty > 1, OR existing in-stock tool receiving more
+                // Both cases → promote to ToolGroup
+                const lastGroup = await tx.toolGroup.findFirst({
+                  orderBy: { createdAt: 'desc' },
+                  select: { groupNumber: true },
+                });
+                const groupNum = lastGroup
+                  ? parseInt(lastGroup.groupNumber.split('-')[1]) + 1
+                  : 1;
+                const groupNumber = `TOOLGRP-${String(groupNum).padStart(3, '0')}`;
+
+                // For a placeholder (currentStock=0): total = just the received quantity
+                // For existing in-stock (currentStock>0): total = 1 (existing record) + received
+                const existingCount = isPlaceholder ? 0 : 1;
+                const totalQty = existingCount + item.quantity;
+                const existingAvailable =
+                  !isPlaceholder && existingTool.status === 'AVAILABLE' ? 1 : 0;
+                const availableQty = existingAvailable + item.quantity;
+
+                const newGroup = await tx.toolGroup.create({
+                  data: {
+                    name: existingTool.name,
+                    groupNumber,
+                    category: existingTool.category,
+                    description: existingTool.description,
+                    manufacturer: existingTool.manufacturer,
+                    unitCost: existingTool.purchaseCost,
+                    totalQuantity: totalQty,
+                    availableQuantity: availableQty,
+                  },
+                });
+
+                if (isPlaceholder) {
+                  // Placeholder: repurpose the existing record as the first received unit
+                  await tx.tool.update({
+                    where: { id: item.toolId },
+                    data: {
+                      toolGroupId: newGroup.id,
+                      toolId: `${groupNumber}-001`,
+                      currentStock: 0,
+                      status: 'AVAILABLE',
+                    },
+                  });
+
+                  const toolsToCreate = [];
+                  for (let i = 1; i < item.quantity; i++) {
+                    toolsToCreate.push({
+                      toolId: `${groupNumber}-${String(i + 1).padStart(3, '0')}`,
+                      name: existingTool.name,
+                      toolGroupId: newGroup.id,
+                      category: existingTool.category,
+                      description: existingTool.description,
+                      manufacturer: existingTool.manufacturer,
+                      purchaseCost: existingTool.purchaseCost,
+                      condition: existingTool.condition,
+                      location: existingTool.location ?? undefined,
+                      status: 'AVAILABLE' as const,
+                    });
+                  }
+                  if (toolsToCreate.length > 0) {
+                    await tx.tool.createMany({ data: toolsToCreate });
+                  }
+                } else {
+                  // Existing in-stock tool: move into group + add received units
+                  await tx.tool.update({
+                    where: { id: item.toolId },
+                    data: {
+                      toolGroupId: newGroup.id,
+                      toolId: `${groupNumber}-001`,
+                    },
+                  });
+
+                  const toolsToCreate = [];
+                  for (let i = 0; i < item.quantity; i++) {
+                    toolsToCreate.push({
+                      toolId: `${groupNumber}-${String(i + 2).padStart(3, '0')}`,
+                      name: existingTool.name,
+                      toolGroupId: newGroup.id,
+                      category: existingTool.category,
+                      description: existingTool.description,
+                      manufacturer: existingTool.manufacturer,
+                      purchaseCost: existingTool.purchaseCost,
+                      condition: existingTool.condition,
+                      location: existingTool.location ?? undefined,
+                      status: 'AVAILABLE' as const,
+                    });
+                  }
+                  await tx.tool.createMany({ data: toolsToCreate });
+                }
+              }
+            }
+          }
         } else {
           // Material path: create batch record + increment currentStock
           const lastBatch = await tx.materialBatch.findFirst({
@@ -140,14 +297,23 @@ export async function POST(
       const newEntries = items.map((item: any) => {
         const type = item.itemType || 'material';
         return type === 'tool'
-          ? {
-              itemType: 'tool',
-              toolGroupId: item.toolGroupId,
-              toolGroupName: item.toolGroupName || '',
-              groupNumber: item.groupNumber || '',
-              receivedQty: item.quantity,
-              receivedAt: new Date().toISOString(),
-            }
+          ? item.toolGroupId
+            ? {
+                itemType: 'tool',
+                toolGroupId: item.toolGroupId,
+                toolGroupName: item.toolGroupName || '',
+                groupNumber: item.groupNumber || '',
+                receivedQty: item.quantity,
+                receivedAt: new Date().toISOString(),
+              }
+            : {
+                itemType: 'tool',
+                toolId: item.toolId || '',
+                toolName: item.toolName || '',
+                toolNumber: item.toolNumber || '',
+                receivedQty: item.quantity,
+                receivedAt: new Date().toISOString(),
+              }
           : {
               itemType: 'material',
               materialId: item.materialId,

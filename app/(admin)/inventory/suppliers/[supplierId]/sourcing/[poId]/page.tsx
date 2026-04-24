@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState, useCallback, use } from "react";
+import React, { useEffect, useState, useCallback, use } from 'react';
 import {
   Box,
   Typography,
@@ -28,8 +28,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-} from "@mui/material";
-import { styled } from "@mui/material/styles";
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
 import {
   ArrowBack as ArrowBackIcon,
   Receipt as InvoiceIcon,
@@ -41,16 +41,16 @@ import {
   NavigateNext as NextIcon,
   Add as AddIcon,
   EventNote as PlanIcon,
-} from "@mui/icons-material";
-import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+} from '@mui/icons-material';
+import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
 
 const steps = [
-  { label: "Planning", icon: <PlanIcon /> },
-  { label: "Invoice", icon: <InvoiceIcon /> },
-  { label: "Payment", icon: <PaymentIcon /> },
-  { label: "Shipment", icon: <ShipmentIcon /> },
-  { label: "Receiving", icon: <ReceivingIcon /> },
+  { label: 'Planning', icon: <PlanIcon /> },
+  { label: 'Invoice', icon: <InvoiceIcon /> },
+  { label: 'Payment', icon: <PaymentIcon /> },
+  { label: 'Shipment', icon: <ShipmentIcon /> },
+  { label: 'Receiving', icon: <ReceivingIcon /> },
 ];
 
 const statusToStep: Record<string, number> = {
@@ -65,11 +65,11 @@ const statusToStep: Record<string, number> = {
 };
 
 const stepToNextStatus: Record<number, string> = {
-  0: "PLANNED",
-  1: "INVOICED",
-  2: "SHIPMENT_TRACKING",
-  3: "RECEIVING",
-  4: "COMPLETED",
+  0: 'PLANNED',
+  1: 'INVOICED',
+  2: 'SHIPMENT_TRACKING',
+  3: 'RECEIVING',
+  4: 'COMPLETED',
 };
 
 const ColorConnector = styled(StepConnector)(({ theme }) => ({
@@ -78,18 +78,18 @@ const ColorConnector = styled(StepConnector)(({ theme }) => ({
   },
   [`&.${stepConnectorClasses.active}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      background: "#0F172A",
+      background: '#0F172A',
     },
   },
   [`&.${stepConnectorClasses.completed}`]: {
     [`& .${stepConnectorClasses.line}`]: {
-      background: "#0F172A",
+      background: '#0F172A',
     },
   },
   [`& .${stepConnectorClasses.line}`]: {
     height: 3,
     border: 0,
-    backgroundColor: "#e2e8f0",
+    backgroundColor: '#e2e8f0',
     borderRadius: 1,
   },
 }));
@@ -104,48 +104,48 @@ export default function PurchaseOrderDetailPage({
   const [po, setPo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
+  const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   // Payment form state (for recording partial payments)
-  const [newPaymentAmount, setNewPaymentAmount] = useState<number | string>("");
-  const [newPaymentMethod, setNewPaymentMethod] = useState("");
-  const [newPaymentRef, setNewPaymentRef] = useState("");
+  const [newPaymentAmount, setNewPaymentAmount] = useState<number | string>('');
+  const [newPaymentMethod, setNewPaymentMethod] = useState('');
+  const [newPaymentRef, setNewPaymentRef] = useState('');
   const [newPaymentDate, setNewPaymentDate] = useState(
-    format(new Date(), "yyyy-MM-dd"),
+    format(new Date(), 'yyyy-MM-dd'),
   );
-  const [newPaymentNotes, setNewPaymentNotes] = useState("");
+  const [newPaymentNotes, setNewPaymentNotes] = useState('');
   const [recordingPayment, setRecordingPayment] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const [paymentStartDate, setPaymentStartDate] = useState("");
-  const [paymentEndDate, setPaymentEndDate] = useState("");
+  const [paymentStartDate, setPaymentStartDate] = useState('');
+  const [paymentEndDate, setPaymentEndDate] = useState('');
 
-  const [shipmentMethod, setShipmentMethod] = useState("");
-  const [trackingNumber, setTrackingNumber] = useState("");
-  const [estimatedArrival, setEstimatedArrival] = useState("");
-  const [shipmentNotes, setShipmentNotes] = useState("");
-  const [shipmentStartDate, setShipmentStartDate] = useState("");
-  const [shipmentEndDate, setShipmentEndDate] = useState("");
+  const [shipmentMethod, setShipmentMethod] = useState('');
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [estimatedArrival, setEstimatedArrival] = useState('');
+  const [shipmentNotes, setShipmentNotes] = useState('');
+  const [shipmentStartDate, setShipmentStartDate] = useState('');
+  const [shipmentEndDate, setShipmentEndDate] = useState('');
 
-  const [receivingStartDate, setReceivingStartDate] = useState("");
-  const [receivingEndDate, setReceivingEndDate] = useState("");
-  const [receivingNotes, setReceivingNotes] = useState("");
+  const [receivingStartDate, setReceivingStartDate] = useState('');
+  const [receivingEndDate, setReceivingEndDate] = useState('');
+  const [receivingNotes, setReceivingNotes] = useState('');
 
-  const [invoiceStartDate, setInvoiceStartDate] = useState("");
-  const [invoiceEndDate, setInvoiceEndDate] = useState("");
-  const [invoiceNotes, setInvoiceNotes] = useState("");
+  const [invoiceStartDate, setInvoiceStartDate] = useState('');
+  const [invoiceEndDate, setInvoiceEndDate] = useState('');
+  const [invoiceNotes, setInvoiceNotes] = useState('');
 
   // Planning step state
-  const [planInvoiceStart, setPlanInvoiceStart] = useState("");
-  const [planInvoiceEnd, setPlanInvoiceEnd] = useState("");
-  const [planPaymentStart, setPlanPaymentStart] = useState("");
-  const [planPaymentEnd, setPlanPaymentEnd] = useState("");
-  const [planShipmentMethod, setPlanShipmentMethod] = useState("");
-  const [planShipmentStart, setPlanShipmentStart] = useState("");
-  const [planShipmentEnd, setPlanShipmentEnd] = useState("");
-  const [planEstimatedArrival, setPlanEstimatedArrival] = useState("");
-  const [planReceivingStart, setPlanReceivingStart] = useState("");
-  const [planReceivingEnd, setPlanReceivingEnd] = useState("");
+  const [planInvoiceStart, setPlanInvoiceStart] = useState('');
+  const [planInvoiceEnd, setPlanInvoiceEnd] = useState('');
+  const [planPaymentStart, setPlanPaymentStart] = useState('');
+  const [planPaymentEnd, setPlanPaymentEnd] = useState('');
+  const [planShipmentMethod, setPlanShipmentMethod] = useState('');
+  const [planShipmentStart, setPlanShipmentStart] = useState('');
+  const [planShipmentEnd, setPlanShipmentEnd] = useState('');
+  const [planEstimatedArrival, setPlanEstimatedArrival] = useState('');
+  const [planReceivingStart, setPlanReceivingStart] = useState('');
+  const [planReceivingEnd, setPlanReceivingEnd] = useState('');
 
   // Receiving: track quantities being received in this session
   const [receivingQtys, setReceivingQtys] = useState<Record<string, number>>(
@@ -164,6 +164,9 @@ export default function PurchaseOrderDetailPage({
       toolGroupId?: string;
       toolGroupName?: string;
       groupNumber?: string;
+      toolId?: string;
+      toolName?: string;
+      toolNumber?: string;
       quantity: number;
       unit: string;
     }[]
@@ -182,59 +185,59 @@ export default function PurchaseOrderDetailPage({
     try {
       setLoading(true);
       const res = await fetch(`/api/inventory/purchase-orders/${poId}`);
-      if (!res.ok) throw new Error("Failed to fetch purchase order");
+      if (!res.ok) throw new Error('Failed to fetch purchase order');
       const data = await res.json();
       setPo(data);
 
       // Populate form fields from existing data
       if (data.paymentStartDate)
         setPaymentStartDate(
-          format(new Date(data.paymentStartDate), "yyyy-MM-dd"),
+          format(new Date(data.paymentStartDate), 'yyyy-MM-dd'),
         );
       if (data.paymentEndDate)
-        setPaymentEndDate(format(new Date(data.paymentEndDate), "yyyy-MM-dd"));
+        setPaymentEndDate(format(new Date(data.paymentEndDate), 'yyyy-MM-dd'));
 
       if (data.shipmentMethod) setShipmentMethod(data.shipmentMethod);
       if (data.trackingNumber) setTrackingNumber(data.trackingNumber);
       if (data.estimatedArrival)
         setEstimatedArrival(
-          format(new Date(data.estimatedArrival), "yyyy-MM-dd"),
+          format(new Date(data.estimatedArrival), 'yyyy-MM-dd'),
         );
       if (data.shipmentNotes) setShipmentNotes(data.shipmentNotes);
       if (data.shipmentStartDate)
         setShipmentStartDate(
-          format(new Date(data.shipmentStartDate), "yyyy-MM-dd"),
+          format(new Date(data.shipmentStartDate), 'yyyy-MM-dd'),
         );
       if (data.shipmentEndDate)
         setShipmentEndDate(
-          format(new Date(data.shipmentEndDate), "yyyy-MM-dd"),
+          format(new Date(data.shipmentEndDate), 'yyyy-MM-dd'),
         );
 
       if (data.receivingStartDate)
         setReceivingStartDate(
-          format(new Date(data.receivingStartDate), "yyyy-MM-dd"),
+          format(new Date(data.receivingStartDate), 'yyyy-MM-dd'),
         );
       if (data.receivingEndDate)
         setReceivingEndDate(
-          format(new Date(data.receivingEndDate), "yyyy-MM-dd"),
+          format(new Date(data.receivingEndDate), 'yyyy-MM-dd'),
         );
       if (data.receivingNotes) setReceivingNotes(data.receivingNotes);
 
       if (data.invoiceStartDate)
         setInvoiceStartDate(
-          format(new Date(data.invoiceStartDate), "yyyy-MM-dd"),
+          format(new Date(data.invoiceStartDate), 'yyyy-MM-dd'),
         );
       if (data.invoiceEndDate)
-        setInvoiceEndDate(format(new Date(data.invoiceEndDate), "yyyy-MM-dd"));
+        setInvoiceEndDate(format(new Date(data.invoiceEndDate), 'yyyy-MM-dd'));
       if (data.invoiceNotes) setInvoiceNotes(data.invoiceNotes);
 
       // Planning fields
-      const fmtD = (d: any) => (d ? format(new Date(d), "yyyy-MM-dd") : "");
+      const fmtD = (d: any) => (d ? format(new Date(d), 'yyyy-MM-dd') : '');
       setPlanInvoiceStart(fmtD(data.plannedInvoiceStartDate));
       setPlanInvoiceEnd(fmtD(data.plannedInvoiceEndDate));
       setPlanPaymentStart(fmtD(data.plannedPaymentStartDate));
       setPlanPaymentEnd(fmtD(data.plannedPaymentEndDate));
-      setPlanShipmentMethod(data.plannedShipmentMethod || "");
+      setPlanShipmentMethod(data.plannedShipmentMethod || '');
       setPlanShipmentStart(fmtD(data.plannedShipmentStartDate));
       setPlanShipmentEnd(fmtD(data.plannedShipmentEndDate));
       setPlanEstimatedArrival(fmtD(data.plannedEstimatedArrival));
@@ -254,7 +257,7 @@ export default function PurchaseOrderDetailPage({
   const activeStep = po ? (statusToStep[po.status] ?? 0) : 0;
   const displayStep = viewStep !== null ? viewStep : activeStep;
   const isViewingPrevious = viewStep !== null && viewStep < activeStep;
-  const isCompleted = po?.status === "COMPLETED";
+  const isCompleted = po?.status === 'COMPLETED';
 
   // Invoice edit helpers
   const editSubtotal = editItems.reduce(
@@ -283,7 +286,7 @@ export default function PurchaseOrderDetailPage({
 
   const handleUpdateEditItem = (
     index: number,
-    field: "quantity" | "unitCost",
+    field: 'quantity' | 'unitCost',
     value: number,
   ) => {
     setEditItems((prev) => {
@@ -292,7 +295,7 @@ export default function PurchaseOrderDetailPage({
         ...updated[index],
         [field]: value,
         totalCost:
-          field === "quantity"
+          field === 'quantity'
             ? value * (updated[index].unitCost || 0)
             : (updated[index].quantity || 0) * value,
       };
@@ -303,10 +306,10 @@ export default function PurchaseOrderDetailPage({
   const handleSaveInvoice = async () => {
     try {
       setSaving(true);
-      setError("");
+      setError('');
       const res = await fetch(`/api/inventory/purchase-orders/${poId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: editItems,
           subtotal: editSubtotal,
@@ -315,12 +318,12 @@ export default function PurchaseOrderDetailPage({
           totalAmount: editTotal,
         }),
       });
-      if (!res.ok) throw new Error("Failed to update invoice");
+      if (!res.ok) throw new Error('Failed to update invoice');
       const updatedPO = await res.json();
       setPo(updatedPO);
       setEditingInvoice(false);
-      setSuccessMsg("Invoice updated successfully!");
-      setTimeout(() => setSuccessMsg(""), 3000);
+      setSuccessMsg('Invoice updated successfully!');
+      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -331,17 +334,17 @@ export default function PurchaseOrderDetailPage({
   const handleSaveStep = async (stepData: any) => {
     try {
       setSaving(true);
-      setError("");
+      setError('');
       const res = await fetch(`/api/inventory/purchase-orders/${poId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(stepData),
       });
-      if (!res.ok) throw new Error("Failed to save");
+      if (!res.ok) throw new Error('Failed to save');
       const updatedPO = await res.json();
       setPo(updatedPO);
-      setSuccessMsg("Saved successfully!");
-      setTimeout(() => setSuccessMsg(""), 3000);
+      setSuccessMsg('Saved successfully!');
+      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -398,13 +401,13 @@ export default function PurchaseOrderDetailPage({
   const handleDownloadPDF = async () => {
     try {
       const res = await fetch(`/api/inventory/purchase-orders/${poId}/pdf`);
-      if (!res.ok) throw new Error("Failed to generate PDF");
+      if (!res.ok) throw new Error('Failed to generate PDF');
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
-      a.download = `${po?.poNumber || "invoice"}.pdf`;
+      a.download = `${po?.poNumber || 'invoice'}.pdf`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -417,29 +420,29 @@ export default function PurchaseOrderDetailPage({
   const handleRecordPayment = async () => {
     const amount = Number(newPaymentAmount);
     if (!amount || amount <= 0) {
-      setError("Enter a valid payment amount");
+      setError('Enter a valid payment amount');
       return;
     }
     if (!newPaymentMethod) {
-      setError("Payment method is required");
+      setError('Payment method is required');
       return;
     }
     const remaining = (po?.totalAmount || 0) - (po?.paidAmount || 0);
     if (amount > remaining) {
       setError(
-        `Amount exceeds remaining balance of ₦${remaining.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`,
+        `Amount exceeds remaining balance of ₦${remaining.toLocaleString('en-NG', { minimumFractionDigits: 2 })}`,
       );
       return;
     }
 
     try {
       setRecordingPayment(true);
-      setError("");
+      setError('');
       const res = await fetch(
         `/api/inventory/purchase-orders/${poId}/payments`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             amount,
             paymentMethod: newPaymentMethod,
@@ -451,19 +454,19 @@ export default function PurchaseOrderDetailPage({
       );
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to record payment");
+        throw new Error(data.error || 'Failed to record payment');
       }
       // Refresh PO
       await fetchPO();
       // Reset form
-      setNewPaymentAmount("");
-      setNewPaymentMethod("");
-      setNewPaymentRef("");
-      setNewPaymentDate(format(new Date(), "yyyy-MM-dd"));
-      setNewPaymentNotes("");
+      setNewPaymentAmount('');
+      setNewPaymentMethod('');
+      setNewPaymentRef('');
+      setNewPaymentDate(format(new Date(), 'yyyy-MM-dd'));
+      setNewPaymentNotes('');
       setPaymentDialogOpen(false);
-      setSuccessMsg("Payment recorded successfully!");
-      setTimeout(() => setSuccessMsg(""), 3000);
+      setSuccessMsg('Payment recorded successfully!');
+      setTimeout(() => setSuccessMsg(''), 3000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -473,7 +476,7 @@ export default function PurchaseOrderDetailPage({
 
   // Returns a unique key for any PO line item (material or tool)
   const getItemKey = (item: any): string =>
-    item.materialId || item.toolGroupId || "";
+    item.materialId || item.toolId || item.toolGroupId || '';
 
   // Opens confirmation dialog with validated items
   const handleRecordReceipt = () => {
@@ -483,11 +486,12 @@ export default function PurchaseOrderDetailPage({
       ? po.receivedItems
       : [];
 
-    // Build map of existing received quantities keyed by materialId or toolGroupId
+    // Build map of existing received quantities keyed by materialId or toolId
     const receivedMap: Record<string, number> = {};
     existingReceived.forEach((r: any) => {
-      const key = r.materialId || r.toolGroupId;
-      if (key) receivedMap[key] = (receivedMap[key] || 0) + (r.receivedQty || 0);
+      const key = r.materialId || r.toolId || r.toolGroupId;
+      if (key)
+        receivedMap[key] = (receivedMap[key] || 0) + (r.receivedQty || 0);
     });
 
     // Validate selected items
@@ -500,7 +504,7 @@ export default function PurchaseOrderDetailPage({
       const alreadyReceived = receivedMap[key] || 0;
       const remaining = (item.quantity || 0) - alreadyReceived;
       const displayName =
-        item.itemType === "tool"
+        item.itemType === 'tool'
           ? item.toolGroupName || key
           : item.materialName || key;
       if (qty > remaining) {
@@ -510,23 +514,26 @@ export default function PurchaseOrderDetailPage({
         return;
       }
       itemsToReceive.push({
-        itemType: item.itemType || "material",
+        itemType: item.itemType || 'material',
         materialId: item.materialId,
         materialName: item.materialName,
-        toolGroupId: item.toolGroupId,
-        toolGroupName: item.toolGroupName,
-        groupNumber: item.groupNumber,
+        toolGroupId: item.toolGroupId || undefined,
+        toolGroupName: item.toolGroupName || undefined,
+        groupNumber: item.groupNumber || undefined,
+        toolId: item.toolId || undefined,
+        toolName: item.toolName || undefined,
+        toolNumber: item.toolNumber || undefined,
         quantity: qty,
-        unit: item.unit || "unit",
+        unit: item.unit || 'unit',
       });
     }
 
     if (itemsToReceive.length === 0) {
-      setError("Select at least one item and enter a quantity to record.");
+      setError('Select at least one item and enter a quantity to record.');
       return;
     }
 
-    setError("");
+    setError('');
     setPendingReceiptItems(itemsToReceive);
     setReceiptConfirmOpen(true);
   };
@@ -535,20 +542,20 @@ export default function PurchaseOrderDetailPage({
   const handleConfirmReceipt = async () => {
     try {
       setRecordingReceipt(true);
-      setError("");
+      setError('');
 
       const res = await fetch(
         `/api/inventory/purchase-orders/${poId}/receive-items`,
         {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ items: pendingReceiptItems }),
         },
       );
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to receive items");
+        throw new Error(data.error || 'Failed to receive items');
       }
 
       // Reset form, close dialog, refresh PO
@@ -557,8 +564,8 @@ export default function PurchaseOrderDetailPage({
       setReceiptConfirmOpen(false);
       setPendingReceiptItems([]);
       await fetchPO();
-      setSuccessMsg("Items received and inventory updated successfully!");
-      setTimeout(() => setSuccessMsg(""), 4000);
+      setSuccessMsg('Items received and inventory updated successfully!');
+      setTimeout(() => setSuccessMsg(''), 4000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -570,10 +577,10 @@ export default function PurchaseOrderDetailPage({
     return (
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "60vh",
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '60vh',
         }}
       >
         <CircularProgress />
@@ -583,7 +590,7 @@ export default function PurchaseOrderDetailPage({
 
   if (!po) {
     return (
-      <Box sx={{ textAlign: "center", py: 8 }}>
+      <Box sx={{ textAlign: 'center', py: 8 }}>
         <Typography variant="h6" color="text.secondary">
           Purchase order not found
         </Typography>
@@ -609,53 +616,53 @@ export default function PurchaseOrderDetailPage({
           onClick={() =>
             router.push(`/inventory/suppliers/${supplierId}/sourcing`)
           }
-          sx={{ mb: 2, color: "text.secondary" }}
+          sx={{ mb: 2, color: 'text.secondary' }}
         >
           Back to Sourcing
         </Button>
 
         <Box
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            flexWrap: "wrap",
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            flexWrap: 'wrap',
             gap: 2,
           }}
         >
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Typography variant="h5" fontWeight={700}>
                 {po.poNumber}
               </Typography>
               <Chip
-                label={po.status.replace(/_/g, " ")}
+                label={po.status.replace(/_/g, ' ')}
                 size="small"
                 color={
-                  po.status === "COMPLETED"
-                    ? "success"
-                    : po.status === "CANCELLED"
-                      ? "error"
-                      : "primary"
+                  po.status === 'COMPLETED'
+                    ? 'success'
+                    : po.status === 'CANCELLED'
+                      ? 'error'
+                      : 'primary'
                 }
                 variant="outlined"
               />
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-              {po.supplier?.name} • Created{" "}
-              {format(new Date(po.createdAt), "dd MMM yyyy")}
+              {po.supplier?.name} • Created{' '}
+              {format(new Date(po.createdAt), 'dd MMM yyyy')}
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               variant="outlined"
               startIcon={<DownloadIcon />}
               onClick={handleDownloadPDF}
               sx={{
-                borderColor: "divider",
-                color: "text.primary",
-                "&:hover": { bgcolor: "action.hover" },
+                borderColor: 'divider',
+                color: 'text.primary',
+                '&:hover': { bgcolor: 'action.hover' },
               }}
             >
               Download Invoice
@@ -665,7 +672,7 @@ export default function PurchaseOrderDetailPage({
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError("")}>
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
           {error}
         </Alert>
       )}
@@ -681,8 +688,8 @@ export default function PurchaseOrderDetailPage({
         sx={{
           p: 4,
           mb: 3,
-          border: "1px solid",
-          borderColor: "divider",
+          border: '1px solid',
+          borderColor: 'divider',
           borderRadius: 2,
         }}
       >
@@ -707,7 +714,7 @@ export default function PurchaseOrderDetailPage({
                     setViewStep(null); // Reset to current
                   }
                 }}
-                sx={{ cursor: isClickable ? "pointer" : "default" }}
+                sx={{ cursor: isClickable ? 'pointer' : 'default' }}
               >
                 <StepLabel
                   StepIconComponent={() => (
@@ -715,26 +722,26 @@ export default function PurchaseOrderDetailPage({
                       sx={{
                         width: 44,
                         height: 44,
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                         bgcolor: isViewing
-                          ? "#1e40af"
+                          ? '#1e40af'
                           : isCompleted
-                            ? "#0F172A"
+                            ? '#0F172A'
                             : isCurrent
-                              ? "#334155"
-                              : "#e2e8f0",
+                              ? '#334155'
+                              : '#e2e8f0',
                         color:
                           activeStep >= index || isViewing
-                            ? "white"
-                            : "#94a3b8",
-                        transition: "all 0.3s ease",
+                            ? 'white'
+                            : '#94a3b8',
+                        transition: 'all 0.3s ease',
                         outline:
                           isViewing && !isCurrent
-                            ? "2px solid #1e40af"
-                            : "none",
+                            ? '2px solid #1e40af'
+                            : 'none',
                         outlineOffset: 2,
                       }}
                     >
@@ -751,8 +758,8 @@ export default function PurchaseOrderDetailPage({
                     fontWeight={isViewing || isCurrent ? 700 : 500}
                     color={
                       activeStep >= index || isViewing
-                        ? "text.primary"
-                        : "text.disabled"
+                        ? 'text.primary'
+                        : 'text.disabled'
                     }
                   >
                     {step.label}
@@ -771,12 +778,12 @@ export default function PurchaseOrderDetailPage({
           sx={{
             p: 2,
             mb: 2,
-            bgcolor: "#eff6ff",
-            border: "1px solid #93c5fd",
+            bgcolor: '#eff6ff',
+            border: '1px solid #93c5fd',
             borderRadius: 2,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
           <Typography variant="body2" fontWeight={600} color="#1e40af">
@@ -788,9 +795,9 @@ export default function PurchaseOrderDetailPage({
             onClick={() => setViewStep(null)}
             disableElevation
             sx={{
-              bgcolor: "#1e40af",
+              bgcolor: '#1e40af',
               fontWeight: 600,
-              "&:hover": { bgcolor: "#1e3a8a" },
+              '&:hover': { bgcolor: '#1e3a8a' },
             }}
           >
             Return to {steps[activeStep]?.label}
@@ -806,8 +813,8 @@ export default function PurchaseOrderDetailPage({
           elevation={0}
           sx={{
             p: 4,
-            border: "1px solid",
-            borderColor: "divider",
+            border: '1px solid',
+            borderColor: 'divider',
             borderRadius: 2,
           }}
         >
@@ -823,11 +830,11 @@ export default function PurchaseOrderDetailPage({
           <Typography
             variant="subtitle2"
             fontWeight={700}
-            sx={{ mb: 1.5, color: "#475569" }}
+            sx={{ mb: 1.5, color: '#475569' }}
           >
             Invoice Dates
           </Typography>
-          <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 3 }}>
+          <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 3 }}>
             <TextField
               label="Planned Start Date"
               type="date"
@@ -854,11 +861,11 @@ export default function PurchaseOrderDetailPage({
           <Typography
             variant="subtitle2"
             fontWeight={700}
-            sx={{ mb: 1.5, color: "#475569" }}
+            sx={{ mb: 1.5, color: '#475569' }}
           >
             Payment Dates
           </Typography>
-          <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 3 }}>
+          <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 3 }}>
             <TextField
               label="Planned Start Date"
               type="date"
@@ -885,11 +892,11 @@ export default function PurchaseOrderDetailPage({
           <Typography
             variant="subtitle2"
             fontWeight={700}
-            sx={{ mb: 1.5, color: "#475569" }}
+            sx={{ mb: 1.5, color: '#475569' }}
           >
             Shipment Details
           </Typography>
-          <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 3 }}>
+          <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 3 }}>
             <TextField
               label="Planned Shipment Method"
               variant="standard"
@@ -932,11 +939,11 @@ export default function PurchaseOrderDetailPage({
           <Typography
             variant="subtitle2"
             fontWeight={700}
-            sx={{ mb: 1.5, color: "#475569" }}
+            sx={{ mb: 1.5, color: '#475569' }}
           >
             Receiving Dates
           </Typography>
-          <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 3 }}>
+          <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 3 }}>
             <TextField
               label="Planned Start Date"
               type="date"
@@ -958,7 +965,7 @@ export default function PurchaseOrderDetailPage({
           </Box>
 
           <Box
-            sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 4 }}
+            sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}
           >
             <Button
               variant="outlined"
@@ -987,15 +994,15 @@ export default function PurchaseOrderDetailPage({
               disabled={saving || isCompleted}
               disableElevation
               sx={{
-                bgcolor: "#0F172A",
+                bgcolor: '#0F172A',
                 fontWeight: 600,
-                "&:hover": { bgcolor: "#1E293B" },
+                '&:hover': { bgcolor: '#1E293B' },
               }}
             >
               {saving ? (
                 <CircularProgress size={20} color="inherit" />
               ) : (
-                " Move to Invoice"
+                ' Move to Invoice'
               )}
             </Button>
           </Box>
@@ -1008,8 +1015,8 @@ export default function PurchaseOrderDetailPage({
           elevation={0}
           sx={{
             p: 4,
-            border: "1px solid",
-            borderColor: "divider",
+            border: '1px solid',
+            borderColor: 'divider',
             borderRadius: 2,
           }}
         >
@@ -1024,7 +1031,7 @@ export default function PurchaseOrderDetailPage({
 
           {/* Edit Invoice Button */}
           {!editingInvoice && !isCompleted && (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
               <Button
                 variant="outlined"
                 size="small"
@@ -1040,20 +1047,20 @@ export default function PurchaseOrderDetailPage({
           <TableContainer
             sx={{
               mb: 3,
-              border: "1px solid",
-              borderColor: editingInvoice ? "#3b82f6" : "divider",
+              border: '1px solid',
+              borderColor: editingInvoice ? '#3b82f6' : 'divider',
               borderRadius: 1,
             }}
           >
             <Table size="small">
               <TableHead>
                 <TableRow
-                  sx={{ bgcolor: editingInvoice ? "#1e40af" : "#f8fafc" }}
+                  sx={{ bgcolor: editingInvoice ? '#1e40af' : '#f8fafc' }}
                 >
                   <TableCell
                     sx={{
                       fontWeight: 600,
-                      color: editingInvoice ? "white" : "inherit",
+                      color: editingInvoice ? 'white' : 'inherit',
                     }}
                   >
                     #
@@ -1061,15 +1068,15 @@ export default function PurchaseOrderDetailPage({
                   <TableCell
                     sx={{
                       fontWeight: 600,
-                      color: editingInvoice ? "white" : "inherit",
+                      color: editingInvoice ? 'white' : 'inherit',
                     }}
                   >
-                    Material
+                    Material / Tool
                   </TableCell>
                   <TableCell
                     sx={{
                       fontWeight: 600,
-                      color: editingInvoice ? "white" : "inherit",
+                      color: editingInvoice ? 'white' : 'inherit',
                     }}
                   >
                     Part No.
@@ -1078,7 +1085,7 @@ export default function PurchaseOrderDetailPage({
                     align="center"
                     sx={{
                       fontWeight: 600,
-                      color: editingInvoice ? "white" : "inherit",
+                      color: editingInvoice ? 'white' : 'inherit',
                     }}
                   >
                     Unit
@@ -1087,7 +1094,7 @@ export default function PurchaseOrderDetailPage({
                     align="center"
                     sx={{
                       fontWeight: 600,
-                      color: editingInvoice ? "white" : "inherit",
+                      color: editingInvoice ? 'white' : 'inherit',
                     }}
                   >
                     Qty
@@ -1096,7 +1103,7 @@ export default function PurchaseOrderDetailPage({
                     align="right"
                     sx={{
                       fontWeight: 600,
-                      color: editingInvoice ? "white" : "inherit",
+                      color: editingInvoice ? 'white' : 'inherit',
                     }}
                   >
                     Unit Cost
@@ -1105,7 +1112,7 @@ export default function PurchaseOrderDetailPage({
                     align="right"
                     sx={{
                       fontWeight: 600,
-                      color: editingInvoice ? "white" : "inherit",
+                      color: editingInvoice ? 'white' : 'inherit',
                     }}
                   >
                     Total
@@ -1117,10 +1124,14 @@ export default function PurchaseOrderDetailPage({
                   (item: any, i: number) => (
                     <TableRow
                       key={i}
-                      sx={editingInvoice ? { bgcolor: "#eff6ff" } : {}}
+                      sx={editingInvoice ? { bgcolor: '#eff6ff' } : {}}
                     >
                       <TableCell>{i + 1}</TableCell>
-                      <TableCell>{item.materialName}</TableCell>
+                      <TableCell>
+                        {item.itemType === 'tool'
+                          ? item.toolGroupName || item.toolName
+                          : item.materialName}
+                      </TableCell>
                       <TableCell>{item.partNumber}</TableCell>
                       <TableCell align="center">{item.unit}</TableCell>
                       <TableCell align="center">
@@ -1133,7 +1144,7 @@ export default function PurchaseOrderDetailPage({
                             onChange={(e) =>
                               handleUpdateEditItem(
                                 i,
-                                "quantity",
+                                'quantity',
                                 parseFloat(e.target.value) || 0,
                               )
                             }
@@ -1154,7 +1165,7 @@ export default function PurchaseOrderDetailPage({
                             onChange={(e) =>
                               handleUpdateEditItem(
                                 i,
-                                "unitCost",
+                                'unitCost',
                                 parseFloat(e.target.value) || 0,
                               )
                             }
@@ -1164,7 +1175,7 @@ export default function PurchaseOrderDetailPage({
                         ) : (
                           <>
                             ₦
-                            {(item.unitCost || 0).toLocaleString("en-NG", {
+                            {(item.unitCost || 0).toLocaleString('en-NG', {
                               minimumFractionDigits: 2,
                             })}
                           </>
@@ -1176,7 +1187,7 @@ export default function PurchaseOrderDetailPage({
                           fontWeight={editingInvoice ? 700 : 400}
                         >
                           ₦
-                          {(item.totalCost || 0).toLocaleString("en-NG", {
+                          {(item.totalCost || 0).toLocaleString('en-NG', {
                             minimumFractionDigits: 2,
                           })}
                         </Typography>
@@ -1189,12 +1200,12 @@ export default function PurchaseOrderDetailPage({
           </TableContainer>
 
           {/* Totals */}
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
             <Box sx={{ width: 300 }}>
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   mb: 0.5,
                 }}
               >
@@ -1206,16 +1217,16 @@ export default function PurchaseOrderDetailPage({
                   {(editingInvoice
                     ? editSubtotal
                     : po.subtotal || 0
-                  ).toLocaleString("en-NG", {
+                  ).toLocaleString('en-NG', {
                     minimumFractionDigits: 2,
                   })}
                 </Typography>
               </Box>
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   mb: 0.5,
                 }}
               >
@@ -1237,7 +1248,7 @@ export default function PurchaseOrderDetailPage({
                 ) : (
                   <Typography variant="body2">
                     +₦
-                    {(po.tax || 0).toLocaleString("en-NG", {
+                    {(po.tax || 0).toLocaleString('en-NG', {
                       minimumFractionDigits: 2,
                     })}
                   </Typography>
@@ -1245,9 +1256,9 @@ export default function PurchaseOrderDetailPage({
               </Box>
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   mb: 0.5,
                 }}
               >
@@ -1269,14 +1280,14 @@ export default function PurchaseOrderDetailPage({
                 ) : (
                   <Typography variant="body2" color="error.main">
                     -₦
-                    {(po.discount || 0).toLocaleString("en-NG", {
+                    {(po.discount || 0).toLocaleString('en-NG', {
                       minimumFractionDigits: 2,
                     })}
                   </Typography>
                 )}
               </Box>
               <Divider sx={{ my: 1 }} />
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography variant="subtitle1" fontWeight={700}>
                   Total
                 </Typography>
@@ -1285,7 +1296,7 @@ export default function PurchaseOrderDetailPage({
                   {(editingInvoice
                     ? editTotal
                     : po.totalAmount || 0
-                  ).toLocaleString("en-NG", {
+                  ).toLocaleString('en-NG', {
                     minimumFractionDigits: 2,
                   })}
                 </Typography>
@@ -1297,8 +1308,8 @@ export default function PurchaseOrderDetailPage({
           {editingInvoice && (
             <Box
               sx={{
-                display: "flex",
-                justifyContent: "flex-end",
+                display: 'flex',
+                justifyContent: 'flex-end',
                 gap: 2,
                 mb: 3,
               }}
@@ -1316,15 +1327,15 @@ export default function PurchaseOrderDetailPage({
                 disabled={saving}
                 disableElevation
                 sx={{
-                  bgcolor: "#16a34a",
+                  bgcolor: '#16a34a',
                   fontWeight: 600,
-                  "&:hover": { bgcolor: "#15803d" },
+                  '&:hover': { bgcolor: '#15803d' },
                 }}
               >
                 {saving ? (
                   <CircularProgress size={20} color="inherit" />
                 ) : (
-                  "Save Invoice Changes"
+                  'Save Invoice Changes'
                 )}
               </Button>
             </Box>
@@ -1333,7 +1344,7 @@ export default function PurchaseOrderDetailPage({
           <Divider sx={{ my: 3 }} />
 
           {/* Dates */}
-          <Box sx={{ display: "flex", gap: 3, mb: 3, flexWrap: "wrap" }}>
+          <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap' }}>
             <TextField
               label="Actual Invoice Start Date"
               type="date"
@@ -1370,46 +1381,46 @@ export default function PurchaseOrderDetailPage({
               return (
                 <Box
                   sx={{
-                    display: "flex",
+                    display: 'flex',
                     gap: 2,
-                    alignItems: "center",
-                    flexWrap: "wrap",
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
                     mt: 1,
                     mb: 2,
                     px: 1.5,
                     py: 0.75,
-                    bgcolor: anyOverdue ? "#fef2f2" : "#f0f9ff",
+                    bgcolor: anyOverdue ? '#fef2f2' : '#f0f9ff',
                     borderRadius: 1,
-                    border: `1px solid ${anyOverdue ? "#fecaca" : "#bae6fd"}`,
+                    border: `1px solid ${anyOverdue ? '#fecaca' : '#bae6fd'}`,
                   }}
                 >
                   <Typography
                     variant="caption"
-                    color={anyOverdue ? "#b91c1c" : "#0369a1"}
+                    color={anyOverdue ? '#b91c1c' : '#0369a1'}
                     fontWeight={600}
                   >
-                    {anyOverdue ? "⚠ Overdue — Planned:" : "Planned:"}
+                    {anyOverdue ? '⚠ Overdue — Planned:' : 'Planned:'}
                   </Typography>
                   {po.plannedInvoiceStartDate && (
                     <Chip
-                      label={`Start: ${format(new Date(po.plannedInvoiceStartDate), "dd MMM yyyy")}`}
+                      label={`Start: ${format(new Date(po.plannedInvoiceStartDate), 'dd MMM yyyy')}`}
                       size="small"
                       sx={{
                         fontSize: 11,
-                        bgcolor: startOverdue ? "#fee2e2" : "#e0f2fe",
-                        color: startOverdue ? "#b91c1c" : "#0369a1",
+                        bgcolor: startOverdue ? '#fee2e2' : '#e0f2fe',
+                        color: startOverdue ? '#b91c1c' : '#0369a1',
                         fontWeight: startOverdue ? 700 : 500,
                       }}
                     />
                   )}
                   {po.plannedInvoiceEndDate && (
                     <Chip
-                      label={`End: ${format(new Date(po.plannedInvoiceEndDate), "dd MMM yyyy")}`}
+                      label={`End: ${format(new Date(po.plannedInvoiceEndDate), 'dd MMM yyyy')}`}
                       size="small"
                       sx={{
                         fontSize: 11,
-                        bgcolor: endOverdue ? "#fee2e2" : "#e0f2fe",
-                        color: endOverdue ? "#b91c1c" : "#0369a1",
+                        bgcolor: endOverdue ? '#fee2e2' : '#e0f2fe',
+                        color: endOverdue ? '#b91c1c' : '#0369a1',
                         fontWeight: endOverdue ? 700 : 500,
                       }}
                     />
@@ -1430,17 +1441,17 @@ export default function PurchaseOrderDetailPage({
           />
 
           <Box
-            sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}
+            sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}
           >
             <Button
               variant="text"
               startIcon={<ArrowBackIcon />}
               onClick={() => setViewStep(0)}
-              sx={{ color: "#64748b", fontWeight: 600 }}
+              sx={{ color: '#64748b', fontWeight: 600 }}
             >
               Previous Step
             </Button>
-            <Box sx={{ display: "flex", gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
                 variant="outlined"
                 startIcon={<DownloadIcon />}
@@ -1455,15 +1466,15 @@ export default function PurchaseOrderDetailPage({
                 disabled={saving || isCompleted}
                 disableElevation
                 sx={{
-                  bgcolor: "#0F172A",
+                  bgcolor: '#0F172A',
                   fontWeight: 600,
-                  "&:hover": { bgcolor: "#1E293B" },
+                  '&:hover': { bgcolor: '#1E293B' },
                 }}
               >
                 {saving ? (
                   <CircularProgress size={20} color="inherit" />
                 ) : (
-                  "Move to Payment"
+                  'Move to Payment'
                 )}
               </Button>
             </Box>
@@ -1486,16 +1497,16 @@ export default function PurchaseOrderDetailPage({
               elevation={0}
               sx={{
                 p: 4,
-                border: "1px solid",
-                borderColor: "divider",
+                border: '1px solid',
+                borderColor: 'divider',
                 borderRadius: 2,
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                   mb: 3,
                 }}
               >
@@ -1509,9 +1520,9 @@ export default function PurchaseOrderDetailPage({
                     onClick={() => setPaymentDialogOpen(true)}
                     disableElevation
                     sx={{
-                      bgcolor: "#0F172A",
+                      bgcolor: '#0F172A',
                       fontWeight: 600,
-                      "&:hover": { bgcolor: "#1E293B" },
+                      '&:hover': { bgcolor: '#1E293B' },
                     }}
                   >
                     Record Payment
@@ -1525,21 +1536,21 @@ export default function PurchaseOrderDetailPage({
                 sx={{
                   p: 3,
                   mb: 3,
-                  border: "1px solid",
-                  borderColor: isFullyPaid ? "#bbf7d0" : "divider",
+                  border: '1px solid',
+                  borderColor: isFullyPaid ? '#bbf7d0' : 'divider',
                   borderRadius: 1.5,
-                  bgcolor: isFullyPaid ? "#f0fdf4" : "#f8fafc",
+                  bgcolor: isFullyPaid ? '#f0fdf4' : '#f8fafc',
                 }}
               >
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     mb: 1,
                   }}
                 >
                   <Typography variant="body2" fontWeight={600}>
-                    {isFullyPaid ? "✓ Fully Paid" : "Payment Progress"}
+                    {isFullyPaid ? '✓ Fully Paid' : 'Payment Progress'}
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
                     {pctPaid.toFixed(0)}%
@@ -1552,28 +1563,28 @@ export default function PurchaseOrderDetailPage({
                     height: 10,
                     borderRadius: 5,
                     mb: 1.5,
-                    bgcolor: "#e2e8f0",
-                    "& .MuiLinearProgress-bar": {
+                    bgcolor: '#e2e8f0',
+                    '& .MuiLinearProgress-bar': {
                       borderRadius: 5,
-                      bgcolor: isFullyPaid ? "#16a34a" : "#0F172A",
+                      bgcolor: isFullyPaid ? '#16a34a' : '#0F172A',
                     },
                   }}
                 />
-                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">
-                    Paid:{" "}
+                    Paid:{' '}
                     <strong>
                       ₦
-                      {totalPaid.toLocaleString("en-NG", {
+                      {totalPaid.toLocaleString('en-NG', {
                         minimumFractionDigits: 2,
                       })}
                     </strong>
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Total:{" "}
+                    Total:{' '}
                     <strong>
                       ₦
-                      {totalAmount.toLocaleString("en-NG", {
+                      {totalAmount.toLocaleString('en-NG', {
                         minimumFractionDigits: 2,
                       })}
                     </strong>
@@ -1582,7 +1593,7 @@ export default function PurchaseOrderDetailPage({
                 {!isFullyPaid && (
                   <Typography variant="body2" color="error.main" sx={{ mt: 1 }}>
                     Remaining: ₦
-                    {remaining.toLocaleString("en-NG", {
+                    {remaining.toLocaleString('en-NG', {
                       minimumFractionDigits: 2,
                     })}
                   </Typography>
@@ -1598,19 +1609,19 @@ export default function PurchaseOrderDetailPage({
                     sx={{ mb: 1.5 }}
                   >
                     Payment History ({payments.length} payment
-                    {payments.length !== 1 ? "s" : ""})
+                    {payments.length !== 1 ? 's' : ''})
                   </Typography>
                   <TableContainer
                     sx={{
                       mb: 3,
-                      border: "1px solid",
-                      borderColor: "divider",
+                      border: '1px solid',
+                      borderColor: 'divider',
                       borderRadius: 1,
                     }}
                   >
                     <Table size="small">
                       <TableHead>
-                        <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                        <TableRow sx={{ bgcolor: '#f8fafc' }}>
                           <TableCell sx={{ fontWeight: 600 }}>#</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>Method</TableCell>
@@ -1631,24 +1642,24 @@ export default function PurchaseOrderDetailPage({
                           <TableRow key={p.id}>
                             <TableCell>{payments.length - i}</TableCell>
                             <TableCell>
-                              {format(new Date(p.paymentDate), "dd MMM yyyy")}
+                              {format(new Date(p.paymentDate), 'dd MMM yyyy')}
                             </TableCell>
                             <TableCell>{p.paymentMethod}</TableCell>
                             <TableCell>
                               <Typography
                                 variant="body2"
                                 sx={{
-                                  fontFamily: "monospace",
-                                  fontSize: "0.8rem",
+                                  fontFamily: 'monospace',
+                                  fontSize: '0.8rem',
                                 }}
                               >
-                                {p.reference || "—"}
+                                {p.reference || '—'}
                               </Typography>
                             </TableCell>
                             <TableCell align="right">
                               <Typography variant="body2" fontWeight={600}>
                                 ₦
-                                {p.amount.toLocaleString("en-NG", {
+                                {p.amount.toLocaleString('en-NG', {
                                   minimumFractionDigits: 2,
                                 })}
                               </Typography>
@@ -1659,12 +1670,12 @@ export default function PurchaseOrderDetailPage({
                                 color="text.secondary"
                                 sx={{
                                   maxWidth: 150,
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
                                 }}
                               >
-                                {p.notes || "—"}
+                                {p.notes || '—'}
                               </Typography>
                             </TableCell>
                             <TableCell>{p.recordedBy}</TableCell>
@@ -1684,7 +1695,7 @@ export default function PurchaseOrderDetailPage({
               )}
 
               {/* Dates */}
-              <Box sx={{ display: "flex", gap: 3, mb: 3, flexWrap: "wrap" }}>
+              <Box sx={{ display: 'flex', gap: 3, mb: 3, flexWrap: 'wrap' }}>
                 <TextField
                   label="Actual Payment Start Date"
                   type="date"
@@ -1720,46 +1731,46 @@ export default function PurchaseOrderDetailPage({
                   return (
                     <Box
                       sx={{
-                        display: "flex",
+                        display: 'flex',
                         gap: 2,
-                        alignItems: "center",
-                        flexWrap: "wrap",
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
                         mt: 1,
                         mb: 2,
                         px: 1.5,
                         py: 0.75,
-                        bgcolor: anyOverdue ? "#fef2f2" : "#f0f9ff",
+                        bgcolor: anyOverdue ? '#fef2f2' : '#f0f9ff',
                         borderRadius: 1,
-                        border: `1px solid ${anyOverdue ? "#fecaca" : "#bae6fd"}`,
+                        border: `1px solid ${anyOverdue ? '#fecaca' : '#bae6fd'}`,
                       }}
                     >
                       <Typography
                         variant="caption"
-                        color={anyOverdue ? "#b91c1c" : "#0369a1"}
+                        color={anyOverdue ? '#b91c1c' : '#0369a1'}
                         fontWeight={600}
                       >
-                        {anyOverdue ? "⚠ Overdue — Planned:" : "Planned:"}
+                        {anyOverdue ? '⚠ Overdue — Planned:' : 'Planned:'}
                       </Typography>
                       {po.plannedPaymentStartDate && (
                         <Chip
-                          label={`Start: ${format(new Date(po.plannedPaymentStartDate), "dd MMM yyyy")}`}
+                          label={`Start: ${format(new Date(po.plannedPaymentStartDate), 'dd MMM yyyy')}`}
                           size="small"
                           sx={{
                             fontSize: 11,
-                            bgcolor: startOverdue ? "#fee2e2" : "#e0f2fe",
-                            color: startOverdue ? "#b91c1c" : "#0369a1",
+                            bgcolor: startOverdue ? '#fee2e2' : '#e0f2fe',
+                            color: startOverdue ? '#b91c1c' : '#0369a1',
                             fontWeight: startOverdue ? 700 : 500,
                           }}
                         />
                       )}
                       {po.plannedPaymentEndDate && (
                         <Chip
-                          label={`End: ${format(new Date(po.plannedPaymentEndDate), "dd MMM yyyy")}`}
+                          label={`End: ${format(new Date(po.plannedPaymentEndDate), 'dd MMM yyyy')}`}
                           size="small"
                           sx={{
                             fontSize: 11,
-                            bgcolor: endOverdue ? "#fee2e2" : "#e0f2fe",
-                            color: endOverdue ? "#b91c1c" : "#0369a1",
+                            bgcolor: endOverdue ? '#fee2e2' : '#e0f2fe',
+                            color: endOverdue ? '#b91c1c' : '#0369a1',
                             fontWeight: endOverdue ? 700 : 500,
                           }}
                         />
@@ -1770,8 +1781,8 @@ export default function PurchaseOrderDetailPage({
 
               <Box
                 sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   gap: 2,
                   mt: 2,
                 }}
@@ -1780,11 +1791,11 @@ export default function PurchaseOrderDetailPage({
                   variant="text"
                   startIcon={<ArrowBackIcon />}
                   onClick={() => setViewStep(1)}
-                  sx={{ color: "#64748b", fontWeight: 600 }}
+                  sx={{ color: '#64748b', fontWeight: 600 }}
                 >
                   Previous Step
                 </Button>
-                <Box sx={{ display: "flex", gap: 2 }}>
+                <Box sx={{ display: 'flex', gap: 2 }}>
                   <Button
                     variant="outlined"
                     onClick={() =>
@@ -1804,15 +1815,15 @@ export default function PurchaseOrderDetailPage({
                     disabled={saving || isCompleted}
                     disableElevation
                     sx={{
-                      bgcolor: "#0F172A",
+                      bgcolor: '#0F172A',
                       fontWeight: 600,
-                      "&:hover": { bgcolor: "#1E293B" },
+                      '&:hover': { bgcolor: '#1E293B' },
                     }}
                   >
                     {saving ? (
                       <CircularProgress size={20} color="inherit" />
                     ) : (
-                      "Move to Shipment"
+                      'Move to Shipment'
                     )}
                   </Button>
                 </Box>
@@ -1844,16 +1855,16 @@ export default function PurchaseOrderDetailPage({
                     color="text.secondary"
                     sx={{ mb: 3 }}
                   >
-                    Remaining balance:{" "}
+                    Remaining balance:{' '}
                     <strong>
                       ₦
-                      {remaining.toLocaleString("en-NG", {
+                      {remaining.toLocaleString('en-NG', {
                         minimumFractionDigits: 2,
                       })}
                     </strong>
                   </Typography>
                   <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}
+                    sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}
                   >
                     <TextField
                       label="Amount (₦) *"
@@ -1862,7 +1873,7 @@ export default function PurchaseOrderDetailPage({
                       size="small"
                       value={newPaymentAmount}
                       onChange={(e) => setNewPaymentAmount(e.target.value)}
-                      inputProps={{ min: 0, max: remaining, step: "0.01" }}
+                      inputProps={{ min: 0, max: remaining, step: '0.01' }}
                       fullWidth
                       autoFocus
                     />
@@ -1918,14 +1929,14 @@ export default function PurchaseOrderDetailPage({
                     disabled={recordingPayment}
                     disableElevation
                     sx={{
-                      bgcolor: "#0F172A",
-                      "&:hover": { bgcolor: "#1E293B" },
+                      bgcolor: '#0F172A',
+                      '&:hover': { bgcolor: '#1E293B' },
                     }}
                   >
                     {recordingPayment ? (
                       <CircularProgress size={20} color="inherit" />
                     ) : (
-                      "Record Payment"
+                      'Record Payment'
                     )}
                   </Button>
                 </DialogActions>
@@ -1940,8 +1951,8 @@ export default function PurchaseOrderDetailPage({
           elevation={0}
           sx={{
             p: 4,
-            border: "1px solid",
-            borderColor: "divider",
+            border: '1px solid',
+            borderColor: 'divider',
             borderRadius: 2,
           }}
         >
@@ -1955,9 +1966,9 @@ export default function PurchaseOrderDetailPage({
               severity="warning"
               sx={{
                 mb: 3,
-                border: "1px solid #fbbf24",
-                bgcolor: "#fffbeb",
-                "& .MuiAlert-icon": { color: "#d97706" },
+                border: '1px solid #fbbf24',
+                bgcolor: '#fffbeb',
+                '& .MuiAlert-icon': { color: '#d97706' },
               }}
             >
               <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
@@ -1965,27 +1976,27 @@ export default function PurchaseOrderDetailPage({
               </Typography>
               <Typography variant="body2">
                 Shipment is proceeding with incomplete payment. ₦
-                {(po.paidAmount || 0).toLocaleString("en-NG", {
+                {(po.paidAmount || 0).toLocaleString('en-NG', {
                   minimumFractionDigits: 2,
-                })}{" "}
+                })}{' '}
                 of ₦
-                {po.totalAmount.toLocaleString("en-NG", {
+                {po.totalAmount.toLocaleString('en-NG', {
                   minimumFractionDigits: 2,
-                })}{" "}
-                paid —{" "}
+                })}{' '}
+                paid —{' '}
                 <strong>
                   ₦
                   {(po.totalAmount - (po.paidAmount || 0)).toLocaleString(
-                    "en-NG",
+                    'en-NG',
                     { minimumFractionDigits: 2 },
-                  )}{" "}
+                  )}{' '}
                   remaining
                 </strong>
               </Typography>
             </Alert>
           )}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
               <TextField
                 label="Shipping Method"
                 variant="standard"
@@ -2003,7 +2014,7 @@ export default function PurchaseOrderDetailPage({
                 sx={{ minWidth: 250, flex: 1 }}
               />
             </Box>
-            <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
               <TextField
                 label="Actual Arrival"
                 type="date"
@@ -2065,24 +2076,24 @@ export default function PurchaseOrderDetailPage({
               return (
                 <Box
                   sx={{
-                    display: "flex",
+                    display: 'flex',
                     gap: 2,
-                    alignItems: "center",
-                    flexWrap: "wrap",
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
                     mt: 2,
                     px: 1.5,
                     py: 0.75,
-                    bgcolor: anyOverdue ? "#fef2f2" : "#f0f9ff",
+                    bgcolor: anyOverdue ? '#fef2f2' : '#f0f9ff',
                     borderRadius: 1,
-                    border: `1px solid ${anyOverdue ? "#fecaca" : "#bae6fd"}`,
+                    border: `1px solid ${anyOverdue ? '#fecaca' : '#bae6fd'}`,
                   }}
                 >
                   <Typography
                     variant="caption"
-                    color={anyOverdue ? "#b91c1c" : "#0369a1"}
+                    color={anyOverdue ? '#b91c1c' : '#0369a1'}
                     fontWeight={600}
                   >
-                    {anyOverdue ? "⚠ Overdue — Planned:" : " Planned:"}
+                    {anyOverdue ? '⚠ Overdue — Planned:' : ' Planned:'}
                   </Typography>
                   {po.plannedShipmentMethod && (
                     <Chip
@@ -2090,43 +2101,43 @@ export default function PurchaseOrderDetailPage({
                       size="small"
                       sx={{
                         fontSize: 11,
-                        bgcolor: "#e0f2fe",
-                        color: "#0369a1",
+                        bgcolor: '#e0f2fe',
+                        color: '#0369a1',
                       }}
                     />
                   )}
                   {po.plannedShipmentStartDate && (
                     <Chip
-                      label={`Start: ${format(new Date(po.plannedShipmentStartDate), "dd MMM yyyy")}`}
+                      label={`Start: ${format(new Date(po.plannedShipmentStartDate), 'dd MMM yyyy')}`}
                       size="small"
                       sx={{
                         fontSize: 11,
-                        bgcolor: startOverdue ? "#fee2e2" : "#e0f2fe",
-                        color: startOverdue ? "#b91c1c" : "#0369a1",
+                        bgcolor: startOverdue ? '#fee2e2' : '#e0f2fe',
+                        color: startOverdue ? '#b91c1c' : '#0369a1',
                         fontWeight: startOverdue ? 700 : 500,
                       }}
                     />
                   )}
                   {po.plannedShipmentEndDate && (
                     <Chip
-                      label={`End: ${format(new Date(po.plannedShipmentEndDate), "dd MMM yyyy")}`}
+                      label={`End: ${format(new Date(po.plannedShipmentEndDate), 'dd MMM yyyy')}`}
                       size="small"
                       sx={{
                         fontSize: 11,
-                        bgcolor: endOverdue ? "#fee2e2" : "#e0f2fe",
-                        color: endOverdue ? "#b91c1c" : "#0369a1",
+                        bgcolor: endOverdue ? '#fee2e2' : '#e0f2fe',
+                        color: endOverdue ? '#b91c1c' : '#0369a1',
                         fontWeight: endOverdue ? 700 : 500,
                       }}
                     />
                   )}
                   {po.plannedEstimatedArrival && (
                     <Chip
-                      label={`ETA: ${format(new Date(po.plannedEstimatedArrival), "dd MMM yyyy")}`}
+                      label={`ETA: ${format(new Date(po.plannedEstimatedArrival), 'dd MMM yyyy')}`}
                       size="small"
                       sx={{
                         fontSize: 11,
-                        bgcolor: etaOverdue ? "#fee2e2" : "#e0f2fe",
-                        color: etaOverdue ? "#b91c1c" : "#0369a1",
+                        bgcolor: etaOverdue ? '#fee2e2' : '#e0f2fe',
+                        color: etaOverdue ? '#b91c1c' : '#0369a1',
                         fontWeight: etaOverdue ? 700 : 500,
                       }}
                     />
@@ -2137,8 +2148,8 @@ export default function PurchaseOrderDetailPage({
 
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
+              display: 'flex',
+              justifyContent: 'space-between',
               gap: 2,
               mt: 4,
             }}
@@ -2147,11 +2158,11 @@ export default function PurchaseOrderDetailPage({
               variant="text"
               startIcon={<ArrowBackIcon />}
               onClick={() => setViewStep(2)}
-              sx={{ color: "#64748b", fontWeight: 600 }}
+              sx={{ color: '#64748b', fontWeight: 600 }}
             >
               Previous Step
             </Button>
-            <Box sx={{ display: "flex", gap: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
                 variant="outlined"
                 onClick={() =>
@@ -2175,15 +2186,15 @@ export default function PurchaseOrderDetailPage({
                 disabled={saving || isCompleted}
                 disableElevation
                 sx={{
-                  bgcolor: "#0F172A",
+                  bgcolor: '#0F172A',
                   fontWeight: 600,
-                  "&:hover": { bgcolor: "#1E293B" },
+                  '&:hover': { bgcolor: '#1E293B' },
                 }}
               >
                 {saving ? (
                   <CircularProgress size={20} color="inherit" />
                 ) : (
-                  " Move to Receiving"
+                  ' Move to Receiving'
                 )}
               </Button>
             </Box>
@@ -2199,11 +2210,12 @@ export default function PurchaseOrderDetailPage({
             ? po.receivedItems
             : [];
 
-          // Build cumulative received map keyed by materialId or toolGroupId
+          // Build cumulative received map keyed by materialId, toolId, or toolGroupId
           const receivedMap: Record<string, number> = {};
           existingReceived.forEach((r: any) => {
-            const key = r.materialId || r.toolGroupId;
-            if (key) receivedMap[key] = (receivedMap[key] || 0) + (r.receivedQty || 0);
+            const key = r.materialId || r.toolId || r.toolGroupId;
+            if (key)
+              receivedMap[key] = (receivedMap[key] || 0) + (r.receivedQty || 0);
           });
 
           const totalOrdered = poItems.reduce(
@@ -2231,7 +2243,7 @@ export default function PurchaseOrderDetailPage({
                 (receivingQtys[getItemKey(i)] || 0) > 0,
             )
             .map((i: any) => ({
-              itemType: i.itemType || "material",
+              itemType: i.itemType || 'material',
               materialId: i.materialId,
               quantity: receivingQtys[getItemKey(i)] || 0,
             }));
@@ -2242,8 +2254,8 @@ export default function PurchaseOrderDetailPage({
                 elevation={0}
                 sx={{
                   p: 4,
-                  border: "1px solid",
-                  borderColor: "divider",
+                  border: '1px solid',
+                  borderColor: 'divider',
                   borderRadius: 2,
                 }}
               >
@@ -2263,7 +2275,7 @@ export default function PurchaseOrderDetailPage({
                 {hasPartialReceipt && (
                   <Alert
                     severity="warning"
-                    sx={{ mb: 2, border: "1px solid #fbbf24" }}
+                    sx={{ mb: 2, border: '1px solid #fbbf24' }}
                   >
                     <Typography variant="body2" fontWeight={600}>
                       Partial Receipt — {totalReceived} of {totalOrdered} items
@@ -2278,10 +2290,10 @@ export default function PurchaseOrderDetailPage({
                 {allFullyReceived && totalReceived > 0 && (
                   <Alert
                     severity="success"
-                    sx={{ mb: 2, border: "1px solid #86efac" }}
+                    sx={{ mb: 2, border: '1px solid #86efac' }}
                   >
                     <Typography variant="body2" fontWeight={600}>
-                      All items fully received ({totalReceived} of{" "}
+                      All items fully received ({totalReceived} of{' '}
                       {totalOrdered})
                     </Typography>
                   </Alert>
@@ -2301,15 +2313,15 @@ export default function PurchaseOrderDetailPage({
                     sx={{
                       p: 2,
                       mb: 3,
-                      border: "1px solid",
-                      borderColor: "divider",
+                      border: '1px solid',
+                      borderColor: 'divider',
                       borderRadius: 2,
                     }}
                   >
                     <Box
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        justifyContent: 'space-between',
                         mb: 0.5,
                       }}
                     >
@@ -2326,23 +2338,23 @@ export default function PurchaseOrderDetailPage({
                       sx={{
                         height: 8,
                         borderRadius: 4,
-                        bgcolor: "#e2e8f0",
-                        "& .MuiLinearProgress-bar": {
+                        bgcolor: '#e2e8f0',
+                        '& .MuiLinearProgress-bar': {
                           bgcolor: allFullyReceived
-                            ? "#16a34a"
+                            ? '#16a34a'
                             : receivedPct >= 50
-                              ? "#f59e0b"
+                              ? '#f59e0b'
                               : receivedPct > 0
-                                ? "#ef4444"
-                                : "#cbd5e1",
+                                ? '#ef4444'
+                                : '#cbd5e1',
                           borderRadius: 4,
                         },
                       }}
                     />
                     <Box
                       sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
+                        display: 'flex',
+                        justifyContent: 'space-between',
                         mt: 0.5,
                       }}
                     >
@@ -2361,10 +2373,10 @@ export default function PurchaseOrderDetailPage({
                   elevation={0}
                   sx={{
                     mb: 3,
-                    border: "1px solid",
-                    borderColor: "divider",
+                    border: '1px solid',
+                    borderColor: 'divider',
                     borderRadius: 2,
-                    overflow: "hidden",
+                    overflow: 'hidden',
                   }}
                 >
                   <Typography
@@ -2377,13 +2389,13 @@ export default function PurchaseOrderDetailPage({
                   <TableContainer>
                     <Table size="small">
                       <TableHead>
-                        <TableRow sx={{ bgcolor: "#0F172A" }}>
-                          <TableCell padding="checkbox" sx={{ color: "white" }}>
+                        <TableRow sx={{ bgcolor: '#0F172A' }}>
+                          <TableCell padding="checkbox" sx={{ color: 'white' }}>
                             <Checkbox
                               size="small"
                               sx={{
-                                color: "white",
-                                "&.Mui-checked": { color: "white" },
+                                color: 'white',
+                                '&.Mui-checked': { color: 'white' },
                               }}
                               checked={
                                 poItems.length > 0 &&
@@ -2405,8 +2417,7 @@ export default function PurchaseOrderDetailPage({
                                 poItems.forEach((i: any) => {
                                   const key = getItemKey(i);
                                   const remaining =
-                                    (i.quantity || 0) -
-                                    (receivedMap[key] || 0);
+                                    (i.quantity || 0) - (receivedMap[key] || 0);
                                   if (remaining > 0) next[key] = checked;
                                 });
                                 setReceivingChecked(next);
@@ -2429,7 +2440,7 @@ export default function PurchaseOrderDetailPage({
                           </TableCell>
                           <TableCell
                             sx={{
-                              color: "white",
+                              color: 'white',
                               fontWeight: 700,
                               fontSize: 12,
                             }}
@@ -2439,7 +2450,7 @@ export default function PurchaseOrderDetailPage({
                           <TableCell
                             align="right"
                             sx={{
-                              color: "white",
+                              color: 'white',
                               fontWeight: 700,
                               fontSize: 12,
                             }}
@@ -2449,7 +2460,7 @@ export default function PurchaseOrderDetailPage({
                           <TableCell
                             align="right"
                             sx={{
-                              color: "white",
+                              color: 'white',
                               fontWeight: 700,
                               fontSize: 12,
                             }}
@@ -2459,7 +2470,7 @@ export default function PurchaseOrderDetailPage({
                           <TableCell
                             align="right"
                             sx={{
-                              color: "white",
+                              color: 'white',
                               fontWeight: 700,
                               fontSize: 12,
                             }}
@@ -2469,7 +2480,7 @@ export default function PurchaseOrderDetailPage({
                           <TableCell
                             align="center"
                             sx={{
-                              color: "white",
+                              color: 'white',
                               fontWeight: 700,
                               fontSize: 12,
                             }}
@@ -2479,7 +2490,7 @@ export default function PurchaseOrderDetailPage({
                           <TableCell
                             align="right"
                             sx={{
-                              color: "white",
+                              color: 'white',
                               fontWeight: 700,
                               fontSize: 12,
                             }}
@@ -2491,12 +2502,12 @@ export default function PurchaseOrderDetailPage({
                       <TableBody>
                         {poItems.map((item: any) => {
                           const key = getItemKey(item);
-                          const isTool = item.itemType === "tool";
+                          const isTool = item.itemType === 'tool';
                           const displayName = isTool
-                            ? item.toolGroupName || key
+                            ? item.toolName || item.toolGroupName || key
                             : item.materialName || key;
                           const subLabel = isTool
-                            ? item.groupNumber
+                            ? item.toolNumber || item.groupNumber
                             : item.partNumber;
                           const ordered = item.quantity || 0;
                           const received = receivedMap[key] || 0;
@@ -2512,10 +2523,10 @@ export default function PurchaseOrderDetailPage({
                               key={key}
                               sx={{
                                 bgcolor: fullyReceived
-                                  ? "#f0fdf4"
+                                  ? '#f0fdf4'
                                   : receivingChecked[key]
-                                    ? "#eff6ff"
-                                    : "transparent",
+                                    ? '#eff6ff'
+                                    : 'transparent',
                                 opacity: fullyReceived ? 0.75 : 1,
                               }}
                             >
@@ -2529,7 +2540,10 @@ export default function PurchaseOrderDetailPage({
                                       ...prev,
                                       [key]: e.target.checked,
                                     }));
-                                    if (e.target.checked && !receivingQtys[key]) {
+                                    if (
+                                      e.target.checked &&
+                                      !receivingQtys[key]
+                                    ) {
                                       setReceivingQtys((prev) => ({
                                         ...prev,
                                         [key]: remaining,
@@ -2539,7 +2553,13 @@ export default function PurchaseOrderDetailPage({
                                 />
                               </TableCell>
                               <TableCell>
-                                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.75,
+                                  }}
+                                >
                                   <Typography variant="body2" fontWeight={600}>
                                     {displayName}
                                   </Typography>
@@ -2550,22 +2570,25 @@ export default function PurchaseOrderDetailPage({
                                       sx={{
                                         fontSize: 10,
                                         height: 18,
-                                        bgcolor: "#e0e7ff",
-                                        color: "#4338ca",
+                                        bgcolor: '#e0e7ff',
+                                        color: '#4338ca',
                                         fontWeight: 600,
                                       }}
                                     />
                                   )}
                                 </Box>
                                 {subLabel && (
-                                  <Typography variant="caption" color="text.secondary">
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
                                     {subLabel}
                                   </Typography>
                                 )}
                               </TableCell>
                               <TableCell align="right">
                                 <Typography variant="body2">
-                                  {ordered} {item.unit || "unit"}
+                                  {ordered} {item.unit || 'unit'}
                                 </Typography>
                               </TableCell>
                               <TableCell align="right">
@@ -2574,10 +2597,10 @@ export default function PurchaseOrderDetailPage({
                                   fontWeight={600}
                                   color={
                                     fullyReceived
-                                      ? "#16a34a"
+                                      ? '#16a34a'
                                       : received > 0
-                                        ? "#d97706"
-                                        : "#64748b"
+                                        ? '#d97706'
+                                        : '#64748b'
                                   }
                                 >
                                   {received}
@@ -2587,7 +2610,7 @@ export default function PurchaseOrderDetailPage({
                                 <Typography
                                   variant="body2"
                                   fontWeight={600}
-                                  color={remaining > 0 ? "#b91c1c" : "#16a34a"}
+                                  color={remaining > 0 ? '#b91c1c' : '#16a34a'}
                                 >
                                   {remaining}
                                 </Typography>
@@ -2599,18 +2622,21 @@ export default function PurchaseOrderDetailPage({
                                   sx={{
                                     height: 6,
                                     borderRadius: 3,
-                                    bgcolor: "#e2e8f0",
-                                    "& .MuiLinearProgress-bar": {
+                                    bgcolor: '#e2e8f0',
+                                    '& .MuiLinearProgress-bar': {
                                       bgcolor: fullyReceived
-                                        ? "#16a34a"
+                                        ? '#16a34a'
                                         : received > 0
-                                          ? "#f59e0b"
-                                          : "#cbd5e1",
+                                          ? '#f59e0b'
+                                          : '#cbd5e1',
                                       borderRadius: 3,
                                     },
                                   }}
                                 />
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
                                   {itemPct.toFixed(0)}%
                                 </Typography>
                               </TableCell>
@@ -2622,8 +2648,8 @@ export default function PurchaseOrderDetailPage({
                                     sx={{
                                       fontSize: 11,
                                       fontWeight: 600,
-                                      bgcolor: "#dcfce7",
-                                      color: "#16a34a",
+                                      bgcolor: '#dcfce7',
+                                      color: '#16a34a',
                                     }}
                                   />
                                 ) : receivingChecked[key] ? (
@@ -2631,11 +2657,14 @@ export default function PurchaseOrderDetailPage({
                                     type="number"
                                     variant="standard"
                                     size="small"
-                                    value={receivingQtys[key] || ""}
+                                    value={receivingQtys[key] || ''}
                                     onChange={(e) => {
                                       const val = Math.max(
                                         0,
-                                        Math.min(remaining, Number(e.target.value) || 0),
+                                        Math.min(
+                                          remaining,
+                                          Number(e.target.value) || 0,
+                                        ),
                                       );
                                       setReceivingQtys((prev) => ({
                                         ...prev,
@@ -2645,11 +2674,14 @@ export default function PurchaseOrderDetailPage({
                                     inputProps={{
                                       min: 0,
                                       max: remaining,
-                                      style: { textAlign: "right", width: 60 },
+                                      style: { textAlign: 'right', width: 60 },
                                     }}
                                   />
                                 ) : (
-                                  <Typography variant="caption" color="text.secondary">
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
                                     —
                                   </Typography>
                                 )}
@@ -2665,7 +2697,7 @@ export default function PurchaseOrderDetailPage({
                 {/* Record Receipt Button */}
                 {!allFullyReceived && (
                   <Box
-                    sx={{ display: "flex", justifyContent: "flex-end", mb: 3 }}
+                    sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}
                   >
                     <Button
                       variant="contained"
@@ -2673,15 +2705,15 @@ export default function PurchaseOrderDetailPage({
                       onClick={handleRecordReceipt}
                       disabled={recordingReceipt || selectedForGRN.length === 0}
                       sx={{
-                        bgcolor: "#0F172A",
+                        bgcolor: '#0F172A',
                         fontWeight: 600,
-                        "&:hover": { bgcolor: "#334155" },
+                        '&:hover': { bgcolor: '#334155' },
                       }}
                     >
                       {recordingReceipt ? (
                         <CircularProgress size={20} color="inherit" />
                       ) : (
-                        `Record Receipt (${selectedForGRN.length} item${selectedForGRN.length !== 1 ? "s" : ""})`
+                        `Record Receipt (${selectedForGRN.length} item${selectedForGRN.length !== 1 ? 's' : ''})`
                       )}
                     </Button>
                   </Box>
@@ -2694,8 +2726,8 @@ export default function PurchaseOrderDetailPage({
                     sx={{
                       p: 2,
                       mb: 3,
-                      border: "1px solid",
-                      borderColor: "divider",
+                      border: '1px solid',
+                      borderColor: 'divider',
                       borderRadius: 2,
                     }}
                   >
@@ -2709,7 +2741,7 @@ export default function PurchaseOrderDetailPage({
                     <TableContainer>
                       <Table size="small">
                         <TableHead>
-                          <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                          <TableRow sx={{ bgcolor: '#f8fafc' }}>
                             <TableCell sx={{ fontWeight: 700, fontSize: 12 }}>
                               Item
                             </TableCell>
@@ -2729,15 +2761,25 @@ export default function PurchaseOrderDetailPage({
                             <TableRow key={i}>
                               <TableCell>
                                 <Typography variant="body2">
-                                  {r.itemType === "tool"
-                                    ? r.toolGroupName || r.toolGroupId
+                                  {r.itemType === 'tool'
+                                    ? r.toolName ||
+                                      r.toolGroupName ||
+                                      r.toolId ||
+                                      r.toolGroupId
                                     : r.materialName || r.materialId}
                                 </Typography>
-                                {r.itemType === "tool" && (
+                                {r.itemType === 'tool' && (
                                   <Chip
                                     label="Tool"
                                     size="small"
-                                    sx={{ fontSize: 10, height: 16, bgcolor: "#e0e7ff", color: "#4338ca", fontWeight: 600, ml: 0.5 }}
+                                    sx={{
+                                      fontSize: 10,
+                                      height: 16,
+                                      bgcolor: '#e0e7ff',
+                                      color: '#4338ca',
+                                      fontWeight: 600,
+                                      ml: 0.5,
+                                    }}
                                   />
                                 )}
                               </TableCell>
@@ -2754,9 +2796,9 @@ export default function PurchaseOrderDetailPage({
                                   {r.receivedAt
                                     ? format(
                                         new Date(r.receivedAt),
-                                        "dd MMM yyyy HH:mm",
+                                        'dd MMM yyyy HH:mm',
                                       )
-                                    : "—"}
+                                    : '—'}
                                 </Typography>
                               </TableCell>
                             </TableRow>
@@ -2770,7 +2812,7 @@ export default function PurchaseOrderDetailPage({
                 <Divider sx={{ mb: 3 }} />
 
                 {/* Dates and notes */}
-                <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", mb: 3 }}>
+                <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', mb: 3 }}>
                   <TextField
                     label="Receiving Start Date"
                     type="date"
@@ -2806,46 +2848,46 @@ export default function PurchaseOrderDetailPage({
                     return (
                       <Box
                         sx={{
-                          display: "flex",
+                          display: 'flex',
                           gap: 2,
-                          alignItems: "center",
-                          flexWrap: "wrap",
+                          alignItems: 'center',
+                          flexWrap: 'wrap',
                           mt: 1,
                           mb: 2,
                           px: 1.5,
                           py: 0.75,
-                          bgcolor: anyOverdue ? "#fef2f2" : "#f0f9ff",
+                          bgcolor: anyOverdue ? '#fef2f2' : '#f0f9ff',
                           borderRadius: 1,
-                          border: `1px solid ${anyOverdue ? "#fecaca" : "#bae6fd"}`,
+                          border: `1px solid ${anyOverdue ? '#fecaca' : '#bae6fd'}`,
                         }}
                       >
                         <Typography
                           variant="caption"
-                          color={anyOverdue ? "#b91c1c" : "#0369a1"}
+                          color={anyOverdue ? '#b91c1c' : '#0369a1'}
                           fontWeight={600}
                         >
-                          {anyOverdue ? "Overdue — Planned:" : "Planned:"}
+                          {anyOverdue ? 'Overdue — Planned:' : 'Planned:'}
                         </Typography>
                         {po.plannedReceivingStartDate && (
                           <Chip
-                            label={`Start: ${format(new Date(po.plannedReceivingStartDate), "dd MMM yyyy")}`}
+                            label={`Start: ${format(new Date(po.plannedReceivingStartDate), 'dd MMM yyyy')}`}
                             size="small"
                             sx={{
                               fontSize: 11,
-                              bgcolor: startOverdue ? "#fee2e2" : "#e0f2fe",
-                              color: startOverdue ? "#b91c1c" : "#0369a1",
+                              bgcolor: startOverdue ? '#fee2e2' : '#e0f2fe',
+                              color: startOverdue ? '#b91c1c' : '#0369a1',
                               fontWeight: startOverdue ? 700 : 500,
                             }}
                           />
                         )}
                         {po.plannedReceivingEndDate && (
                           <Chip
-                            label={`End: ${format(new Date(po.plannedReceivingEndDate), "dd MMM yyyy")}`}
+                            label={`End: ${format(new Date(po.plannedReceivingEndDate), 'dd MMM yyyy')}`}
                             size="small"
                             sx={{
                               fontSize: 11,
-                              bgcolor: endOverdue ? "#fee2e2" : "#e0f2fe",
-                              color: endOverdue ? "#b91c1c" : "#0369a1",
+                              bgcolor: endOverdue ? '#fee2e2' : '#e0f2fe',
+                              color: endOverdue ? '#b91c1c' : '#0369a1',
                               fontWeight: endOverdue ? 700 : 500,
                             }}
                           />
@@ -2866,8 +2908,8 @@ export default function PurchaseOrderDetailPage({
 
                 <Box
                   sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     gap: 2,
                   }}
                 >
@@ -2875,11 +2917,11 @@ export default function PurchaseOrderDetailPage({
                     variant="text"
                     startIcon={<ArrowBackIcon />}
                     onClick={() => setViewStep(3)}
-                    sx={{ color: "#64748b", fontWeight: 600 }}
+                    sx={{ color: '#64748b', fontWeight: 600 }}
                   >
                     Previous Step
                   </Button>
-                  <Box sx={{ display: "flex", gap: 2 }}>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
                     <Button
                       variant="outlined"
                       onClick={() =>
@@ -2900,15 +2942,15 @@ export default function PurchaseOrderDetailPage({
                       disabled={saving || isCompleted}
                       disableElevation
                       sx={{
-                        bgcolor: "#16a34a",
+                        bgcolor: '#16a34a',
                         fontWeight: 600,
-                        "&:hover": { bgcolor: "#15803d" },
+                        '&:hover': { bgcolor: '#15803d' },
                       }}
                     >
                       {saving ? (
                         <CircularProgress size={20} color="inherit" />
                       ) : (
-                        "Mark as Completed"
+                        'Mark as Completed'
                       )}
                     </Button>
                   </Box>
@@ -2927,8 +2969,8 @@ export default function PurchaseOrderDetailPage({
                 <DialogTitle
                   sx={{
                     fontWeight: 700,
-                    bgcolor: "#f8fafc",
-                    borderBottom: "1px solid #e2e8f0",
+                    bgcolor: '#f8fafc',
+                    borderBottom: '1px solid #e2e8f0',
                   }}
                 >
                   Confirm Receipt & Update Inventory
@@ -2939,7 +2981,7 @@ export default function PurchaseOrderDetailPage({
                     color="text.secondary"
                     sx={{ mb: 2 }}
                   >
-                    The following items will be marked as received and{" "}
+                    The following items will be marked as received and{' '}
                     <strong>
                       inventory stock will be updated automatically
                     </strong>
@@ -2948,10 +2990,10 @@ export default function PurchaseOrderDetailPage({
                   <TableContainer>
                     <Table size="small">
                       <TableHead>
-                        <TableRow sx={{ bgcolor: "#0F172A" }}>
+                        <TableRow sx={{ bgcolor: '#0F172A' }}>
                           <TableCell
                             sx={{
-                              color: "white",
+                              color: 'white',
                               fontWeight: 700,
                               fontSize: 12,
                             }}
@@ -2961,7 +3003,7 @@ export default function PurchaseOrderDetailPage({
                           <TableCell
                             align="right"
                             sx={{
-                              color: "white",
+                              color: 'white',
                               fontWeight: 700,
                               fontSize: 12,
                             }}
@@ -2970,7 +3012,7 @@ export default function PurchaseOrderDetailPage({
                           </TableCell>
                           <TableCell
                             sx={{
-                              color: "white",
+                              color: 'white',
                               fontWeight: 700,
                               fontSize: 12,
                             }}
@@ -2981,19 +3023,31 @@ export default function PurchaseOrderDetailPage({
                       </TableHead>
                       <TableBody>
                         {pendingReceiptItems.map((item, idx) => (
-                          <TableRow key={item.materialId || item.toolGroupId || idx}>
+                          <TableRow key={item.materialId || item.toolId || idx}>
                             <TableCell>
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.75,
+                                }}
+                              >
                                 <Typography variant="body2" fontWeight={600}>
-                                  {item.itemType === "tool"
-                                    ? item.toolGroupName
+                                  {item.itemType === 'tool'
+                                    ? item.toolGroupName || item.toolName
                                     : item.materialName}
                                 </Typography>
-                                {item.itemType === "tool" && (
+                                {item.itemType === 'tool' && (
                                   <Chip
                                     label="Tool"
                                     size="small"
-                                    sx={{ fontSize: 10, height: 18, bgcolor: "#e0e7ff", color: "#4338ca", fontWeight: 600 }}
+                                    sx={{
+                                      fontSize: 10,
+                                      height: 18,
+                                      bgcolor: '#e0e7ff',
+                                      color: '#4338ca',
+                                      fontWeight: 600,
+                                    }}
                                   />
                                 )}
                               </Box>
@@ -3024,14 +3078,14 @@ export default function PurchaseOrderDetailPage({
                     <Typography variant="body2">
                       <strong>{pendingReceiptItems.length}</strong> item
                       {pendingReceiptItems.length !== 1
-                        ? "s"
-                        : ""} totalling{" "}
+                        ? 's'
+                        : ''} totalling{' '}
                       <strong>
                         {pendingReceiptItems.reduce(
                           (sum, i) => sum + i.quantity,
                           0,
                         )}
-                      </strong>{" "}
+                      </strong>{' '}
                       units will be added to inventory.
                     </Typography>
                   </Alert>
@@ -3049,15 +3103,15 @@ export default function PurchaseOrderDetailPage({
                     disabled={recordingReceipt}
                     disableElevation
                     sx={{
-                      bgcolor: "#16a34a",
+                      bgcolor: '#16a34a',
                       fontWeight: 600,
-                      "&:hover": { bgcolor: "#15803d" },
+                      '&:hover': { bgcolor: '#15803d' },
                     }}
                   >
                     {recordingReceipt ? (
                       <CircularProgress size={20} color="inherit" />
                     ) : (
-                      "Confirm & Update Inventory"
+                      'Confirm & Update Inventory'
                     )}
                   </Button>
                 </DialogActions>
@@ -3084,28 +3138,28 @@ export default function PurchaseOrderDetailPage({
 
           const stages = [
             {
-              label: "Invoice",
+              label: 'Invoice',
               plannedStart: po.plannedInvoiceStartDate,
               plannedEnd: po.plannedInvoiceEndDate,
               actualStart: po.invoiceStartDate,
               actualEnd: po.invoiceEndDate,
             },
             {
-              label: "Payment",
+              label: 'Payment',
               plannedStart: po.plannedPaymentStartDate,
               plannedEnd: po.plannedPaymentEndDate,
               actualStart: po.paymentStartDate,
               actualEnd: po.paymentEndDate,
             },
             {
-              label: "Shipment",
+              label: 'Shipment',
               plannedStart: po.plannedShipmentStartDate,
               plannedEnd: po.plannedShipmentEndDate,
               actualStart: po.shipmentStartDate,
               actualEnd: po.shipmentEndDate,
             },
             {
-              label: "Receiving",
+              label: 'Receiving',
               plannedStart: po.plannedReceivingStartDate,
               plannedEnd: po.plannedReceivingEndDate,
               actualStart: po.receivingStartDate,
@@ -3122,16 +3176,16 @@ export default function PurchaseOrderDetailPage({
               elevation={0}
               sx={{
                 p: 4,
-                border: "1px solid",
-                borderColor: "#bbf7d0",
+                border: '1px solid',
+                borderColor: '#bbf7d0',
                 borderRadius: 2,
-                bgcolor: "#f0fdf4",
+                bgcolor: '#f0fdf4',
               }}
             >
               <Box
-                sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}
+                sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}
               >
-                <CheckIcon sx={{ color: "#16a34a", fontSize: 32 }} />
+                <CheckIcon sx={{ color: '#16a34a', fontSize: 32 }} />
                 <Typography variant="h6" fontWeight={700} color="#16a34a">
                   Sourcing Complete
                 </Typography>
@@ -3147,9 +3201,9 @@ export default function PurchaseOrderDetailPage({
                   severity="warning"
                   sx={{
                     mb: 3,
-                    border: "1px solid #fbbf24",
-                    bgcolor: "#fffbeb",
-                    "& .MuiAlert-icon": { color: "#d97706" },
+                    border: '1px solid #fbbf24',
+                    bgcolor: '#fffbeb',
+                    '& .MuiAlert-icon': { color: '#d97706' },
                   }}
                 >
                   <Typography variant="body2" fontWeight={600} sx={{ mb: 0.5 }}>
@@ -3157,19 +3211,19 @@ export default function PurchaseOrderDetailPage({
                   </Typography>
                   <Typography variant="body2">
                     ₦
-                    {paidAmount.toLocaleString("en-NG", {
+                    {paidAmount.toLocaleString('en-NG', {
                       minimumFractionDigits: 2,
-                    })}{" "}
+                    })}{' '}
                     of ₦
-                    {totalAmount.toLocaleString("en-NG", {
+                    {totalAmount.toLocaleString('en-NG', {
                       minimumFractionDigits: 2,
-                    })}{" "}
+                    })}{' '}
                     paid &nbsp;—&nbsp;
                     <strong>
                       ₦
-                      {remaining.toLocaleString("en-NG", {
+                      {remaining.toLocaleString('en-NG', {
                         minimumFractionDigits: 2,
-                      })}{" "}
+                      })}{' '}
                       remaining
                     </strong>
                   </Typography>
@@ -3186,8 +3240,10 @@ export default function PurchaseOrderDetailPage({
                   : [];
                 const compReceivedMap: Record<string, number> = {};
                 compReceived.forEach((r: any) => {
-                  const key = r.materialId || r.toolGroupId;
-                  if (key) compReceivedMap[key] = (compReceivedMap[key] || 0) + (r.receivedQty || 0);
+                  const key = r.materialId || r.toolId || r.toolGroupId;
+                  if (key)
+                    compReceivedMap[key] =
+                      (compReceivedMap[key] || 0) + (r.receivedQty || 0);
                 });
                 const compTotalOrdered = compItems.reduce(
                   (s: number, i: any) => s + (i.quantity || 0),
@@ -3195,7 +3251,10 @@ export default function PurchaseOrderDetailPage({
                 );
                 const compTotalReceived = compItems.reduce(
                   (s: number, i: any) =>
-                    s + (compReceivedMap[i.materialId || i.toolGroupId] || 0),
+                    s +
+                    (compReceivedMap[
+                      i.materialId || i.toolId || i.toolGroupId
+                    ] || 0),
                   0,
                 );
                 const receiptIncomplete =
@@ -3206,9 +3265,9 @@ export default function PurchaseOrderDetailPage({
                     severity="warning"
                     sx={{
                       mb: 3,
-                      border: "1px solid #fbbf24",
-                      bgcolor: "#fffbeb",
-                      "& .MuiAlert-icon": { color: "#d97706" },
+                      border: '1px solid #fbbf24',
+                      bgcolor: '#fffbeb',
+                      '& .MuiAlert-icon': { color: '#d97706' },
                     }}
                   >
                     <Typography
@@ -3232,8 +3291,8 @@ export default function PurchaseOrderDetailPage({
               </Typography>
               <Box
                 sx={{
-                  display: "flex",
-                  flexDirection: "column",
+                  display: 'flex',
+                  flexDirection: 'column',
                   gap: 1.5,
                   mb: 3,
                 }}
@@ -3247,7 +3306,7 @@ export default function PurchaseOrderDetailPage({
                         new Date(po.plannedInvoiceEndDate);
                     return (
                       <Box
-                        sx={{ display: "flex", gap: 2, alignItems: "center" }}
+                        sx={{ display: 'flex', gap: 2, alignItems: 'center' }}
                       >
                         <Chip
                           label="Invoice"
@@ -3255,14 +3314,14 @@ export default function PurchaseOrderDetailPage({
                           sx={{
                             minWidth: 90,
                             ...(overdue
-                              ? { bgcolor: "#fee2e2", color: "#b91c1c" }
+                              ? { bgcolor: '#fee2e2', color: '#b91c1c' }
                               : {}),
                           }}
                         />
                         <Typography variant="body2">
-                          {format(new Date(po.invoiceStartDate), "dd MMM yyyy")}
+                          {format(new Date(po.invoiceStartDate), 'dd MMM yyyy')}
                           {po.invoiceEndDate &&
-                            ` → ${format(new Date(po.invoiceEndDate), "dd MMM yyyy")}`}
+                            ` → ${format(new Date(po.invoiceEndDate), 'dd MMM yyyy')}`}
                         </Typography>
                         {overdue && (
                           <Chip
@@ -3271,9 +3330,9 @@ export default function PurchaseOrderDetailPage({
                             sx={{
                               fontSize: 10,
                               fontWeight: 700,
-                              bgcolor: "#fef2f2",
-                              color: "#b91c1c",
-                              border: "1px solid #fecaca",
+                              bgcolor: '#fef2f2',
+                              color: '#b91c1c',
+                              border: '1px solid #fecaca',
                             }}
                           />
                         )}
@@ -3289,7 +3348,7 @@ export default function PurchaseOrderDetailPage({
                         new Date(po.plannedPaymentEndDate);
                     return (
                       <Box
-                        sx={{ display: "flex", gap: 2, alignItems: "center" }}
+                        sx={{ display: 'flex', gap: 2, alignItems: 'center' }}
                       >
                         <Chip
                           label="Payment"
@@ -3298,19 +3357,19 @@ export default function PurchaseOrderDetailPage({
                             minWidth: 90,
                             ...(paymentIncomplete
                               ? {
-                                  bgcolor: "#fef3c7",
-                                  color: "#92400e",
-                                  border: "1px solid #fbbf24",
+                                  bgcolor: '#fef3c7',
+                                  color: '#92400e',
+                                  border: '1px solid #fbbf24',
                                 }
                               : overdue
-                                ? { bgcolor: "#fee2e2", color: "#b91c1c" }
+                                ? { bgcolor: '#fee2e2', color: '#b91c1c' }
                                 : {}),
                           }}
                         />
                         <Typography variant="body2">
-                          {format(new Date(po.paymentStartDate), "dd MMM yyyy")}
+                          {format(new Date(po.paymentStartDate), 'dd MMM yyyy')}
                           {po.paymentEndDate &&
-                            ` → ${format(new Date(po.paymentEndDate), "dd MMM yyyy")}`}
+                            ` → ${format(new Date(po.paymentEndDate), 'dd MMM yyyy')}`}
                           {po.paymentMethod && ` • ${po.paymentMethod}`}
                         </Typography>
                         {paymentIncomplete && (
@@ -3320,9 +3379,9 @@ export default function PurchaseOrderDetailPage({
                             sx={{
                               fontSize: 10,
                               fontWeight: 700,
-                              bgcolor: "#fffbeb",
-                              color: "#92400e",
-                              border: "1px solid #fbbf24",
+                              bgcolor: '#fffbeb',
+                              color: '#92400e',
+                              border: '1px solid #fbbf24',
                             }}
                           />
                         )}
@@ -3333,9 +3392,9 @@ export default function PurchaseOrderDetailPage({
                             sx={{
                               fontSize: 10,
                               fontWeight: 700,
-                              bgcolor: "#fef2f2",
-                              color: "#b91c1c",
-                              border: "1px solid #fecaca",
+                              bgcolor: '#fef2f2',
+                              color: '#b91c1c',
+                              border: '1px solid #fecaca',
                             }}
                           />
                         )}
@@ -3351,7 +3410,7 @@ export default function PurchaseOrderDetailPage({
                         new Date(po.plannedShipmentEndDate);
                     return (
                       <Box
-                        sx={{ display: "flex", gap: 2, alignItems: "center" }}
+                        sx={{ display: 'flex', gap: 2, alignItems: 'center' }}
                       >
                         <Chip
                           label="Shipment"
@@ -3359,17 +3418,17 @@ export default function PurchaseOrderDetailPage({
                           sx={{
                             minWidth: 90,
                             ...(overdue
-                              ? { bgcolor: "#fee2e2", color: "#b91c1c" }
+                              ? { bgcolor: '#fee2e2', color: '#b91c1c' }
                               : {}),
                           }}
                         />
                         <Typography variant="body2">
                           {format(
                             new Date(po.shipmentStartDate),
-                            "dd MMM yyyy",
+                            'dd MMM yyyy',
                           )}
                           {po.shipmentEndDate &&
-                            ` → ${format(new Date(po.shipmentEndDate), "dd MMM yyyy")}`}
+                            ` → ${format(new Date(po.shipmentEndDate), 'dd MMM yyyy')}`}
                           {po.trackingNumber && ` • ${po.trackingNumber}`}
                         </Typography>
                         {overdue && (
@@ -3379,9 +3438,9 @@ export default function PurchaseOrderDetailPage({
                             sx={{
                               fontSize: 10,
                               fontWeight: 700,
-                              bgcolor: "#fef2f2",
-                              color: "#b91c1c",
-                              border: "1px solid #fecaca",
+                              bgcolor: '#fef2f2',
+                              color: '#b91c1c',
+                              border: '1px solid #fecaca',
                             }}
                           />
                         )}
@@ -3397,7 +3456,7 @@ export default function PurchaseOrderDetailPage({
                         new Date(po.plannedReceivingEndDate);
                     return (
                       <Box
-                        sx={{ display: "flex", gap: 2, alignItems: "center" }}
+                        sx={{ display: 'flex', gap: 2, alignItems: 'center' }}
                       >
                         <Chip
                           label="Received"
@@ -3406,17 +3465,17 @@ export default function PurchaseOrderDetailPage({
                           sx={{
                             minWidth: 90,
                             ...(overdue
-                              ? { bgcolor: "#fee2e2", color: "#b91c1c" }
+                              ? { bgcolor: '#fee2e2', color: '#b91c1c' }
                               : {}),
                           }}
                         />
                         <Typography variant="body2">
                           {format(
                             new Date(po.receivingStartDate),
-                            "dd MMM yyyy",
+                            'dd MMM yyyy',
                           )}
                           {po.receivingEndDate &&
-                            ` → ${format(new Date(po.receivingEndDate), "dd MMM yyyy")}`}
+                            ` → ${format(new Date(po.receivingEndDate), 'dd MMM yyyy')}`}
                           {po.grn && ` • GRN: ${po.grn.grnNumber}`}
                         </Typography>
                         {overdue && (
@@ -3426,9 +3485,9 @@ export default function PurchaseOrderDetailPage({
                             sx={{
                               fontSize: 10,
                               fontWeight: 700,
-                              bgcolor: "#fef2f2",
-                              color: "#b91c1c",
-                              border: "1px solid #fecaca",
+                              bgcolor: '#fef2f2',
+                              color: '#b91c1c',
+                              border: '1px solid #fecaca',
                             }}
                           />
                         )}
@@ -3450,14 +3509,14 @@ export default function PurchaseOrderDetailPage({
                   </Typography>
                   <TableContainer
                     sx={{
-                      border: "1px solid",
-                      borderColor: "divider",
+                      border: '1px solid',
+                      borderColor: 'divider',
                       borderRadius: 1,
                     }}
                   >
                     <Table size="small">
                       <TableHead>
-                        <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                        <TableRow sx={{ bgcolor: '#f8fafc' }}>
                           <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
                             Stage
                           </TableCell>
@@ -3500,25 +3559,25 @@ export default function PurchaseOrderDetailPage({
                                     {s.plannedEnd
                                       ? format(
                                           new Date(s.plannedEnd),
-                                          "dd MMM yyyy",
+                                          'dd MMM yyyy',
                                         )
-                                      : "—"}
+                                      : '—'}
                                   </Typography>
                                 </TableCell>
                                 <TableCell>
                                   <Typography
                                     variant="body2"
                                     sx={{
-                                      color: isOverdue ? "#b91c1c" : "inherit",
+                                      color: isOverdue ? '#b91c1c' : 'inherit',
                                       fontWeight: isOverdue ? 700 : 400,
                                     }}
                                   >
                                     {s.actualEnd
                                       ? format(
                                           new Date(s.actualEnd),
-                                          "dd MMM yyyy",
+                                          'dd MMM yyyy',
                                         )
-                                      : "—"}
+                                      : '—'}
                                   </Typography>
                                 </TableCell>
                                 <TableCell align="center">
@@ -3527,10 +3586,10 @@ export default function PurchaseOrderDetailPage({
                                     fontWeight={600}
                                     sx={{
                                       color: isOverdue
-                                        ? "#b91c1c"
+                                        ? '#b91c1c'
                                         : isEarly
-                                          ? "#16a34a"
-                                          : "#64748b",
+                                          ? '#16a34a'
+                                          : '#64748b',
                                     }}
                                   >
                                     {variance !== null
@@ -3538,8 +3597,8 @@ export default function PurchaseOrderDetailPage({
                                         ? `+${variance}d late`
                                         : isEarly
                                           ? `${variance}d early`
-                                          : "0d"
-                                      : "—"}
+                                          : '0d'
+                                      : '—'}
                                   </Typography>
                                 </TableCell>
                                 <TableCell align="center">
@@ -3547,25 +3606,25 @@ export default function PurchaseOrderDetailPage({
                                     <Chip
                                       label={
                                         isOverdue
-                                          ? "Overdue"
+                                          ? 'Overdue'
                                           : isEarly
-                                            ? "Early"
-                                            : "On Time"
+                                            ? 'Early'
+                                            : 'On Time'
                                       }
                                       size="small"
                                       sx={{
                                         fontSize: 11,
                                         fontWeight: 600,
                                         bgcolor: isOverdue
-                                          ? "#fee2e2"
+                                          ? '#fee2e2'
                                           : isEarly
-                                            ? "#dcfce7"
-                                            : "#f0f9ff",
+                                            ? '#dcfce7'
+                                            : '#f0f9ff',
                                         color: isOverdue
-                                          ? "#b91c1c"
+                                          ? '#b91c1c'
                                           : isEarly
-                                            ? "#16a34a"
-                                            : "#0369a1",
+                                            ? '#16a34a'
+                                            : '#0369a1',
                                       }}
                                     />
                                   ) : (

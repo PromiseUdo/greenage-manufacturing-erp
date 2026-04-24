@@ -111,6 +111,7 @@ export async function POST(request: NextRequest) {
       location,
       condition,
       isGrouped,
+      currentStock,
     } = body;
 
     if (!name || !category) {
@@ -226,6 +227,7 @@ export async function POST(request: NextRequest) {
           location,
           condition: (condition as ToolCondition) || 'GOOD',
           status: ToolStatus.AVAILABLE,
+          currentStock: currentStock ?? 1,
         },
       });
 

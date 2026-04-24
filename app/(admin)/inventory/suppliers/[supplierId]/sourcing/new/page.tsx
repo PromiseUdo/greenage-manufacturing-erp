@@ -19,7 +19,11 @@ import {
   DialogActions,
   ToggleButton,
   ToggleButtonGroup,
-  Chip,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from "@mui/material";
 import Grid from "@mui/material/GridLegacy";
 import {
@@ -40,14 +44,18 @@ interface Material {
   unitCost?: number;
 }
 
-interface ToolGroup {
+// Unified option shown in the tool autocomplete.
+// isGroup=true  → ToolGroup record (many identical units)
+// isGroup=false → standalone Tool record (single unique unit)
+interface ToolOption {
   id: string;
   name: string;
-  groupNumber: string;
+  displayNumber: string; // groupNumber or toolId
   category: string;
   unitCost?: number;
-  totalQuantity: number;
-  availableQuantity: number;
+  isGroup: boolean;
+  totalQuantity?: number;
+  availableQuantity?: number;
 }
 
 interface POFormData {
@@ -57,10 +65,14 @@ interface POFormData {
     materialId: string;
     materialName: string;
     partNumber: string;
-    // tool fields
+    // grouped-tool fields (ToolGroup)
     toolGroupId: string;
     toolGroupName: string;
     groupNumber: string;
+    // standalone-tool fields
+    toolId: string;
+    toolName: string;
+    toolNumber: string;
     // shared
     unit: string;
     quantity: number;
@@ -79,6 +91,9 @@ const emptyItem = (): POFormData["items"][number] => ({
   toolGroupId: "",
   toolGroupName: "",
   groupNumber: "",
+  toolId: "",
+  toolName: "",
+  toolNumber: "",
   unit: "",
   quantity: 1,
   unitCost: 0,
@@ -95,7 +110,7 @@ export default function NewPurchaseOrderPage({
   const groupId = searchParams.get("groupId");
 
   const [materials, setMaterials] = useState<Material[]>([]);
-  const [toolGroups, setToolGroups] = useState<ToolGroup[]>([]);
+  const [toolOptions, setToolOptions] = useState<ToolOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [supplierName, setSupplierName] = useState("");
@@ -109,6 +124,18 @@ export default function NewPurchaseOrderPage({
     category: "OTHER",
   });
   const [creatingMaterial, setCreatingMaterial] = useState(false);
+
+  // New tool dialog
+  const [newToolDialog, setNewToolDialog] = useState(false);
+  const [newToolType, setNewToolType] = useState<"group" | "standalone">("group");
+  const [newToolData, setNewToolData] = useState({
+    name: "",
+    category: "OTHER",
+    quantity: 1,
+    unitCost: 0,
+  });
+  const [newToolErrors, setNewToolErrors] = useState<Record<string, string>>({});
+  const [creatingTool, setCreatingTool] = useState(false);
 
   const {
     control,
@@ -143,17 +170,51 @@ export default function NewPurchaseOrderPage({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [materialsRes, supplierRes, toolGroupsRes] = await Promise.all([
-          fetch("/api/inventory/materials?limit=1000"),
-          fetch(`/api/inventory/suppliers/${supplierId}`),
-          fetch("/api/inventory/tool-groups?limit=1000"),
-        ]);
-        const [materialsData, supplierData, toolGroupsData] = await Promise.all(
-          [materialsRes.json(), supplierRes.json(), toolGroupsRes.json()],
-        );
+        const [materialsRes, supplierRes, toolGroupsRes, toolsRes] =
+          await Promise.all([
+            fetch("/api/inventory/materials?limit=1000"),
+            fetch(`/api/inventory/suppliers/${supplierId}`),
+            fetch("/api/inventory/tool-groups?limit=1000"),
+            fetch("/api/inventory/tools?limit=1000"),
+          ]);
+        const [materialsData, supplierData, toolGroupsData, toolsData] =
+          await Promise.all([
+            materialsRes.json(),
+            supplierRes.json(),
+            toolGroupsRes.json(),
+            toolsRes.json(),
+          ]);
+
         setMaterials(materialsData.materials || []);
         setSupplierName(supplierData.name || "");
-        setToolGroups(toolGroupsData.toolGroups || []);
+
+        // Tool groups → one option per group (represents many identical units)
+        const groupOptions: ToolOption[] = (
+          toolGroupsData.toolGroups || []
+        ).map((g: any) => ({
+          id: g.id,
+          name: g.name,
+          displayNumber: g.groupNumber,
+          category: g.category,
+          unitCost: g.unitCost,
+          isGroup: true,
+          totalQuantity: g.totalQuantity,
+          availableQuantity: g.availableQuantity,
+        }));
+
+        // Standalone tools → one option per unique tool (no group)
+        const standaloneOptions: ToolOption[] = (
+          toolsData.standaloneTools || []
+        ).map((t: any) => ({
+          id: t.id,
+          name: t.name,
+          displayNumber: t.toolId,
+          category: t.category,
+          unitCost: t.purchaseCost,
+          isGroup: false,
+        }));
+
+        setToolOptions([...groupOptions, ...standaloneOptions]);
       } catch (err) {
         console.error("Error fetching data:", err);
       }
@@ -191,6 +252,80 @@ export default function NewPurchaseOrderPage({
     }
   };
 
+  const handleCreateTool = async () => {
+    // Validate
+    const errs: Record<string, string> = {};
+    if (!newToolData.name.trim()) errs.name = "Name is required";
+    if (!newToolData.category) errs.category = "Category is required";
+    if (newToolType === "group" && (!newToolData.quantity || newToolData.quantity < 1))
+      errs.quantity = "Quantity must be at least 1";
+    if (Object.keys(errs).length) { setNewToolErrors(errs); return; }
+    setNewToolErrors({});
+
+    try {
+      setCreatingTool(true);
+      const res = await fetch("/api/inventory/tools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newToolData.name.trim(),
+          category: newToolData.category,
+          unitCost: newToolData.unitCost || undefined,
+          quantity: newToolType === "group" ? newToolData.quantity : undefined,
+          isGrouped: newToolType === "group",
+          // Standalone tools created from PO are placeholders — stock is set on receipt
+          currentStock: newToolType === "standalone" ? 0 : undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to create tool");
+      }
+
+      const result = await res.json();
+
+      if (newToolType === "group") {
+        // result = { group: ToolGroup, toolCount: N }
+        const g = result.group;
+        setToolOptions((prev) => [
+          ...prev,
+          {
+            id: g.id,
+            name: g.name,
+            displayNumber: g.groupNumber,
+            category: g.category,
+            unitCost: g.unitCost,
+            isGroup: true,
+            totalQuantity: g.totalQuantity,
+            availableQuantity: g.availableQuantity,
+          },
+        ]);
+      } else {
+        // result = Tool record
+        setToolOptions((prev) => [
+          ...prev,
+          {
+            id: result.id,
+            name: result.name,
+            displayNumber: result.toolId,
+            category: result.category,
+            unitCost: result.purchaseCost,
+            isGroup: false,
+          },
+        ]);
+      }
+
+      setNewToolDialog(false);
+      setNewToolData({ name: "", category: "OTHER", quantity: 1, unitCost: 0 });
+      setNewToolType("group");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setCreatingTool(false);
+    }
+  };
+
   const handleFormSubmit = async (data: POFormData) => {
     try {
       setLoading(true);
@@ -198,11 +333,25 @@ export default function NewPurchaseOrderPage({
 
       const enrichedItems = data.items.map((item) => {
         if (item.itemType === "tool") {
+          // Grouped tool: references the ToolGroup
+          if (item.toolGroupId) {
+            return {
+              itemType: "tool",
+              toolGroupId: item.toolGroupId,
+              toolGroupName: item.toolGroupName,
+              groupNumber: item.groupNumber,
+              unit: item.unit || "unit",
+              quantity: item.quantity,
+              unitCost: item.unitCost,
+              totalCost: item.quantity * item.unitCost,
+            };
+          }
+          // Standalone tool: references a single Tool record
           return {
             itemType: "tool",
-            toolGroupId: item.toolGroupId,
-            toolGroupName: item.toolGroupName,
-            groupNumber: item.groupNumber,
+            toolId: item.toolId,
+            toolName: item.toolName,
+            toolNumber: item.toolNumber,
             unit: item.unit || "unit",
             quantity: item.quantity,
             unitCost: item.unitCost,
@@ -294,7 +443,7 @@ export default function NewPurchaseOrderPage({
             <Typography variant="subtitle1" fontWeight={700}>
               Line Items
             </Typography>
-            <Box sx={{ display: "flex", gap: 1 }}>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
               <Button
                 size="small"
                 variant="outlined"
@@ -303,7 +452,15 @@ export default function NewPurchaseOrderPage({
               >
                 + New Material
               </Button>
-              <Tooltip title="Add Item">
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setNewToolDialog(true)}
+                sx={{ fontSize: 12, borderColor: "#c7d2fe", color: "#4338ca" }}
+              >
+                + New Tool
+              </Button>
+              <Tooltip title="Add Line Item">
                 <IconButton
                   size="small"
                   onClick={() => append(emptyItem())}
@@ -366,6 +523,9 @@ export default function NewPurchaseOrderPage({
                             setValue(`items.${index}.toolGroupId`, "");
                             setValue(`items.${index}.toolGroupName`, "");
                             setValue(`items.${index}.groupNumber`, "");
+                            setValue(`items.${index}.toolId`, "");
+                            setValue(`items.${index}.toolName`, "");
+                            setValue(`items.${index}.toolNumber`, "");
                             setValue(`items.${index}.unit`, "");
                             setValue(`items.${index}.unitCost`, 0);
                           }}
@@ -396,19 +556,6 @@ export default function NewPurchaseOrderPage({
                         </ToggleButtonGroup>
                       )}
                     />
-                    {itemType === "tool" && (
-                      <Chip
-                        label="Tool Group"
-                        size="small"
-                        sx={{
-                          fontSize: 10,
-                          height: 20,
-                          bgcolor: "#e0e7ff",
-                          color: "#4338ca",
-                          fontWeight: 600,
-                        }}
-                      />
-                    )}
                   </Box>
                   {fields.length > 1 && (
                     <IconButton
@@ -482,64 +629,79 @@ export default function NewPurchaseOrderPage({
                       <Controller
                         name={`items.${index}.toolGroupId`}
                         control={control}
-                        rules={{ required: "Tool group is required" }}
+                        rules={{
+                          validate: () => {
+                            const hasGroup = !!watchedItems[index]?.toolGroupId;
+                            const hasStandalone = !!watchedItems[index]?.toolId;
+                            return hasGroup || hasStandalone || "Select a tool";
+                          },
+                        }}
                         render={({ field: formField }) => {
+                          const currentGroupId = formField.value;
+                          const currentToolId = watchedItems[index]?.toolId;
                           const selected =
-                            toolGroups.find(
-                              (tg) => tg.id === formField.value,
+                            toolOptions.find(
+                              (o) =>
+                                (o.isGroup && o.id === currentGroupId) ||
+                                (!o.isGroup && o.id === currentToolId),
                             ) || null;
                           return (
-                            <Autocomplete<ToolGroup>
-                              options={toolGroups}
+                            <Autocomplete<ToolOption>
+                              options={toolOptions}
                               value={selected}
+                              groupBy={(o) =>
+                                o.isGroup ? "Tool Groups" : "Standalone Tools"
+                              }
                               getOptionLabel={(o) =>
-                                `${o.groupNumber} – ${o.name}`
+                                `${o.displayNumber} – ${o.name}`
                               }
                               renderOption={(props, option) => {
                                 const { key, ...rest } = props;
                                 return (
                                   <li key={option.id} {...rest}>
                                     <Box>
-                                      <Typography
-                                        variant="body2"
-                                        fontWeight={600}
-                                      >
-                                        {option.groupNumber} — {option.name}
+                                      <Typography variant="body2" fontWeight={600}>
+                                        {option.displayNumber} — {option.name}
                                       </Typography>
-                                      <Typography
-                                        variant="caption"
-                                        color="text.secondary"
-                                      >
-                                        {option.category} • Available:{" "}
-                                        {option.availableQuantity}
+                                      <Typography variant="caption" color="text.secondary">
+                                        {option.category.replace(/_/g, " ")}
+                                        {option.isGroup
+                                          ? ` • ${option.availableQuantity} available`
+                                          : " • Single unit"}
                                       </Typography>
                                     </Box>
                                   </li>
                                 );
                               }}
                               onChange={(_, value) => {
-                                formField.onChange(value?.id || "");
-                                if (value) {
-                                  setValue(
-                                    `items.${index}.toolGroupName`,
-                                    value.name,
-                                  );
-                                  setValue(
-                                    `items.${index}.groupNumber`,
-                                    value.groupNumber,
-                                  );
-                                  setValue(`items.${index}.unit`, "unit");
-                                  setValue(
-                                    `items.${index}.unitCost`,
-                                    value.unitCost || 0,
-                                  );
+                                // Clear both sets of fields first
+                                setValue(`items.${index}.toolGroupId`, "");
+                                setValue(`items.${index}.toolGroupName`, "");
+                                setValue(`items.${index}.groupNumber`, "");
+                                setValue(`items.${index}.toolId`, "");
+                                setValue(`items.${index}.toolName`, "");
+                                setValue(`items.${index}.toolNumber`, "");
+
+                                if (!value) return;
+                                setValue(`items.${index}.unit`, "unit");
+                                setValue(`items.${index}.unitCost`, value.unitCost || 0);
+
+                                if (value.isGroup) {
+                                  formField.onChange(value.id);
+                                  setValue(`items.${index}.toolGroupName`, value.name);
+                                  setValue(`items.${index}.groupNumber`, value.displayNumber);
+                                } else {
+                                  formField.onChange("");
+                                  setValue(`items.${index}.toolId`, value.id);
+                                  setValue(`items.${index}.toolName`, value.name);
+                                  setValue(`items.${index}.toolNumber`, value.displayNumber);
                                 }
                               }}
                               disabled={loading}
                               renderInput={(params) => (
                                 <TextField
                                   {...params}
-                                  label="Tool Group"
+                                  label="Tool"
                                   variant="standard"
                                   required
                                   error={!!errors.items?.[index]?.toolGroupId}
@@ -861,6 +1023,175 @@ export default function NewPurchaseOrderPage({
             sx={{ bgcolor: "#0F172A", "&:hover": { bgcolor: "#1E293B" } }}
           >
             {creatingMaterial ? "Creating..." : "Create Material"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* New Tool Dialog */}
+      <Dialog
+        open={newToolDialog}
+        onClose={() => {
+          setNewToolDialog(false);
+          setNewToolErrors({});
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>Add New Tool</DialogTitle>
+        <DialogContent>
+          {/* Group vs Standalone toggle */}
+          <Box sx={{ mb: 3, mt: 0.5 }}>
+            <ToggleButtonGroup
+              value={newToolType}
+              exclusive
+              onChange={(_, val) => {
+                if (val) { setNewToolType(val); setNewToolErrors({}); }
+              }}
+              size="small"
+              fullWidth
+            >
+              <ToggleButton value="group" sx={{ textTransform: "none", fontWeight: 600, fontSize: 12 }}>
+                <ToolIcon sx={{ fontSize: 14, mr: 0.75 }} />
+                Tool Group
+                <Typography variant="caption" sx={{ ml: 1, color: "text.secondary", fontWeight: 400 }}>
+                  — multiple identical units
+                </Typography>
+              </ToggleButton>
+              <ToggleButton value="standalone" sx={{ textTransform: "none", fontWeight: 600, fontSize: 12 }}>
+                <ToolIcon sx={{ fontSize: 14, mr: 0.75 }} />
+                Single Tool
+                <Typography variant="caption" sx={{ ml: 1, color: "text.secondary", fontWeight: 400 }}>
+                  — one unique item
+                </Typography>
+              </ToggleButton>
+            </ToggleButtonGroup>
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+              {newToolType === "group"
+                ? "Creates a Tool Group and the specified number of individual unit records."
+                : "Creates a single standalone tool record tracked as a unique item."}
+            </Typography>
+          </Box>
+
+          <Grid container spacing={2}>
+            {/* Name */}
+            <Grid item xs={12}>
+              <TextField
+                label="Tool Name"
+                fullWidth
+                variant="standard"
+                required
+                value={newToolData.name}
+                onChange={(e) =>
+                  setNewToolData((p) => ({ ...p, name: e.target.value }))
+                }
+                error={!!newToolErrors.name}
+                helperText={newToolErrors.name}
+              />
+            </Grid>
+
+            {/* Category */}
+            <Grid item xs={newToolType === "group" ? 6 : 12}>
+              <FormControl
+                fullWidth
+                variant="standard"
+                required
+                error={!!newToolErrors.category}
+              >
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={newToolData.category}
+                  onChange={(e) =>
+                    setNewToolData((p) => ({ ...p, category: e.target.value }))
+                  }
+                >
+                  {[
+                    "HAND_TOOL",
+                    "POWER_TOOL",
+                    "MEASURING_TOOL",
+                    "TESTING_EQUIPMENT",
+                    "SAFETY_EQUIPMENT",
+                    "WORKSTATION",
+                    "LIFTING_EQUIPMENT",
+                    "OTHER",
+                  ].map((c) => (
+                    <MenuItem key={c} value={c}>
+                      {c.replace(/_/g, " ")}
+                    </MenuItem>
+                  ))}
+                </Select>
+                {newToolErrors.category && (
+                  <FormHelperText>{newToolErrors.category}</FormHelperText>
+                )}
+              </FormControl>
+            </Grid>
+
+            {/* Quantity — group only */}
+            {newToolType === "group" && (
+              <Grid item xs={6}>
+                <TextField
+                  label="No. of Units"
+                  fullWidth
+                  variant="standard"
+                  type="number"
+                  required
+                  value={newToolData.quantity}
+                  onChange={(e) =>
+                    setNewToolData((p) => ({
+                      ...p,
+                      quantity: parseInt(e.target.value) || 1,
+                    }))
+                  }
+                  inputProps={{ min: 1 }}
+                  error={!!newToolErrors.quantity}
+                  helperText={
+                    newToolErrors.quantity ||
+                    "How many identical units exist in this group"
+                  }
+                />
+              </Grid>
+            )}
+
+            {/* Unit cost */}
+            <Grid item xs={12}>
+              <TextField
+                label="Unit Cost (₦) — optional"
+                fullWidth
+                variant="standard"
+                type="number"
+                value={newToolData.unitCost || ""}
+                onChange={(e) =>
+                  setNewToolData((p) => ({
+                    ...p,
+                    unitCost: parseFloat(e.target.value) || 0,
+                  }))
+                }
+                inputProps={{ min: 0 }}
+                helperText="Will pre-fill the unit cost field when this tool is selected on a PO line"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            onClick={() => {
+              setNewToolDialog(false);
+              setNewToolErrors({});
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            disableElevation
+            disabled={creatingTool || !newToolData.name.trim()}
+            onClick={handleCreateTool}
+            sx={{ bgcolor: "#4338ca", "&:hover": { bgcolor: "#3730a3" } }}
+          >
+            {creatingTool
+              ? "Creating..."
+              : newToolType === "group"
+                ? "Create Tool Group"
+                : "Create Tool"}
           </Button>
         </DialogActions>
       </Dialog>
