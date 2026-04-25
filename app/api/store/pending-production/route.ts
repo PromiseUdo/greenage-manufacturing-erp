@@ -344,6 +344,20 @@ export async function POST(request: NextRequest) {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+// Atomically increments a named counter and returns the new value.
+// Uses MongoDB's findAndModify ($inc) so concurrent requests can never
+// receive the same sequence number.
+async function nextSequence(name: string): Promise<number> {
+  const result = await prisma.$runCommandRaw({
+    findAndModify: 'counters',
+    query: { _id: name },
+    update: { $inc: { seq: 1 } },
+    upsert: true,
+    new: true,
+  });
+  return (result as any).value.seq as number;
+}
+
 async function findOrCreateStoreItem(product: {
   id: string;
   name: string;
@@ -354,17 +368,11 @@ async function findOrCreateStoreItem(product: {
   });
 
   if (!storeItem) {
-    const lastStoreItem = await prisma.storeItem.findFirst({
-      orderBy: { createdAt: 'desc' },
-      select: { itemNumber: true },
-    });
-    const itemCount = lastStoreItem
-      ? parseInt(lastStoreItem.itemNumber.split('-')[1]) + 1
-      : 1;
+    const seq = await nextSequence('storeItem');
 
     storeItem = await prisma.storeItem.create({
       data: {
-        itemNumber: `STK-${itemCount.toString().padStart(4, '0')}`,
+        itemNumber: `STK-${seq.toString().padStart(4, '0')}`,
         name: product.name,
         productId: product.id,
         category: product.category as ProductCategory,
@@ -379,12 +387,6 @@ async function findOrCreateStoreItem(product: {
 }
 
 async function generateReceiptNumber(): Promise<string> {
-  const lastReceipt = await prisma.storeReceipt.findFirst({
-    orderBy: { createdAt: 'desc' },
-    select: { receiptNumber: true },
-  });
-  const receiptCount = lastReceipt
-    ? parseInt(lastReceipt.receiptNumber.split('-')[2]) + 1
-    : 1;
-  return `SRN-${new Date().getFullYear()}-${receiptCount.toString().padStart(4, '0')}`;
+  const seq = await nextSequence('storeReceipt');
+  return `SRN-${new Date().getFullYear()}-${seq.toString().padStart(4, '0')}`;
 }
