@@ -40,6 +40,10 @@ import {
   AttachMoney,
   Receipt,
   Factory,
+  RequestQuote,
+  CheckCircleOutline,
+  Cancel,
+  Remove,
 } from '@mui/icons-material';
 import {
   PieChart,
@@ -107,6 +111,17 @@ function pct(n: string | number): string {
   return `${n}%`;
 }
 
+function fmtDateTime(dt: string | null | undefined): string {
+  if (!dt) return '—';
+  return new Date(dt).toLocaleString('en-NG', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 // Recharts Pie label — props.name = nameKey value, works for all Pie charts
 const pieLabel = (props: any) =>
   `${String(props.name || '').replace(/_/g, ' ')} ${((props.percent || 0) * 100).toFixed(0)}%`;
@@ -146,6 +161,11 @@ const DEPT_META: Record<
     label: 'Dispatch & Logistics',
     color: '#F44336',
     icon: <LocalShipping />,
+  },
+  procurement: {
+    label: 'Procurement',
+    color: '#5C6BC0',
+    icon: <RequestQuote />,
   },
 };
 
@@ -243,13 +263,20 @@ function ChartBox({
 function SalesReport({ data }: { data: any }) {
   const kpis: KpiCard[] = [
     {
-      label: 'Total Orders',
+      label: 'Order Count',
       value: data.totalOrders,
       icon: <ShoppingCart />,
       color: '#2196F3',
     },
     {
-      label: 'Total Revenue',
+      label: 'Sales Volume',
+      value: (data.salesVolume ?? 0).toLocaleString(),
+      icon: <Inventory2 />,
+      color: '#00BCD4',
+      sub: 'Total units sold',
+    },
+    {
+      label: 'Net Sales',
       value: fmt(data.totalRevenue),
       icon: <AttachMoney />,
       color: '#4CAF50',
@@ -266,19 +293,13 @@ function SalesReport({ data }: { data: any }) {
       value: fmt(data.avgOrderValue ?? 0),
       icon: <TrendingUp />,
       color: '#2196F3',
-      sub: 'Revenue ÷ Orders',
-    },
-    {
-      label: 'Total Invoices',
-      value: data.totalInvoices,
-      icon: <Receipt />,
-      color: '#9C27B0',
+      sub: 'Net Sales ÷ Orders',
     },
     {
       label: 'Conversion Rate',
       value: pct(data.conversionRate),
       icon: <TrendingUp />,
-      color: '#00BCD4',
+      color: '#FF9800',
       sub: `${data.totalQuotes} quotes raised`,
     },
   ];
@@ -435,7 +456,7 @@ function SalesReport({ data }: { data: any }) {
       {/* Top customers table */}
       <Paper
         elevation={0}
-        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, mb: 3 }}
       >
         <Box sx={{ p: 2.5, pb: 1.5 }}>
           <Typography variant="subtitle1" fontWeight={700}>
@@ -498,7 +519,132 @@ function SalesReport({ data }: { data: any }) {
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* ── Sales-order detail table ────────────────────────────────────────── */}
+      <SalesOrderDetailTable orders={data.orderDetails ?? []} />
     </>
+  );
+}
+
+// ─── Sales-order detail table ─────────────────────────────────────────────────
+
+function SalesOrderDetailTable({ orders }: { orders: any[] }) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+    >
+      <Box sx={{ p: 2.5, pb: 1.5 }}>
+        <Typography variant="subtitle1" fontWeight={700}>
+          Sales-Order Detail
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          Individual orders for the selected period — discount and net sales from linked invoice
+        </Typography>
+      </Box>
+      <TableContainer sx={{ overflowX: 'auto' }}>
+        <Table size="small" sx={{ minWidth: 900 }}>
+          <StyledTableHead>
+            <TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Order ID</TableCell>
+              <TableCell>Customer</TableCell>
+              <TableCell>Product</TableCell>
+              <TableCell align="right">Qty</TableCell>
+              <TableCell align="right">Unit Price</TableCell>
+              <TableCell align="right">Discount</TableCell>
+              <TableCell align="right">Net Sales</TableCell>
+            </TableRow>
+          </StyledTableHead>
+          <TableBody>
+            {orders.map((o: any, i: number) => (
+              <TableRow key={i} hover>
+                {/* Date */}
+                <TableCell
+                  sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap' }}
+                >
+                  {fmtDateTime(o.date)}
+                </TableCell>
+
+                {/* Order ID */}
+                <TableCell
+                  sx={{
+                    fontWeight: 700,
+                    fontFamily: 'monospace',
+                    fontSize: '0.8rem',
+                    whiteSpace: 'nowrap',
+                    color: '#2196F3',
+                  }}
+                >
+                  {o.orderNumber}
+                </TableCell>
+
+                {/* Customer */}
+                <TableCell sx={{ fontWeight: 600, fontSize: '0.82rem' }}>
+                  {o.customer}
+                </TableCell>
+
+                {/* Product */}
+                <TableCell sx={{ fontSize: '0.82rem' }}>
+                  {o.itemCount > 1 ? (
+                    <Chip
+                      label={o.product}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.72rem', height: 20 }}
+                    />
+                  ) : (
+                    o.product
+                  )}
+                </TableCell>
+
+                {/* Qty */}
+                <TableCell align="right" sx={{ fontWeight: 600 }}>
+                  {o.qty > 0 ? o.qty.toLocaleString() : '—'}
+                </TableCell>
+
+                {/* Unit Price */}
+                <TableCell
+                  align="right"
+                  sx={{ color: 'text.secondary', fontSize: '0.82rem' }}
+                >
+                  {o.unitPrice != null ? fmt(o.unitPrice) : '—'}
+                </TableCell>
+
+                {/* Discount */}
+                <TableCell
+                  align="right"
+                  sx={{
+                    fontSize: '0.82rem',
+                    color: o.discount > 0 ? '#FF9800' : 'text.disabled',
+                    fontWeight: o.discount > 0 ? 600 : 400,
+                  }}
+                >
+                  {o.discount > 0 ? `−${fmt(o.discount)}` : '—'}
+                </TableCell>
+
+                {/* Net Sales */}
+                <TableCell
+                  align="right"
+                  sx={{ fontWeight: 700, color: '#4CAF50' }}
+                >
+                  {fmt(o.netSales ?? 0)}
+                </TableCell>
+              </TableRow>
+            ))}
+            {orders.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No orders for this period
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
   );
 }
 
@@ -807,7 +953,12 @@ function ProductionReport({ data }: { data: any }) {
       {/* ── Top products table ──────────────────────────────────────────────── */}
       <Paper
         elevation={0}
-        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 3,
+          mb: 3,
+        }}
       >
         <Box sx={{ p: 2.5, pb: 1.5 }}>
           <Typography variant="subtitle1" fontWeight={700}>
@@ -864,7 +1015,655 @@ function ProductionReport({ data }: { data: any }) {
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* ── Work-order detail table ─────────────────────────────────────────── */}
+      <WorkOrderDetailTable orders={data.workOrderDetails ?? []} />
     </>
+  );
+}
+
+// ─── Procurement Report ───────────────────────────────────────────────────────
+
+function ProcurementReport({ data }: { data: any }) {
+  const PROCUREMENT_COLOR = '#5C6BC0';
+
+  const kpis: KpiCard[] = [
+    {
+      label: 'Total PO Value',
+      value: fmt(data.totalSpend ?? 0),
+      icon: <RequestQuote />,
+      color: PROCUREMENT_COLOR,
+      sub: `${fmt(data.totalPaid ?? 0)} paid · ${fmt(data.totalOutstanding ?? 0)} outstanding`,
+    },
+    {
+      label: 'PO Count',
+      value: data.totalPOs ?? 0,
+      icon: <Receipt />,
+      color: '#2196F3',
+      sub: 'Orders in period',
+    },
+    {
+      label: 'Avg Cost / Unit',
+      value: data.avgCostPerUnit != null ? fmt(data.avgCostPerUnit) : 'N/A',
+      icon: <AttachMoney />,
+      color: '#4CAF50',
+      sub: 'Weighted across all line items',
+    },
+    {
+      label: 'Avg Lead Time',
+      value: data.avgLeadTime != null ? `${data.avgLeadTime} days` : 'N/A',
+      icon: <TrendingUp />,
+      color: '#FF9800',
+      sub: 'Order → receipt (completed POs)',
+    },
+    {
+      label: 'On-Time Delivery',
+      value: data.onTimeRate != null ? pct(data.onTimeRate) : 'N/A',
+      icon: <CheckCircle />,
+      color:
+        data.onTimeRate == null
+          ? '#9E9E9E'
+          : data.onTimeRate >= 90
+            ? '#4CAF50'
+            : data.onTimeRate >= 70
+              ? '#FF9800'
+              : '#F44336',
+      sub:
+        data.deliveredCount > 0
+          ? `${data.onTimeCount} of ${data.deliveredCount} deliveries`
+          : 'No deliveries yet',
+    },
+  ];
+
+  const hasMonthlyTrend =
+    Array.isArray(data.monthlyTrend) && data.monthlyTrend.length > 1;
+
+  return (
+    <>
+      {/* ── KPI row ───────────────────────────────────────────────────────────── */}
+      <Grid container spacing={2} mb={3}>
+        {kpis.map((k) => (
+          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={k.label}>
+            <KpiCard card={k} />
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* ── Row 1: PO Value by Status + Monthly Volume Trend ─────────────────── */}
+      <Grid container spacing={3} mb={3}>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <ChartBox title="PO Value by Status">
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart
+                data={data.poByStatus ?? []}
+                layout="vertical"
+                margin={{ left: 100, right: 32 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={(v) =>
+                    v >= 1_000_000
+                      ? `${(v / 1_000_000).toFixed(1)}M`
+                      : v >= 1_000
+                        ? `${(v / 1_000).toFixed(0)}K`
+                        : String(v)
+                  }
+                />
+                <YAxis
+                  type="category"
+                  dataKey="status"
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(v) => v.replace(/_/g, ' ')}
+                />
+                <ReTooltip
+                  formatter={(v: any) => [fmt(v), 'Value']}
+                  labelFormatter={(l) => l.replace(/_/g, ' ')}
+                />
+                <Bar
+                  dataKey="amount"
+                  radius={[0, 4, 4, 0]}
+                  shape={(props: any) => (
+                    <Rectangle
+                      {...props}
+                      fill={CHART_COLORS[props.index % CHART_COLORS.length]}
+                      radius={[0, 4, 4, 0]}
+                    />
+                  )}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartBox>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 4 }}>
+          <ChartBox title="PO Count by Status">
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={(data.poByStatus ?? []).map((s: any, i: number) => ({
+                    ...s,
+                    name: s.status,
+                    value: s.count,
+                    fill: CHART_COLORS[i % CHART_COLORS.length],
+                  }))}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={52}
+                  outerRadius={88}
+                  label={pieLabel}
+                  labelLine={false}
+                />
+                <ReTooltip
+                  formatter={(v: any) => [v, 'POs']}
+                  labelFormatter={(l) => String(l).replace(/_/g, ' ')}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </ChartBox>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 3 }}>
+          <ChartBox title="On-Time Delivery">
+            <ResponsiveContainer width="100%" height={260}>
+              <PieChart>
+                <Pie
+                  data={
+                    data.deliveredCount > 0
+                      ? [
+                          {
+                            name: 'On Time',
+                            value: data.onTimeCount ?? 0,
+                            fill: '#4CAF50',
+                          },
+                          {
+                            name: 'Late',
+                            value:
+                              (data.deliveredCount ?? 0) -
+                              (data.onTimeCount ?? 0),
+                            fill: '#F44336',
+                          },
+                        ]
+                      : [{ name: 'No data', value: 1, fill: '#E0E0E0' }]
+                  }
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={52}
+                  outerRadius={88}
+                  label={pieLabel}
+                  labelLine={false}
+                />
+                <ReTooltip formatter={(v: any) => [v, 'Deliveries']} />
+                <Legend iconSize={10} iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
+          </ChartBox>
+        </Grid>
+      </Grid>
+
+      {/* ── Row 2: Top Suppliers + Monthly Trend ─────────────────────────────── */}
+      <Grid container spacing={3} mb={3}>
+        <Grid size={{ xs: 12, md: hasMonthlyTrend ? 7 : 12 }}>
+          <ChartBox title="Top Suppliers by Spend">
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart
+                data={data.topSuppliers ?? []}
+                layout="vertical"
+                margin={{ left: 120, right: 32 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={(v) =>
+                    v >= 1_000_000
+                      ? `${(v / 1_000_000).toFixed(1)}M`
+                      : v >= 1_000
+                        ? `${(v / 1_000).toFixed(0)}K`
+                        : String(v)
+                  }
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fontSize: 10 }}
+                  width={110}
+                />
+                <ReTooltip formatter={(v: any) => [fmt(v), 'Spend']} />
+                <Bar dataKey="spend" fill={PROCUREMENT_COLOR} radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartBox>
+        </Grid>
+
+        {hasMonthlyTrend && (
+          <Grid size={{ xs: 12, md: 5 }}>
+            <ChartBox title="Monthly PO Volume">
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart
+                  data={data.monthlyTrend}
+                  margin={{ top: 4, right: 16 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <ReTooltip formatter={(v: any) => [v, 'POs']} />
+                  <Area
+                    type="monotone"
+                    dataKey="count"
+                    stroke={PROCUREMENT_COLOR}
+                    fill={`${PROCUREMENT_COLOR}22`}
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartBox>
+          </Grid>
+        )}
+      </Grid>
+
+      {/* ── Supplier performance table ────────────────────────────────────────── */}
+      <Paper
+        elevation={0}
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 3,
+          mb: 3,
+        }}
+      >
+        <Box sx={{ p: 2.5, pb: 1.5 }}>
+          <Typography variant="subtitle1" fontWeight={700}>
+            Supplier Performance
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Spend, PO count and on-time rate per supplier for the selected period
+          </Typography>
+        </Box>
+        <TableContainer>
+          <Table size="small">
+            <StyledTableHead>
+              <TableRow>
+                <TableCell>#</TableCell>
+                <TableCell>Supplier</TableCell>
+                <TableCell align="right">POs</TableCell>
+                <TableCell align="right">Total Spend</TableCell>
+                <TableCell align="right">On-Time Rate</TableCell>
+              </TableRow>
+            </StyledTableHead>
+            <TableBody>
+              {(data.topSuppliers ?? []).map((s: any, i: number) => {
+                const rate: number | null = s.onTimeRate;
+                const rateColor =
+                  rate == null
+                    ? '#9E9E9E'
+                    : rate >= 90
+                      ? '#2E7D32'
+                      : rate >= 70
+                        ? '#E65100'
+                        : '#B71C1C';
+                return (
+                  <TableRow key={i} hover>
+                    <TableCell sx={{ color: 'text.secondary' }}>{i + 1}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{s.name}</TableCell>
+                    <TableCell align="right">
+                      <Chip
+                        label={s.poCount}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+                      />
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700, color: PROCUREMENT_COLOR }}>
+                      {fmt(s.spend)}
+                    </TableCell>
+                    <TableCell align="right">
+                      {rate != null ? (
+                        <Chip
+                          label={`${rate}%`}
+                          size="small"
+                          sx={{
+                            bgcolor: `${rateColor}18`,
+                            color: rateColor,
+                            fontWeight: 700,
+                            fontSize: '0.78rem',
+                          }}
+                        />
+                      ) : (
+                        <Typography variant="body2" color="text.disabled">
+                          N/A
+                        </Typography>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {(data.topSuppliers ?? []).length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No supplier data for this period
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+
+      {/* ── Purchase-order detail table ───────────────────────────────────────── */}
+      <Paper
+        elevation={0}
+        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+      >
+        <Box sx={{ p: 2.5, pb: 1.5 }}>
+          <Typography variant="subtitle1" fontWeight={700}>
+            Purchase-Order Detail
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Line-level breakdown of every PO in the selected period
+          </Typography>
+        </Box>
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table size="small" sx={{ minWidth: 1100 }}>
+            <StyledTableHead>
+              <TableRow>
+                <TableCell>PO ID</TableCell>
+                <TableCell>Supplier</TableCell>
+                <TableCell>Item</TableCell>
+                <TableCell align="right">Qty</TableCell>
+                <TableCell align="right">Unit Cost</TableCell>
+                <TableCell align="right">Total Cost</TableCell>
+                <TableCell>Order Date</TableCell>
+                <TableCell>Delivery Date</TableCell>
+                <TableCell align="right">Lead Time</TableCell>
+                <TableCell align="center">On-Time</TableCell>
+                <TableCell align="right">Cost Variance</TableCell>
+              </TableRow>
+            </StyledTableHead>
+            <TableBody>
+              {(data.poDetails ?? []).map((po: any, i: number) => (
+                <TableRow key={i} hover>
+                  {/* PO ID */}
+                  <TableCell
+                    sx={{
+                      fontWeight: 700,
+                      fontFamily: 'monospace',
+                      fontSize: '0.78rem',
+                      whiteSpace: 'nowrap',
+                      color: PROCUREMENT_COLOR,
+                    }}
+                  >
+                    {po.poNumber}
+                  </TableCell>
+
+                  {/* Supplier */}
+                  <TableCell sx={{ fontWeight: 600, fontSize: '0.82rem' }}>
+                    {po.supplier}
+                  </TableCell>
+
+                  {/* Item */}
+                  <TableCell sx={{ fontSize: '0.82rem' }}>
+                    {po.itemCount > 1 ? (
+                      <Chip
+                        label={po.item}
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontSize: '0.72rem', height: 20 }}
+                      />
+                    ) : (
+                      po.item
+                    )}
+                  </TableCell>
+
+                  {/* Qty */}
+                  <TableCell align="right" sx={{ fontWeight: 600 }}>
+                    {po.qty > 0 ? po.qty.toLocaleString() : '—'}
+                  </TableCell>
+
+                  {/* Unit Cost */}
+                  <TableCell
+                    align="right"
+                    sx={{ color: 'text.secondary', fontSize: '0.82rem' }}
+                  >
+                    {po.unitCost != null ? fmt(po.unitCost) : '—'}
+                  </TableCell>
+
+                  {/* Total Cost */}
+                  <TableCell
+                    align="right"
+                    sx={{ fontWeight: 700, color: PROCUREMENT_COLOR }}
+                  >
+                    {fmt(po.totalCost)}
+                  </TableCell>
+
+                  {/* Order Date */}
+                  <TableCell
+                    sx={{
+                      fontSize: '0.78rem',
+                      color: 'text.secondary',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {fmtDateTime(po.orderDate)}
+                  </TableCell>
+
+                  {/* Delivery Date */}
+                  <TableCell
+                    sx={{
+                      fontSize: '0.78rem',
+                      whiteSpace: 'nowrap',
+                      color: po.deliveryDate ? '#2E7D32' : 'text.disabled',
+                    }}
+                  >
+                    {po.deliveryDate ? fmtDateTime(po.deliveryDate) : 'Pending'}
+                  </TableCell>
+
+                  {/* Lead Time */}
+                  <TableCell
+                    align="right"
+                    sx={{ fontSize: '0.82rem', whiteSpace: 'nowrap' }}
+                  >
+                    {po.leadTime != null ? (
+                      <Chip
+                        label={`${po.leadTime}d`}
+                        size="small"
+                        sx={{
+                          bgcolor:
+                            po.leadTime <= 7
+                              ? '#E8F5E9'
+                              : po.leadTime <= 21
+                                ? '#FFF3E0'
+                                : '#FFEBEE',
+                          color:
+                            po.leadTime <= 7
+                              ? '#2E7D32'
+                              : po.leadTime <= 21
+                                ? '#E65100'
+                                : '#B71C1C',
+                          fontWeight: 700,
+                          fontSize: '0.72rem',
+                          height: 22,
+                        }}
+                      />
+                    ) : (
+                      <Typography variant="body2" color="text.disabled">
+                        —
+                      </Typography>
+                    )}
+                  </TableCell>
+
+                  {/* On-Time */}
+                  <TableCell align="center">
+                    {po.onTime === true ? (
+                      <CheckCircleOutline
+                        sx={{ fontSize: 18, color: '#4CAF50' }}
+                      />
+                    ) : po.onTime === false ? (
+                      <Cancel sx={{ fontSize: 18, color: '#F44336' }} />
+                    ) : (
+                      <Remove sx={{ fontSize: 18, color: '#BDBDBD' }} />
+                    )}
+                  </TableCell>
+
+                  {/* Cost Variance */}
+                  <TableCell
+                    align="right"
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: '0.82rem',
+                      color:
+                        po.costVariance === 0
+                          ? '#4CAF50'
+                          : po.costVariance > 0
+                            ? '#FF9800'
+                            : '#F44336',
+                    }}
+                  >
+                    {po.costVariance === 0
+                      ? '✓ Settled'
+                      : fmt(po.costVariance)}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {(data.poDetails ?? []).length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={11} align="center" sx={{ py: 3 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No purchase orders for this period
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+    </>
+  );
+}
+
+// ─── Status chip colour map ───────────────────────────────────────────────────
+
+const ORDER_STATUS_COLOR: Record<string, { bg: string; text: string }> = {
+  DRAFT:               { bg: '#F5F5F5', text: '#757575' },
+  IN_PROGRESS:         { bg: '#E3F2FD', text: '#1565C0' },
+  ON_HOLD:             { bg: '#FFF3E0', text: '#E65100' },
+  PARTIALLY_COMPLETED: { bg: '#F3E5F5', text: '#6A1B9A' },
+  COMPLETED:           { bg: '#E8F5E9', text: '#2E7D32' },
+  CANCELLED:           { bg: '#FFEBEE', text: '#B71C1C' },
+};
+
+function StatusChip({ status }: { status: string }) {
+  const c = ORDER_STATUS_COLOR[status] ?? { bg: '#F5F5F5', text: '#616161' };
+  return (
+    <Chip
+      label={status.replace(/_/g, ' ')}
+      size="small"
+      sx={{
+        bgcolor: c.bg,
+        color: c.text,
+        fontWeight: 700,
+        fontSize: '0.72rem',
+        height: 22,
+        borderRadius: 1,
+      }}
+    />
+  );
+}
+
+function WorkOrderDetailTable({ orders }: { orders: any[] }) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+    >
+      <Box sx={{ p: 2.5, pb: 1.5 }}>
+        <Typography variant="subtitle1" fontWeight={700}>
+          Work-Order Detail
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          Individual production orders for the selected period
+        </Typography>
+      </Box>
+      <TableContainer>
+        <Table size="small">
+          <StyledTableHead>
+            <TableRow>
+              <TableCell>Order ID</TableCell>
+              <TableCell>Product</TableCell>
+              <TableCell align="right">Volume</TableCell>
+              <TableCell>Current Stage</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Start</TableCell>
+              <TableCell>Completion</TableCell>
+            </TableRow>
+          </StyledTableHead>
+          <TableBody>
+            {orders.map((o: any, i: number) => (
+              <TableRow key={i} hover>
+                <TableCell
+                  sx={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '0.8rem' }}
+                >
+                  {o.orderNumber}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>{o.product}</TableCell>
+                <TableCell align="right">
+                  <Chip
+                    label={o.volume}
+                    size="small"
+                    variant="outlined"
+                    sx={{ fontWeight: 700, fontSize: '0.78rem' }}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color:
+                        o.currentStage === '—' ? 'text.disabled' : 'text.primary',
+                      fontSize: '0.82rem',
+                    }}
+                  >
+                    {o.currentStage}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <StatusChip status={o.status} />
+                </TableCell>
+                <TableCell sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                  {fmtDateTime(o.startedAt)}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontSize: '0.78rem',
+                    whiteSpace: 'nowrap',
+                    color: o.completedAt ? '#2E7D32' : 'text.disabled',
+                  }}
+                >
+                  {fmtDateTime(o.completedAt)}
+                </TableCell>
+              </TableRow>
+            ))}
+            {orders.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No production orders for this period
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
   );
 }
 
@@ -1459,9 +2258,53 @@ function FinanceReport({ data }: { data: any }) {
   // Ageing severity colours
   const AGING_COLOR = ['#4CAF50', '#FF9800', '#F44336', '#B71C1C'];
 
+  const margin = Number(data.profitMargin ?? 0);
+  const plKpis: KpiCard[] = [
+    {
+      label: 'Sales Units',
+      value: (data.salesUnits ?? 0).toLocaleString(),
+      icon: <Inventory2 />,
+      color: '#2196F3',
+      sub: 'Total units invoiced in period',
+    },
+    {
+      label: 'Net Revenue',
+      value: fmt(data.totalInvoiced ?? 0),
+      icon: <AttachMoney />,
+      color: '#4CAF50',
+      sub: 'Sum of all invoice final amounts',
+    },
+    {
+      label: 'Total COGS',
+      value: fmt(data.totalCogs ?? 0),
+      icon: <TrendingDown />,
+      color: '#FF9800',
+      sub: 'Unit cost × units sold per product',
+    },
+    {
+      label: 'Gross Profit',
+      value: fmt(data.grossProfit ?? 0),
+      icon: <TrendingUp />,
+      color: (data.grossProfit ?? 0) >= 0 ? '#4CAF50' : '#F44336',
+      sub: 'Net Revenue − Total COGS',
+    },
+    {
+      label: 'Profit Margin',
+      value: data.profitMargin != null ? pct(data.profitMargin) : 'N/A',
+      icon: <TrendingUp />,
+      color:
+        margin >= 30
+          ? '#4CAF50'
+          : margin >= 10
+            ? '#FF9800'
+            : '#F44336',
+      sub: 'Gross Profit ÷ Net Revenue',
+    },
+  ];
+
   return (
     <>
-      {/* ── KPI row ─────────────────────────────────────────────────────── */}
+      {/* ── Cash-flow KPI row ────────────────────────────────────────────── */}
       <Grid container spacing={2} mb={3}>
         {kpis.map((k) => (
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} key={k.label}>
@@ -1469,6 +2312,29 @@ function FinanceReport({ data }: { data: any }) {
           </Grid>
         ))}
       </Grid>
+
+      {/* ── Profitability KPI row ─────────────────────────────────────────── */}
+      <Paper
+        elevation={0}
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 3,
+          p: 2.5,
+          mb: 3,
+        }}
+      >
+        <Typography variant="subtitle2" fontWeight={700} color="text.secondary" mb={2} textTransform="uppercase" letterSpacing="0.05em" fontSize="0.72rem">
+          Profitability Overview
+        </Typography>
+        <Grid container spacing={2}>
+          {plKpis.map((k) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={k.label}>
+              <KpiCard card={k} />
+            </Grid>
+          ))}
+        </Grid>
+      </Paper>
 
       {/* ── Row 1: Monthly revenue trend (full width) ────────────────────── */}
       {hasMonthlyTrend && (
@@ -1633,7 +2499,7 @@ function FinanceReport({ data }: { data: any }) {
       {/* ── Row 3: Payment methods donut ─────────────────────────────────── */}
       <Grid container spacing={3} mb={3}>
         <Grid size={{ xs: 12, md: 5 }}>
-          <ChartBox title="Payment Methods">
+          <ChartBox title="Payment Methods (cash received in period)">
             <ResponsiveContainer width="100%" height={240}>
               <PieChart>
                 <Pie
@@ -1848,7 +2714,7 @@ function FinanceReport({ data }: { data: any }) {
       {hasTopDebtors && (
         <Paper
           elevation={0}
-          sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+          sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, mb: 3 }}
         >
           <Box sx={{ p: 2.5, pb: 1.5 }}>
             <Typography variant="subtitle1" fontWeight={700}>
@@ -1895,7 +2761,161 @@ function FinanceReport({ data }: { data: any }) {
           </TableContainer>
         </Paper>
       )}
+
+      {/* ── Finance detail table ──────────────────────────────────────────── */}
+      <FinanceDetailTable rows={data.productDetails ?? []} />
     </>
+  );
+}
+
+// ─── Finance detail table ─────────────────────────────────────────────────────
+
+function FinanceDetailTable({ rows }: { rows: any[] }) {
+  return (
+    <Paper
+      elevation={0}
+      sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+    >
+      <Box sx={{ p: 2.5, pb: 1.5 }}>
+        <Typography variant="subtitle1" fontWeight={700}>
+          Revenue &amp; Profitability Detail — by Product
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
+          Aggregated per product for the selected period · unit cost sourced from current store/product cost price · discount prorated from invoice header
+        </Typography>
+      </Box>
+      <TableContainer sx={{ overflowX: 'auto' }}>
+        <Table size="small" sx={{ minWidth: 1100 }}>
+          <StyledTableHead>
+            <TableRow>
+              <TableCell>Date</TableCell>
+              <TableCell>Product</TableCell>
+              <TableCell align="right">Units Sold</TableCell>
+              <TableCell align="right">Unit Price</TableCell>
+              <TableCell align="right">Discount</TableCell>
+              <TableCell align="right">Returns</TableCell>
+              <TableCell align="right">Unit Cost</TableCell>
+              <TableCell align="right">Net Revenue</TableCell>
+              <TableCell align="right">COGS</TableCell>
+              <TableCell align="right">Profit / Unit</TableCell>
+            </TableRow>
+          </StyledTableHead>
+          <TableBody>
+            {rows.map((row: any, i: number) => {
+              const rowMargin =
+                row.netRevenue > 0
+                  ? Math.round(
+                      ((row.netRevenue - row.cogs) / row.netRevenue) * 100,
+                    )
+                  : null;
+              const profitColor =
+                row.profitPerUnit > 0
+                  ? '#2E7D32'
+                  : row.profitPerUnit < 0
+                    ? '#B71C1C'
+                    : 'text.secondary';
+
+              return (
+                <TableRow key={i} hover>
+                  {/* Date */}
+                  <TableCell
+                    sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap' }}
+                  >
+                    {fmtDateTime(row.date)}
+                  </TableCell>
+
+                  {/* Product */}
+                  <TableCell sx={{ fontWeight: 600, fontSize: '0.82rem' }}>
+                    {row.product}
+                  </TableCell>
+
+                  {/* Units Sold */}
+                  <TableCell align="right" sx={{ fontWeight: 700 }}>
+                    {(row.unitsSold ?? 0).toLocaleString()}
+                  </TableCell>
+
+                  {/* Unit Price */}
+                  <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                    {fmt(row.unitPrice ?? 0)}
+                  </TableCell>
+
+                  {/* Discount */}
+                  <TableCell
+                    align="right"
+                    sx={{
+                      fontSize: '0.82rem',
+                      color: row.discount > 0 ? '#FF9800' : 'text.disabled',
+                      fontWeight: row.discount > 0 ? 600 : 400,
+                    }}
+                  >
+                    {row.discount > 0 ? `−${fmt(row.discount)}` : '—'}
+                  </TableCell>
+
+                  {/* Returns */}
+                  <TableCell
+                    align="right"
+                    sx={{
+                      fontSize: '0.82rem',
+                      color: row.returns > 0 ? '#F44336' : 'text.disabled',
+                      fontWeight: row.returns > 0 ? 600 : 400,
+                    }}
+                  >
+                    {row.returns > 0 ? row.returns : '—'}
+                  </TableCell>
+
+                  {/* Unit Cost */}
+                  <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                    {row.unitCost > 0 ? fmt(row.unitCost) : '—'}
+                  </TableCell>
+
+                  {/* Net Revenue */}
+                  <TableCell
+                    align="right"
+                    sx={{ fontWeight: 700, color: '#9C27B0' }}
+                  >
+                    {fmt(row.netRevenue ?? 0)}
+                  </TableCell>
+
+                  {/* COGS */}
+                  <TableCell
+                    align="right"
+                    sx={{ fontWeight: 600, color: '#FF9800', fontSize: '0.82rem' }}
+                  >
+                    {row.cogs > 0 ? fmt(row.cogs) : '—'}
+                  </TableCell>
+
+                  {/* Profit per Unit */}
+                  <TableCell align="right">
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.25 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 700, color: profitColor, fontSize: '0.82rem' }}
+                      >
+                        {row.unitCost > 0 ? fmt(row.profitPerUnit ?? 0) : '—'}
+                      </Typography>
+                      {rowMargin !== null && row.unitCost > 0 && (
+                        <Typography variant="caption" sx={{ color: profitColor, fontSize: '0.68rem' }}>
+                          {rowMargin}% margin
+                        </Typography>
+                      )}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            {rows.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No invoice data for this period
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
   );
 }
 
@@ -3099,6 +4119,7 @@ export default function DepartmentReportPage({
           {department === 'finance' && <FinanceReport data={data} />}
           {department === 'quality-control' && <QCReport data={data} />}
           {department === 'dispatch' && <DispatchReport data={data} />}
+          {department === 'procurement' && <ProcurementReport data={data} />}
         </>
       )}
     </Box>

@@ -18,6 +18,7 @@ import {
   AccountBalance,
   VerifiedUser,
   LocalShipping,
+  RequestQuote,
   ArrowForward,
   BarChart,
 } from '@mui/icons-material';
@@ -84,6 +85,16 @@ const DEPARTMENTS = [
     color: '#F44336',
     bg: 'rgba(244,67,54,0.08)',
     metrics: ['Dispatches', 'Delivery Rate', 'Store Dispatches', 'Returns'],
+  },
+  {
+    id: 'procurement',
+    label: 'Procurement',
+    description:
+      'Purchase order spend, supplier performance, average lead times, on-time delivery rates and cost variance analysis.',
+    icon: RequestQuote,
+    color: '#5C6BC0',
+    bg: 'rgba(92,107,192,0.08)',
+    metrics: ['PO Value', 'Avg Lead Time', 'On-Time %', 'Cost Variance'],
   },
 ];
 

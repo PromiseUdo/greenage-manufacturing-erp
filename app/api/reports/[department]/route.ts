@@ -59,6 +59,8 @@ export async function GET(
           paymentStatuses,
           quotesByStatus,
           topCustomersByRevenue,
+          salesVolumeAgg,
+          orderDetailsRaw,
         ] = await Promise.all([
           prisma.order.count({ where: { createdAt: dateFilter } }),
           prisma.order.groupBy({
@@ -94,6 +96,37 @@ export async function GET(
             orderBy: { _sum: { finalAmount: 'desc' } },
             take: 5,
           }),
+          // Total units sold across all orders in period
+          prisma.orderLineItem.aggregate({
+            _sum: { quantity: true },
+            where: { order: { createdAt: dateFilter } },
+          }),
+          // Order detail rows for the detail table
+          prisma.order.findMany({
+            where: { createdAt: dateFilter },
+            select: {
+              orderNumber: true,
+              createdAt: true,
+              customer: { select: { name: true } },
+              lineItems: {
+                select: {
+                  quantity: true,
+                  unitPrice: true,
+                  totalAmount: true,
+                  product: { select: { name: true } },
+                  storeItem: { select: { name: true } },
+                },
+              },
+              invoices: {
+                select: {
+                  discountAmount: true,
+                  finalAmount: true,
+                },
+                take: 1,
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+          }),
         ]);
 
         const customerIds = topCustomersByRevenue.map((c) => c.customerId);
@@ -104,12 +137,49 @@ export async function GET(
 
         const totalRevenue = invoiceAgg._sum.finalAmount || 0;
         const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+        const salesVolume = salesVolumeAgg._sum.quantity ?? 0;
+
+        // Build order detail rows
+        const orderDetails = orderDetailsRaw.map((o) => {
+          const items = o.lineItems;
+          const invoice = o.invoices[0] ?? null;
+          const itemCount = items.length;
+          const primary = items[0];
+
+          const productName =
+            itemCount === 1
+              ? (primary?.storeItem?.name ?? primary?.product?.name ?? '—')
+              : `${itemCount} items`;
+
+          const totalQty = items.reduce(
+            (sum, it) => sum + (it.quantity ?? 0),
+            0,
+          );
+          const unitPrice = itemCount === 1 ? (primary?.unitPrice ?? null) : null;
+          const discount = invoice?.discountAmount ?? 0;
+          const netSales =
+            invoice?.finalAmount ??
+            items.reduce((sum, it) => sum + (it.totalAmount ?? 0), 0);
+
+          return {
+            date: o.createdAt,
+            orderNumber: o.orderNumber,
+            customer: o.customer?.name ?? '—',
+            product: productName,
+            itemCount,
+            qty: totalQty,
+            unitPrice,
+            discount,
+            netSales,
+          };
+        });
 
         return NextResponse.json({
           totalOrders,
           totalQuotes,
           totalInvoices,
           avgOrderValue,
+          salesVolume,
           conversionRate:
             totalQuotes > 0
               ? ((convertedQuotes / totalQuotes) * 100).toFixed(1)
@@ -136,6 +206,7 @@ export async function GET(
             revenue: c._sum.finalAmount || 0,
             collected: c._sum.paidAmount || 0,
           })),
+          orderDetails,
         });
       }
 
@@ -153,6 +224,7 @@ export async function GET(
           failCategories,
           stageActivity,
           topProductsRaw,
+          workOrdersRaw,
         ] = await Promise.all([
           prisma.productionOrder.count({ where: { createdAt: dateFilter } }),
           prisma.productionOrder.groupBy({
@@ -216,6 +288,28 @@ export async function GET(
             where: { createdAt: dateFilter },
             orderBy: { _count: { productId: 'desc' } },
             take: 5,
+          }),
+          // Work-order detail rows for the detail table
+          prisma.productionOrder.findMany({
+            where: { createdAt: dateFilter },
+            select: {
+              orderNumber: true,
+              quantity: true,
+              status: true,
+              scheduledStart: true,
+              actualStart: true,
+              actualEnd: true,
+              product: { select: { name: true } },
+              stages: {
+                select: {
+                  stageLabel: true,
+                  status: true,
+                  sortOrder: true,
+                },
+                orderBy: { sortOrder: 'asc' },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
           }),
         ]);
 
@@ -288,6 +382,26 @@ export async function GET(
                 ? Number(p._avg.yieldRate.toFixed(1))
                 : null,
           })),
+          workOrderDetails: workOrdersRaw.map((o) => {
+            const inProgress = o.stages.find((s) => s.status === 'IN_PROGRESS');
+            const lastCompleted = [...o.stages]
+              .reverse()
+              .find((s) => s.status === 'COMPLETED');
+            const currentStage =
+              inProgress?.stageLabel ??
+              lastCompleted?.stageLabel ??
+              o.stages[0]?.stageLabel ??
+              '—';
+            return {
+              orderNumber: o.orderNumber,
+              product: o.product?.name ?? '—',
+              volume: o.quantity,
+              currentStage,
+              status: o.status,
+              startedAt: o.actualStart ?? o.scheduledStart,
+              completedAt: o.actualEnd,
+            };
+          }),
         });
       }
 
@@ -480,6 +594,9 @@ export async function GET(
           unpaidInvoices,
           topDebtorsRaw,
           totalInvoiceCount,
+          salesUnitsAgg,
+          lineItemsRaw,
+          returnsRaw,
         ] = await Promise.all([
           prisma.invoice.aggregate({
             _sum: {
@@ -497,6 +614,8 @@ export async function GET(
             _sum: { finalAmount: true, paidAmount: true, balanceAmount: true },
             where: { createdAt: dateFilter },
           }),
+          // NOTE: paymentDate filter — tracks cash received in period (may differ
+          // from totalCollected which tracks cumulative payments on period-invoices)
           prisma.invoicePayment.groupBy({
             by: ['paymentMethod'],
             _count: { _all: true },
@@ -527,6 +646,37 @@ export async function GET(
             take: 10,
           }),
           prisma.invoice.count({ where: { createdAt: dateFilter } }),
+          // Total units sold — sum of all invoice line item quantities in period
+          prisma.invoiceLineItem.aggregate({
+            _sum: { quantity: true },
+            where: { invoice: { createdAt: dateFilter } },
+          }),
+          // Line items for COGS / product profitability breakdown
+          prisma.invoiceLineItem.findMany({
+            where: { invoice: { createdAt: dateFilter } },
+            select: {
+              quantity: true,
+              unitPrice: true,
+              totalAmount: true,
+              productId: true,
+              product: { select: { name: true, costPrice: true } },
+              storeItem: {
+                select: { name: true, unitCostPrice: true, productId: true },
+              },
+              invoice: {
+                select: {
+                  createdAt: true,
+                  discountAmount: true,
+                  totalAmount: true, // gross line-item total — proration denominator
+                },
+              },
+            },
+          }),
+          // Product returns received in the period
+          prisma.productReturn.findMany({
+            where: dateFilter ? { dateReceived: dateFilter } : {},
+            select: { productId: true, quantity: true },
+          }),
         ]);
 
         // ── Monthly revenue trend ─────────────────────────────────────────────
@@ -590,10 +740,105 @@ export async function GET(
             outstanding: d._sum.balanceAmount || 0,
           }));
 
-        const totalInvoiced   = invoiceAgg._sum.finalAmount  || 0;
-        const totalCollected  = invoiceAgg._sum.paidAmount   || 0;
-        const totalPurchaseSpend = poSpend._sum.totalAmount  || 0;
-        const totalPurchasePaid  = poSpend._sum.paidAmount   || 0;
+        // ── P&L: product-level aggregation for COGS / profitability ───────────
+
+        // Returns map: productId → total units returned in period
+        const returnsMap = new Map<string, number>();
+        for (const r of returnsRaw) {
+          if (r.productId) {
+            returnsMap.set(r.productId, (returnsMap.get(r.productId) ?? 0) + r.quantity);
+          }
+        }
+
+        type ProdRow = {
+          productId: string | null;
+          product: string;
+          unitPrice: number;
+          unitCost: number;
+          qty: number;
+          grossRevenue: number;
+          proratedDiscount: number;
+          firstDate: Date;
+        };
+        const productMap = new Map<string, ProdRow>();
+
+        for (const li of lineItemsRaw) {
+          const productName =
+            li.storeItem?.name ?? li.product?.name ?? 'Unknown';
+          const unitCost =
+            (li.storeItem?.unitCostPrice ?? li.product?.costPrice) ?? 0;
+          const productId =
+            li.productId ?? li.storeItem?.productId ?? null;
+
+          // Prorated discount: (lineTotal / invoiceGross) × invoiceDiscount
+          const invoiceGross = li.invoice.totalAmount || 0;
+          const lineDiscount =
+            invoiceGross > 0
+              ? ((li.totalAmount ?? 0) / invoiceGross) *
+                (li.invoice.discountAmount ?? 0)
+              : 0;
+
+          if (!productMap.has(productName)) {
+            productMap.set(productName, {
+              productId,
+              product: productName,
+              unitPrice: li.unitPrice ?? 0,
+              unitCost,
+              qty: 0,
+              grossRevenue: 0,
+              proratedDiscount: 0,
+              firstDate: li.invoice.createdAt,
+            });
+          }
+
+          const row = productMap.get(productName)!;
+          row.qty               += li.quantity ?? 0;
+          row.grossRevenue      += li.totalAmount ?? 0;
+          row.proratedDiscount  += lineDiscount;
+          if (li.invoice.createdAt < row.firstDate) {
+            row.firstDate = li.invoice.createdAt;
+          }
+        }
+
+        // Compute totals and build detail rows
+        let totalCogs       = 0;
+        let totalNetRevenue = 0;
+
+        const productDetails = Array.from(productMap.values())
+          .map((row) => {
+            const returns    = row.productId ? (returnsMap.get(row.productId) ?? 0) : 0;
+            const netRevenue = row.grossRevenue - row.proratedDiscount;
+            const cogs       = row.unitCost * row.qty;
+            const profitPerUnit = row.unitPrice - row.unitCost;
+
+            totalCogs       += cogs;
+            totalNetRevenue += netRevenue;
+
+            return {
+              date:         row.firstDate,
+              product:      row.product,
+              unitsSold:    row.qty,
+              unitPrice:    row.unitPrice,
+              discount:     row.proratedDiscount,
+              returns,
+              unitCost:     row.unitCost,
+              netRevenue,
+              cogs,
+              profitPerUnit,
+            };
+          })
+          .sort((a, b) => b.netRevenue - a.netRevenue);
+
+        const totalInvoiced      = invoiceAgg._sum.finalAmount  || 0;
+        const totalCollected     = invoiceAgg._sum.paidAmount   || 0;
+        const totalPurchaseSpend = poSpend._sum.totalAmount     || 0;
+        const totalPurchasePaid  = poSpend._sum.paidAmount      || 0;
+        const salesUnits         = salesUnitsAgg._sum.quantity  ?? 0;
+        const grossProfit        = totalInvoiced - totalCogs;
+        const profitMargin       =
+          totalInvoiced > 0
+            ? Number(((grossProfit / totalInvoiced) * 100).toFixed(1))
+            : null;
 
         return NextResponse.json({
           // ── KPI figures ───────────────────────────────────────────────────
@@ -613,6 +858,12 @@ export async function GET(
           totalPurchasePaid,
           totalPurchaseOutstanding: totalPurchaseSpend - totalPurchasePaid,
 
+          // ── P&L KPIs ──────────────────────────────────────────────────────
+          salesUnits,
+          totalCogs:    Number(totalCogs.toFixed(2)),
+          grossProfit:  Number(grossProfit.toFixed(2)),
+          profitMargin,
+
           // ── Chart data ────────────────────────────────────────────────────
           monthlyTrend,
           receivablesAging,
@@ -631,6 +882,7 @@ export async function GET(
 
           // ── Table data ────────────────────────────────────────────────────
           topDebtors,
+          productDetails,
         });
       }
 
@@ -860,6 +1112,204 @@ export async function GET(
               'Unknown',
             dispatches: c._count._all,
           })),
+        });
+      }
+
+      // ─── PROCUREMENT ──────────────────────────────────────────────────────────
+      case 'procurement': {
+        // Fetch all POs in the period with supplier + date fields
+        const purchaseOrders = await prisma.purchaseOrder.findMany({
+          where: { createdAt: dateFilter },
+          select: {
+            poNumber: true,
+            status: true,
+            totalAmount: true,
+            paidAmount: true,
+            items: true,
+            createdAt: true,
+            receivingEndDate: true,
+            plannedEstimatedArrival: true,
+            plannedReceivingEndDate: true,
+            supplier: { select: { name: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        // ── Aggregate KPI figures ─────────────────────────────────────────────
+        const [poByStatus, poAgg] = await Promise.all([
+          prisma.purchaseOrder.groupBy({
+            by: ['status'],
+            _count: { _all: true },
+            _sum: { totalAmount: true },
+            where: { createdAt: dateFilter },
+          }),
+          prisma.purchaseOrder.aggregate({
+            _sum: { totalAmount: true, paidAmount: true },
+            where: { createdAt: dateFilter },
+          }),
+        ]);
+
+        // ── JS-computed metrics (items is Json — no SQL aggregation) ──────────
+        let totalQty = 0;
+        let totalWeightedCost = 0;
+        const leadTimeDays: number[] = [];
+        let onTimeCount = 0;
+        let deliveredCount = 0;
+
+        // ── Monthly trend map ─────────────────────────────────────────────────
+        const trendMap: Record<string, number> = {};
+
+        // ── Supplier rollup ───────────────────────────────────────────────────
+        const supplierMap: Record<
+          string,
+          { name: string; count: number; spend: number; onTime: number; delivered: number }
+        > = {};
+
+        // ── Detail rows ───────────────────────────────────────────────────────
+        const poDetails = purchaseOrders.map((po) => {
+          const items: any[] = Array.isArray(po.items) ? (po.items as any[]) : [];
+
+          // Avg cost/unit accumulation
+          for (const it of items) {
+            const q = Number(it.quantity) || 0;
+            const uc = Number(it.unitCost) || 0;
+            totalQty += q;
+            totalWeightedCost += q * uc;
+          }
+
+          // Monthly trend
+          const key = po.createdAt.toISOString().slice(0, 7);
+          trendMap[key] = (trendMap[key] || 0) + 1;
+
+          // Lead time + on-time
+          let leadTime: number | null = null;
+          let onTime: boolean | null = null;
+          if (po.receivingEndDate) {
+            leadTime = Math.round(
+              (po.receivingEndDate.getTime() - po.createdAt.getTime()) /
+                (1000 * 60 * 60 * 24),
+            );
+            if (leadTime >= 0) leadTimeDays.push(leadTime);
+            deliveredCount++;
+
+            const expected = po.plannedEstimatedArrival ?? po.plannedReceivingEndDate;
+            if (expected) {
+              onTime = po.receivingEndDate <= expected;
+              if (onTime) onTimeCount++;
+            }
+          }
+
+          // Supplier rollup
+          const supplierName = po.supplier?.name ?? 'Unknown';
+          if (!supplierMap[supplierName]) {
+            supplierMap[supplierName] = {
+              name: supplierName,
+              count: 0,
+              spend: 0,
+              onTime: 0,
+              delivered: 0,
+            };
+          }
+          supplierMap[supplierName].count++;
+          supplierMap[supplierName].spend += po.totalAmount ?? 0;
+          if (po.receivingEndDate) {
+            supplierMap[supplierName].delivered++;
+            if (onTime) supplierMap[supplierName].onTime++;
+          }
+
+          // Item summary for detail row
+          const itemCount = items.length;
+          const primaryItem = items[0];
+          const rowQty = items.reduce(
+            (s: number, it: any) => s + (Number(it.quantity) || 0),
+            0,
+          );
+          const rowItem =
+            itemCount === 1
+              ? String(primaryItem?.materialName ?? '—')
+              : `${itemCount} items`;
+          const rowUnitCost = itemCount === 1 ? (Number(primaryItem?.unitCost) || null) : null;
+
+          return {
+            poNumber: po.poNumber,
+            supplier: supplierName,
+            item: rowItem,
+            itemCount,
+            qty: rowQty,
+            unitCost: rowUnitCost,
+            totalCost: po.totalAmount ?? 0,
+            orderDate: po.createdAt,
+            deliveryDate: po.receivingEndDate,
+            leadTime,
+            onTime,
+            costVariance: (po.totalAmount ?? 0) - (po.paidAmount ?? 0),
+            status: po.status,
+          };
+        });
+
+        // ── Derived KPIs ─────────────────────────────────────────────────────
+        const avgCostPerUnit =
+          totalQty > 0 ? Number((totalWeightedCost / totalQty).toFixed(2)) : null;
+        const avgLeadTime =
+          leadTimeDays.length > 0
+            ? Math.round(
+                leadTimeDays.reduce((a, b) => a + b, 0) / leadTimeDays.length,
+              )
+            : null;
+        const onTimeRate =
+          deliveredCount > 0
+            ? Number(((onTimeCount / deliveredCount) * 100).toFixed(1))
+            : null;
+
+        // ── Monthly trend ─────────────────────────────────────────────────────
+        const monthlyTrend = Object.entries(trendMap)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([month, count]) => ({
+            month: new Date(month + '-01').toLocaleDateString('en-NG', {
+              month: 'short',
+              year: '2-digit',
+            }),
+            count,
+          }));
+
+        // ── Top suppliers (sorted by spend desc, top 8) ───────────────────────
+        const topSuppliers = Object.values(supplierMap)
+          .sort((a, b) => b.spend - a.spend)
+          .slice(0, 8)
+          .map((s) => ({
+            name: s.name,
+            poCount: s.count,
+            spend: s.spend,
+            onTimeRate:
+              s.delivered > 0
+                ? Number(((s.onTime / s.delivered) * 100).toFixed(1))
+                : null,
+          }));
+
+        return NextResponse.json({
+          // ── KPIs ──────────────────────────────────────────────────────────
+          totalPOs: purchaseOrders.length,
+          totalSpend: poAgg._sum.totalAmount ?? 0,
+          totalPaid: poAgg._sum.paidAmount ?? 0,
+          totalOutstanding:
+            (poAgg._sum.totalAmount ?? 0) - (poAgg._sum.paidAmount ?? 0),
+          avgCostPerUnit,
+          avgLeadTime,
+          onTimeRate,
+          onTimeCount,
+          deliveredCount,
+
+          // ── Chart data ─────────────────────────────────────────────────────
+          poByStatus: poByStatus.map((s) => ({
+            status: s.status,
+            count: s._count._all,
+            amount: s._sum.totalAmount ?? 0,
+          })),
+          monthlyTrend,
+          topSuppliers,
+
+          // ── Detail table ───────────────────────────────────────────────────
+          poDetails,
         });
       }
 
