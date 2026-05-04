@@ -282,7 +282,7 @@ export default function RDProjectsPage() {
           {/* <ScienceIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} /> */}
           <Typography color="text.secondary">
             {projects.length === 0
-              ? 'No research projects yet. Create your first one.'
+              ? 'No research projects yet.'
               : 'No projects match your search.'}
           </Typography>
         </Box>
