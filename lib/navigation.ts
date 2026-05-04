@@ -20,12 +20,14 @@ import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import BlockIcon from '@mui/icons-material/Block';
+import ScienceIcon from '@mui/icons-material/Science';
 
 import SettingsIcon from '@mui/icons-material/Settings';
 import SecurityIcon from '@mui/icons-material/Security';
 import BusinessIcon from '@mui/icons-material/Business';
 
 import { SvgIconProps } from '@mui/material';
+import { ShoppingBasket } from '@mui/icons-material';
 
 export interface NavItem {
   label: string;
@@ -145,6 +147,12 @@ export const navigation: {
             permission: 'production_orders:read',
           },
         ],
+      },
+      {
+        label: 'R&D',
+        path: '/production/rd',
+        icon: ScienceIcon,
+        permission: 'rd_projects:read',
       },
     ],
   },
@@ -311,6 +319,12 @@ export const navigation: {
             path: '/reports/finance',
             icon: AccountBalanceIcon,
             permission: 'reports:finance',
+          },
+          {
+            label: 'Procurement',
+            path: '/reports/procurement',
+            icon: ShoppingBasket,
+            permission: 'reports:procurement',
           },
           // {
           //   label: 'Quality Control',

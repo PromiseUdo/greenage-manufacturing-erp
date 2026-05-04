@@ -33,6 +33,7 @@ export async function PATCH(
         },
         productionOrder: { select: { id: true, orderNumber: true, quantity: true } },
         productReturn: { select: { id: true, returnNumber: true, quantity: true } },
+        researchProject: { select: { id: true, projectNumber: true, title: true } },
       },
     }) as any;
 
@@ -104,12 +105,16 @@ export async function PATCH(
           ? `Production Order ${requisition.productionOrder.orderNumber}`
           : requisition.productReturn
           ? `Product Return ${requisition.productReturn.returnNumber}`
+          : requisition.researchProject
+          ? `R&D Project ${requisition.researchProject.projectNumber} — ${requisition.researchProject.title}`
           : `Requisition ${requisition.requisitionNumber}`;
-          
+
         const purposeRef = requisition.productionOrder
           ? `BOM material sign-out for production order ${requisition.productionOrder.orderNumber}`
           : requisition.productReturn
           ? `Repair materials for return ${requisition.productReturn.returnNumber}`
+          : requisition.researchProject
+          ? `R&D material sign-out for project ${requisition.researchProject.projectNumber}`
           : `Material sign-out for requisition ${requisition.requisitionNumber}`;
 
         issuancePromises.push(

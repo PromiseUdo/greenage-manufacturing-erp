@@ -27,6 +27,7 @@ import {
   Build,
   Group,
   Receipt,
+  Science,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 
@@ -135,6 +136,13 @@ export const AVAILABLE_PERMISSIONS = [
       { value: 'reports:dispatch', label: 'View Dispatch Report' },
     ],
   },
+  {
+    module: 'Research & Development',
+    permissions: [
+      { value: 'rd_projects:read', label: 'View R&D Projects' },
+      { value: 'rd_projects:write', label: 'Create/Edit R&D Projects & Tasks' },
+    ],
+  },
 ];
 
 // ─── Section groupings ────────────────────────────────────────────────────────
@@ -171,6 +179,11 @@ const SECTIONS: {
     icon: <BarChart fontSize="small" />,
     modules: ['Reports'],
   },
+  {
+    label: 'Research & Development',
+    icon: <Science fontSize="small" />,
+    modules: ['Research & Development'],
+  },
 ];
 
 // Icon per module
@@ -186,6 +199,7 @@ const MODULE_ICON: Record<string, React.ReactNode> = {
   'Sales (Quotes & Invoices)': <Receipt sx={{ fontSize: 16 }} />,
   'Store & Dispatch': <LocalShipping sx={{ fontSize: 16 }} />,
   Reports: <BarChart sx={{ fontSize: 16 }} />,
+  'Research & Development': <Science sx={{ fontSize: 16 }} />,
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────

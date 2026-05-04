@@ -68,6 +68,14 @@ model User {
   inspectedReturnUnits     ReturnUnit[]            @relation("ReturnUnitInspector")
   approvedReturnUnits      ReturnUnit[]            @relation("ReturnUnitApprover")
 
+  // R&D relations
+  rdProjectsCreated        ResearchProject[]       @relation("RDProjectCreator")
+  rdProjectsClosed         ResearchProject[]       @relation("RDProjectCloser")
+  rdProjectsReopened       ResearchProject[]       @relation("RDProjectReopener")
+  rdTasksAssigned          ResearchTask[]          @relation("RDTaskAssignee")
+  rdTasksCompleted         ResearchTask[]          @relation("RDTaskCompleter")
+  rdNotesAuthored          ResearchNote[]          @relation("RDNoteAuthor")
+
   @@map("users")
 }
 
@@ -1696,6 +1704,9 @@ model ProductionMaterialRequisition {
   productReturnId     String?   @db.ObjectId
   productReturn       ProductReturn?   @relation(fields: [productReturnId], references: [id], onDelete: Cascade)
 
+  researchProjectId   String?   @db.ObjectId
+  researchProject     ResearchProject? @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
+
   status              RequisitionStatus @default(PENDING)
 
   // Who raised it (production manager / assembly lead)
@@ -1926,4 +1937,82 @@ model UnitReworkTask {
   updatedAt     DateTime   @updatedAt
 
   @@map("unit_rework_tasks")
+}
+
+// ============================================
+// RESEARCH & DEVELOPMENT
+// ============================================
+
+enum ResearchProjectStatus {
+  OPEN
+  CLOSED
+}
+
+model ResearchProject {
+  id            String                @id @default(auto()) @map("_id") @db.ObjectId
+  projectNumber String                @unique  // "RD-2026-0001"
+  title         String
+  description   String?
+  status        ResearchProjectStatus @default(OPEN)
+
+  createdById   String                @db.ObjectId
+  createdBy     User                  @relation("RDProjectCreator", fields: [createdById], references: [id])
+
+  closedAt      DateTime?
+  closedById    String?               @db.ObjectId
+  closedBy      User?                 @relation("RDProjectCloser", fields: [closedById], references: [id])
+
+  reopenedAt    DateTime?
+  reopenedById  String?               @db.ObjectId
+  reopenedBy    User?                 @relation("RDProjectReopener", fields: [reopenedById], references: [id])
+
+  tasks                ResearchTask[]
+  notes                ResearchNote[]
+  materialRequisitions ProductionMaterialRequisition[]
+
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@map("research_projects")
+}
+
+model ResearchTask {
+  id                    String          @id @default(auto()) @map("_id") @db.ObjectId
+
+  researchProjectId     String          @db.ObjectId
+  researchProject       ResearchProject @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
+
+  name                  String
+  status                String          @default("PENDING")  // PENDING | DONE
+
+  assignedToId          String?         @db.ObjectId
+  assignedTo            User?           @relation("RDTaskAssignee", fields: [assignedToId], references: [id])
+
+  completionDescription String?
+  attachments           Json?           // [{ name, mimeType, base64, sizeBytes }] — required when marking done
+
+  completedAt           DateTime?
+  completedById         String?         @db.ObjectId
+  completedBy           User?           @relation("RDTaskCompleter", fields: [completedById], references: [id])
+
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@map("research_tasks")
+}
+
+model ResearchNote {
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+
+  researchProjectId String          @db.ObjectId
+  researchProject   ResearchProject @relation(fields: [researchProjectId], references: [id], onDelete: Cascade)
+
+  content           String
+  authorId          String          @db.ObjectId
+  author            User            @relation("RDNoteAuthor", fields: [authorId], references: [id])
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@map("research_notes")
 }

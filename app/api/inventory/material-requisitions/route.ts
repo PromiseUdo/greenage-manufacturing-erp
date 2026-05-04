@@ -41,6 +41,9 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+        researchProject: {
+          select: { id: true, projectNumber: true, title: true },
+        },
         requestedBy: { select: { id: true, name: true, email: true } },
         fulfilledBy: { select: { id: true, name: true } },
         items: {

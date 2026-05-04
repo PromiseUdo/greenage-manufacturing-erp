@@ -8,6 +8,7 @@ import {
   InputAdornment,
   CircularProgress,
   Paper,
+  Popper,
   List,
   ListItem,
   ListItemText,
@@ -26,6 +27,7 @@ export function MaterialSearchPicker({
   const [results, setResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLDivElement | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export function MaterialSearchPicker({
   };
 
   return (
-    <Box sx={{ position: "relative" }}>
+    <Box ref={anchorRef}>
       <TextField
         size="small"
         fullWidth
@@ -67,27 +69,31 @@ export function MaterialSearchPicker({
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => results.length > 0 && setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              {searching ? <CircularProgress size={14} /> : <SearchIcon />}
-            </InputAdornment>
-          ),
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                {searching ? <CircularProgress size={14} /> : <SearchIcon />}
+              </InputAdornment>
+            ),
+          },
         }}
         sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
       />
-      {open && results.length > 0 && (
+      <Popper
+        open={open && results.length > 0}
+        anchorEl={anchorRef.current}
+        placement="bottom-start"
+        style={{ zIndex: 1500, width: anchorRef.current?.offsetWidth }}
+      >
         <Paper
           elevation={4}
           sx={{
-            position: "absolute",
-            zIndex: 1000,
-            width: "100%",
-            mt: 0.5,
             borderRadius: 2,
             overflow: "hidden",
             maxHeight: 280,
             overflowY: "auto",
+            mt: 0.5,
           }}
         >
           <List dense disablePadding>
@@ -97,7 +103,7 @@ export function MaterialSearchPicker({
                 <ListItem
                   key={mat.id}
                   onMouseDown={(e) => {
-                    e.preventDefault(); // Prevent input onblur from firing before selection
+                    e.preventDefault();
                     if (!isAdded) handleSelect(mat);
                   }}
                   sx={{
@@ -151,7 +157,7 @@ export function MaterialSearchPicker({
             })}
           </List>
         </Paper>
-      )}
+      </Popper>
     </Box>
   );
 }
