@@ -274,7 +274,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
         password,
       });
 
-      if (res?.ok) {
+      if (res?.ok && !res?.error) {
         const session = await getSession();
         const role = session?.user?.role;
         if (role === 'CUSTOMER') {
@@ -283,10 +283,10 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           router.push('/dashboard');
         }
       } else {
-        if (res?.error === 'Email not verified') {
+        if (res?.code === 'email_not_verified') {
           setServerError('Please verify your email before signing in.');
         } else {
-          setServerError(res?.error || 'Invalid email or password');
+          setServerError('Invalid email or password');
         }
       }
     } catch (error) {

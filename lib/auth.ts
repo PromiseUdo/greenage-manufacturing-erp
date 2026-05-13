@@ -199,11 +199,15 @@
 // lib/auth.ts
 // OPTIMIZED - Prisma refresh only happens on API routes, not middleware
 
-import NextAuth from 'next-auth';
+import NextAuth, { CredentialsSignin } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { UserRole } from '@prisma/client';
+
+class EmailNotVerifiedError extends CredentialsSignin {
+  code = 'email_not_verified';
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: {
@@ -233,7 +237,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (!valid) return null;
-        if (!user.isVerified) throw new Error('Email not verified');
+        if (!user.isVerified) throw new EmailNotVerifiedError();
 
         return {
           id: user.id,
