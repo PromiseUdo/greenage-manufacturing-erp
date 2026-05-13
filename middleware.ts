@@ -192,18 +192,38 @@ export default auth((req) => {
       }
     }
 
-    const isSuperAdmin = session.user.role === 'SUPERADMIN';
+    const role = session.user.role;
+    const isSuperAdmin = role === 'SUPERADMIN';
+    const isCustomer = role === 'CUSTOMER';
+
     // Default landing page per role
-    const homePage = isSuperAdmin ? '/dashboard' : '/production/orders';
+    const homePage = isSuperAdmin
+      ? '/dashboard'
+      : isCustomer
+        ? '/customer/overview'
+        : '/production/orders';
 
     // Prevent accessing auth pages when already logged in
     if (isPublicRoute && !session.user.mustChangePassword) {
       return NextResponse.redirect(new URL(homePage, req.url));
     }
 
+    // CUSTOMER: can only access /customer/* paths
+    if (isCustomer) {
+      if (!pathname.startsWith('/customer/')) {
+        return NextResponse.redirect(new URL('/customer/overview', req.url));
+      }
+      return NextResponse.next();
+    }
+
     // Only SUPERADMIN can view the dashboard page
     if (pathname === '/dashboard' && !isSuperAdmin) {
       return NextResponse.redirect(new URL('/production/orders', req.url));
+    }
+
+    // Block non-CUSTOMER users from the customer portal
+    if (pathname.startsWith('/customer/')) {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
     }
   }
 

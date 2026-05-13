@@ -16,7 +16,7 @@ import Link from '@mui/material/Link';
 import { styled } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { signIn } from 'next-auth/react';
+import { signIn, getSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import * as React from 'react';
 import ForgotPassword from '../components/forgot-password';
@@ -275,7 +275,13 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
       });
 
       if (res?.ok) {
-        router.push('/dashboard');
+        const session = await getSession();
+        const role = session?.user?.role;
+        if (role === 'CUSTOMER') {
+          router.push('/customer/overview');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
         if (res?.error === 'Email not verified') {
           setServerError('Please verify your email before signing in.');
