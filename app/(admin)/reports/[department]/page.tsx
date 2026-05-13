@@ -456,7 +456,12 @@ function SalesReport({ data }: { data: any }) {
       {/* Top customers table */}
       <Paper
         elevation={0}
-        sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, mb: 3 }}
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 3,
+          mb: 3,
+        }}
       >
         <Box sx={{ p: 2.5, pb: 1.5 }}>
           <Typography variant="subtitle1" fontWeight={700}>
@@ -539,7 +544,8 @@ function SalesOrderDetailTable({ orders }: { orders: any[] }) {
           Sales-Order Detail
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          Individual orders for the selected period — discount and net sales from linked invoice
+          Individual orders for the selected period — discount and net sales
+          from linked invoice
         </Typography>
       </Box>
       <TableContainer sx={{ overflowX: 'auto' }}>
@@ -561,7 +567,11 @@ function SalesOrderDetailTable({ orders }: { orders: any[] }) {
               <TableRow key={i} hover>
                 {/* Date */}
                 <TableCell
-                  sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap' }}
+                  sx={{
+                    fontSize: '0.78rem',
+                    color: 'text.secondary',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   {fmtDateTime(o.date)}
                 </TableCell>
@@ -1235,7 +1245,11 @@ function ProcurementReport({ data }: { data: any }) {
                   width={110}
                 />
                 <ReTooltip formatter={(v: any) => [fmt(v), 'Spend']} />
-                <Bar dataKey="spend" fill={PROCUREMENT_COLOR} radius={[0, 4, 4, 0]} />
+                <Bar
+                  dataKey="spend"
+                  fill={PROCUREMENT_COLOR}
+                  radius={[0, 4, 4, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </ChartBox>
@@ -1282,7 +1296,8 @@ function ProcurementReport({ data }: { data: any }) {
             Supplier Performance
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Spend, PO count and on-time rate per supplier for the selected period
+            Spend, PO count and on-time rate per supplier for the selected
+            period
           </Typography>
         </Box>
         <TableContainer>
@@ -1309,7 +1324,9 @@ function ProcurementReport({ data }: { data: any }) {
                         : '#B71C1C';
                 return (
                   <TableRow key={i} hover>
-                    <TableCell sx={{ color: 'text.secondary' }}>{i + 1}</TableCell>
+                    <TableCell sx={{ color: 'text.secondary' }}>
+                      {i + 1}
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>{s.name}</TableCell>
                     <TableCell align="right">
                       <Chip
@@ -1319,7 +1336,10 @@ function ProcurementReport({ data }: { data: any }) {
                         sx={{ fontWeight: 700, fontSize: '0.78rem' }}
                       />
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: PROCUREMENT_COLOR }}>
+                    <TableCell
+                      align="right"
+                      sx={{ fontWeight: 700, color: PROCUREMENT_COLOR }}
+                    >
                       {fmt(s.spend)}
                     </TableCell>
                     <TableCell align="right">
@@ -1526,9 +1546,7 @@ function ProcurementReport({ data }: { data: any }) {
                             : '#F44336',
                     }}
                   >
-                    {po.costVariance === 0
-                      ? '✓ Settled'
-                      : fmt(po.costVariance)}
+                    {po.costVariance === 0 ? '✓ Settled' : fmt(po.costVariance)}
                   </TableCell>
                 </TableRow>
               ))}
@@ -1552,12 +1570,12 @@ function ProcurementReport({ data }: { data: any }) {
 // ─── Status chip colour map ───────────────────────────────────────────────────
 
 const ORDER_STATUS_COLOR: Record<string, { bg: string; text: string }> = {
-  DRAFT:               { bg: '#F5F5F5', text: '#757575' },
-  IN_PROGRESS:         { bg: '#E3F2FD', text: '#1565C0' },
-  ON_HOLD:             { bg: '#FFF3E0', text: '#E65100' },
+  DRAFT: { bg: '#F5F5F5', text: '#757575' },
+  IN_PROGRESS: { bg: '#E3F2FD', text: '#1565C0' },
+  ON_HOLD: { bg: '#FFF3E0', text: '#E65100' },
   PARTIALLY_COMPLETED: { bg: '#F3E5F5', text: '#6A1B9A' },
-  COMPLETED:           { bg: '#E8F5E9', text: '#2E7D32' },
-  CANCELLED:           { bg: '#FFEBEE', text: '#B71C1C' },
+  COMPLETED: { bg: '#E8F5E9', text: '#2E7D32' },
+  CANCELLED: { bg: '#FFEBEE', text: '#B71C1C' },
 };
 
 function StatusChip({ status }: { status: string }) {
@@ -1609,7 +1627,11 @@ function WorkOrderDetailTable({ orders }: { orders: any[] }) {
             {orders.map((o: any, i: number) => (
               <TableRow key={i} hover>
                 <TableCell
-                  sx={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '0.8rem' }}
+                  sx={{
+                    fontWeight: 700,
+                    fontFamily: 'monospace',
+                    fontSize: '0.8rem',
+                  }}
                 >
                   {o.orderNumber}
                 </TableCell>
@@ -1627,7 +1649,9 @@ function WorkOrderDetailTable({ orders }: { orders: any[] }) {
                     variant="body2"
                     sx={{
                       color:
-                        o.currentStage === '—' ? 'text.disabled' : 'text.primary',
+                        o.currentStage === '—'
+                          ? 'text.disabled'
+                          : 'text.primary',
                       fontSize: '0.82rem',
                     }}
                   >
@@ -1637,7 +1661,13 @@ function WorkOrderDetailTable({ orders }: { orders: any[] }) {
                 <TableCell>
                   <StatusChip status={o.status} />
                 </TableCell>
-                <TableCell sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>
+                <TableCell
+                  sx={{
+                    fontSize: '0.78rem',
+                    color: 'text.secondary',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   {fmtDateTime(o.startedAt)}
                 </TableCell>
                 <TableCell
@@ -2292,12 +2322,7 @@ function FinanceReport({ data }: { data: any }) {
       label: 'Profit Margin',
       value: data.profitMargin != null ? pct(data.profitMargin) : 'N/A',
       icon: <TrendingUp />,
-      color:
-        margin >= 30
-          ? '#4CAF50'
-          : margin >= 10
-            ? '#FF9800'
-            : '#F44336',
+      color: margin >= 30 ? '#4CAF50' : margin >= 10 ? '#FF9800' : '#F44336',
       sub: 'Gross Profit ÷ Net Revenue',
     },
   ];
@@ -2324,7 +2349,15 @@ function FinanceReport({ data }: { data: any }) {
           mb: 3,
         }}
       >
-        <Typography variant="subtitle2" fontWeight={700} color="text.secondary" mb={2} textTransform="uppercase" letterSpacing="0.05em" fontSize="0.72rem">
+        <Typography
+          variant="subtitle2"
+          fontWeight={700}
+          color="text.secondary"
+          mb={2}
+          textTransform="uppercase"
+          letterSpacing="0.05em"
+          fontSize="0.72rem"
+        >
           Profitability Overview
         </Typography>
         <Grid container spacing={2}>
@@ -2714,7 +2747,12 @@ function FinanceReport({ data }: { data: any }) {
       {hasTopDebtors && (
         <Paper
           elevation={0}
-          sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, mb: 3 }}
+          sx={{
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 3,
+            mb: 3,
+          }}
         >
           <Box sx={{ p: 2.5, pb: 1.5 }}>
             <Typography variant="subtitle1" fontWeight={700}>
@@ -2781,7 +2819,9 @@ function FinanceDetailTable({ rows }: { rows: any[] }) {
           Revenue &amp; Profitability Detail — by Product
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          Aggregated per product for the selected period · unit cost sourced from current store/product cost price · discount prorated from invoice header
+          Aggregated per product for the selected period · unit cost sourced
+          from current store/product cost price · discount prorated from invoice
+          header
         </Typography>
       </Box>
       <TableContainer sx={{ overflowX: 'auto' }}>
@@ -2819,7 +2859,11 @@ function FinanceDetailTable({ rows }: { rows: any[] }) {
                 <TableRow key={i} hover>
                   {/* Date */}
                   <TableCell
-                    sx={{ fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap' }}
+                    sx={{
+                      fontSize: '0.78rem',
+                      color: 'text.secondary',
+                      whiteSpace: 'nowrap',
+                    }}
                   >
                     {fmtDateTime(row.date)}
                   </TableCell>
@@ -2835,7 +2879,10 @@ function FinanceDetailTable({ rows }: { rows: any[] }) {
                   </TableCell>
 
                   {/* Unit Price */}
-                  <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                  <TableCell
+                    align="right"
+                    sx={{ color: 'text.secondary', fontSize: '0.82rem' }}
+                  >
                     {fmt(row.unitPrice ?? 0)}
                   </TableCell>
 
@@ -2864,7 +2911,10 @@ function FinanceDetailTable({ rows }: { rows: any[] }) {
                   </TableCell>
 
                   {/* Unit Cost */}
-                  <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.82rem' }}>
+                  <TableCell
+                    align="right"
+                    sx={{ color: 'text.secondary', fontSize: '0.82rem' }}
+                  >
                     {row.unitCost > 0 ? fmt(row.unitCost) : '—'}
                   </TableCell>
 
@@ -2879,22 +2929,40 @@ function FinanceDetailTable({ rows }: { rows: any[] }) {
                   {/* COGS */}
                   <TableCell
                     align="right"
-                    sx={{ fontWeight: 600, color: '#FF9800', fontSize: '0.82rem' }}
+                    sx={{
+                      fontWeight: 600,
+                      color: '#FF9800',
+                      fontSize: '0.82rem',
+                    }}
                   >
                     {row.cogs > 0 ? fmt(row.cogs) : '—'}
                   </TableCell>
 
                   {/* Profit per Unit */}
                   <TableCell align="right">
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.25 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-end',
+                        gap: 0.25,
+                      }}
+                    >
                       <Typography
                         variant="body2"
-                        sx={{ fontWeight: 700, color: profitColor, fontSize: '0.82rem' }}
+                        sx={{
+                          fontWeight: 700,
+                          color: profitColor,
+                          fontSize: '0.82rem',
+                        }}
                       >
                         {row.unitCost > 0 ? fmt(row.profitPerUnit ?? 0) : '—'}
                       </Typography>
                       {rowMargin !== null && row.unitCost > 0 && (
-                        <Typography variant="caption" sx={{ color: profitColor, fontSize: '0.68rem' }}>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: profitColor, fontSize: '0.68rem' }}
+                        >
                           {rowMargin}% margin
                         </Typography>
                       )}
@@ -3808,7 +3876,10 @@ async function exportPDF(
         ['Delivered (Combined)', data.deliveredCount ?? 0],
         ['Failed Delivery (Combined)', data.failedCount ?? 0],
         ['Delivery Rate', `${data.deliveryRate}%`],
-        ['Avg Delivery Time', data.avgDeliveryDays != null ? `${data.avgDeliveryDays} days` : 'N/A'],
+        [
+          'Avg Delivery Time',
+          data.avgDeliveryDays != null ? `${data.avgDeliveryDays} days` : 'N/A',
+        ],
         ['Product Returns', data.totalReturns],
         ['Units Returned', data.totalUnitsReturned ?? 0],
         ['Total Repair Cost', fmt(data.totalRepairCost ?? 0)],
@@ -3910,7 +3981,7 @@ async function exportPDF(
     doc.setFontSize(8);
     doc.setTextColor(150);
     doc.text(
-      `Greenage Production Manager — ${label} Report | Page ${i} of ${pageCount}`,
+      ` ${label} Report | Page ${i} of ${pageCount}`,
       14,
       doc.internal.pageSize.height - 8,
     );

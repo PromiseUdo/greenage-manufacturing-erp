@@ -8,7 +8,8 @@ export async function GET(
 ) {
   try {
     const session = await auth();
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!session)
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const { id: returnId, reqId } = await params;
 
@@ -44,10 +45,16 @@ export async function GET(
     });
 
     if (!requisition) {
-      return NextResponse.json({ error: 'Requisition not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Requisition not found' },
+        { status: 404 },
+      );
     }
     if (requisition.productReturnId !== returnId) {
-      return NextResponse.json({ error: 'Requisition does not belong to this return' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Requisition does not belong to this return' },
+        { status: 403 },
+      );
     }
 
     const { jsPDF } = await import('jspdf');
@@ -96,7 +103,12 @@ export async function GET(
     const col1X = 15;
     const col2X = 110;
 
-    const drawInfoRow = (label: string, value: string, x: number, y: number) => {
+    const drawInfoRow = (
+      label: string,
+      value: string,
+      x: number,
+      y: number,
+    ) => {
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...accentColor);
@@ -109,18 +121,41 @@ export async function GET(
 
     const ret = requisition.productReturn;
     drawInfoRow('Return Number', ret?.returnNumber ?? '—', col1X, infoY);
-    drawInfoRow('Product', ret ? `${ret.product.name} (${ret.product.productNumber})` : '—', col2X, infoY);
+    drawInfoRow(
+      'Product',
+      ret ? `${ret.product.name} (${ret.product.productNumber})` : '—',
+      col2X,
+      infoY,
+    );
 
     drawInfoRow('Customer', ret?.customer?.name ?? '—', col1X, infoY + 18);
-    drawInfoRow('Requested By', requisition.requestedBy?.name ?? '—', col2X, infoY + 18);
+    drawInfoRow(
+      'Requested By',
+      requisition.requestedBy?.name ?? '—',
+      col2X,
+      infoY + 18,
+    );
 
-    drawInfoRow('Status', requisition.status.replace(/_/g, ' '), col1X, infoY + 36);
+    drawInfoRow(
+      'Status',
+      requisition.status.replace(/_/g, ' '),
+      col1X,
+      infoY + 36,
+    );
     if (requisition.fulfilledBy) {
-      drawInfoRow('Fulfilled By', requisition.fulfilledBy.name, col2X, infoY + 36);
+      drawInfoRow(
+        'Fulfilled By',
+        requisition.fulfilledBy.name,
+        col2X,
+        infoY + 36,
+      );
     }
 
     if (ret?.issueReported) {
-      const issueLines = doc.splitTextToSize(ret.issueReported, 170) as string[];
+      const issueLines = doc.splitTextToSize(
+        ret.issueReported,
+        170,
+      ) as string[];
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...accentColor);
@@ -159,14 +194,26 @@ export async function GET(
         item.material.partNumber ?? '—',
         item.material.category?.replace(/_/g, ' ') ?? '—',
         `${item.quantityRequired} ${item.material.unit}`,
-        item.quantityIssued != null ? `${item.quantityIssued} ${item.material.unit}` : '—',
+        item.quantityIssued != null
+          ? `${item.quantityIssued} ${item.material.unit}`
+          : '—',
         statusLabel,
       ];
     });
 
     autoTable(doc, {
       startY: tableStartY,
-      head: [['#', 'Material', 'Part No.', 'Category', 'Qty Required', 'Qty Issued', 'Status']],
+      head: [
+        [
+          '#',
+          'Material',
+          'Part No.',
+          'Category',
+          'Qty Required',
+          'Qty Issued',
+          'Status',
+        ],
+      ],
       body: tableRows,
       headStyles: {
         fillColor: primaryColor,
@@ -209,14 +256,25 @@ export async function GET(
           };
           if (status && colors[status]) {
             doc.setFillColor(...colors[status]);
-            doc.rect(data.cell.x + 1, data.cell.y + 1, data.cell.width - 2, data.cell.height - 2, 'F');
+            doc.rect(
+              data.cell.x + 1,
+              data.cell.y + 1,
+              data.cell.width - 2,
+              data.cell.height - 2,
+              'F',
+            );
             doc.setTextColor(...textColors[status]);
             doc.setFontSize(7.5);
             doc.setFont('helvetica', 'bold');
             const label = data.cell.raw as string;
-            doc.text(label, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2 + 1, {
-              align: 'center',
-            });
+            doc.text(
+              label,
+              data.cell.x + data.cell.width / 2,
+              data.cell.y + data.cell.height / 2 + 1,
+              {
+                align: 'center',
+              },
+            );
           }
         }
       },
@@ -226,7 +284,9 @@ export async function GET(
 
     // === Summary row ===
     const totalItems = requisition.items.length;
-    const issuedItems = requisition.items.filter((i) => i.status === 'ISSUED').length;
+    const issuedItems = requisition.items.filter(
+      (i) => i.status === 'ISSUED',
+    ).length;
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
@@ -276,7 +336,7 @@ export async function GET(
     doc.setFontSize(7.5);
     doc.setTextColor(...accentColor);
     doc.text(
-      `${requisition.requisitionNumber}  ·  ${ret?.returnNumber ?? returnId}  ·  Generated ${new Date().toLocaleString('en-GB')}  ·  Greenage Production Manager`,
+      `${requisition.requisitionNumber}  ·  ${ret?.returnNumber ?? returnId}  ·  Generated ${new Date().toLocaleString('en-GB')}`,
       105,
       pageHeight - 7,
       { align: 'center' },
@@ -293,6 +353,9 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error generating return requisition PDF:', error);
-    return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to generate PDF' },
+      { status: 500 },
+    );
   }
 }

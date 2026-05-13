@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; reqId: string }> }
+  { params }: { params: Promise<{ id: string; reqId: string }> },
 ) {
   try {
     const session = await auth();
@@ -44,10 +44,16 @@ export async function GET(
     });
 
     if (!requisition) {
-      return NextResponse.json({ error: 'Requisition not found' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Requisition not found' },
+        { status: 404 },
+      );
     }
     if (requisition.productionOrderId !== orderId) {
-      return NextResponse.json({ error: 'Requisition does not belong to this order' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Requisition does not belong to this order' },
+        { status: 403 },
+      );
     }
 
     const { jsPDF } = await import('jspdf');
@@ -61,8 +67,12 @@ export async function GET(
     const redColor: [number, number, number] = [220, 38, 38];
 
     const isReplacement = requisition.notes?.startsWith('[Replacement');
-    const typeLabel = isReplacement ? 'REPLACEMENT REQUEST' : 'MATERIAL REQUISITION';
-    const headerAccent: [number, number, number] = isReplacement ? redColor : greenColor;
+    const typeLabel = isReplacement
+      ? 'REPLACEMENT REQUEST'
+      : 'MATERIAL REQUISITION';
+    const headerAccent: [number, number, number] = isReplacement
+      ? redColor
+      : greenColor;
 
     // === Header ===
     doc.setFillColor(...primaryColor);
@@ -79,7 +89,11 @@ export async function GET(
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Ref: ${requisition.requisitionNumber}`, 15, 31);
-    doc.text(`Date: ${new Date(requisition.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`, 15, 38);
+    doc.text(
+      `Date: ${new Date(requisition.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`,
+      15,
+      38,
+    );
 
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
@@ -93,7 +107,12 @@ export async function GET(
     const col1X = 15;
     const col2X = 110;
 
-    const drawInfoRow = (label: string, value: string, x: number, y: number) => {
+    const drawInfoRow = (
+      label: string,
+      value: string,
+      x: number,
+      y: number,
+    ) => {
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...accentColor);
@@ -104,14 +123,48 @@ export async function GET(
       doc.text(value || '—', x, y + 6);
     };
 
-    drawInfoRow('Production Order', requisition.productionOrder?.orderNumber ?? '—', col1X, infoY);
-    drawInfoRow('Product', requisition.productionOrder ? `${requisition.productionOrder.product.name} (${requisition.productionOrder.product.productNumber})` : '—', col2X, infoY);
+    drawInfoRow(
+      'Production Order',
+      requisition.productionOrder?.orderNumber ?? '—',
+      col1X,
+      infoY,
+    );
+    drawInfoRow(
+      'Product',
+      requisition.productionOrder
+        ? `${requisition.productionOrder.product.name} (${requisition.productionOrder.product.productNumber})`
+        : '—',
+      col2X,
+      infoY,
+    );
 
-    drawInfoRow('Production Unit', requisition.productionUnit ? `${requisition.productionUnit.unitId}` : 'All Units', col1X, infoY + 18);
-    drawInfoRow('Requested By', requisition.requestedBy?.name ?? '—', col2X, infoY + 18);
+    drawInfoRow(
+      'Production Unit',
+      requisition.productionUnit
+        ? `${requisition.productionUnit.unitId}`
+        : 'All Units',
+      col1X,
+      infoY + 18,
+    );
+    drawInfoRow(
+      'Requested By',
+      requisition.requestedBy?.name ?? '—',
+      col2X,
+      infoY + 18,
+    );
 
-    drawInfoRow('Status', requisition.status.replace(/_/g, ' '), col1X, infoY + 36);
-    drawInfoRow('Order Qty', `${requisition.productionOrder?.quantity ?? '—'} units`, col2X, infoY + 36);
+    drawInfoRow(
+      'Status',
+      requisition.status.replace(/_/g, ' '),
+      col1X,
+      infoY + 36,
+    );
+    drawInfoRow(
+      'Order Qty',
+      `${requisition.productionOrder?.quantity ?? '—'} units`,
+      col2X,
+      infoY + 36,
+    );
 
     if (requisition.notes) {
       const cleanNotes = requisition.notes.replace(/^\[.*?\]\s*/, '');
@@ -129,9 +182,13 @@ export async function GET(
     // === Materials Table ===
     const tableRows = requisition.items.map((item, index) => {
       const statusLabel =
-        item.status === 'ISSUED' ? 'Issued' :
-        item.status === 'PARTIAL' ? 'Partial' :
-        item.status === 'UNAVAILABLE' ? 'Unavailable' : 'Pending';
+        item.status === 'ISSUED'
+          ? 'Issued'
+          : item.status === 'PARTIAL'
+            ? 'Partial'
+            : item.status === 'UNAVAILABLE'
+              ? 'Unavailable'
+              : 'Pending';
 
       return [
         index + 1,
@@ -139,14 +196,26 @@ export async function GET(
         item.material.partNumber ?? '—',
         item.material.category?.replace(/_/g, ' ') ?? '—',
         `${item.quantityRequired} ${item.material.unit}`,
-        item.quantityIssued != null ? `${item.quantityIssued} ${item.material.unit}` : '—',
+        item.quantityIssued != null
+          ? `${item.quantityIssued} ${item.material.unit}`
+          : '—',
         statusLabel,
       ];
     });
 
     autoTable(doc, {
       startY: tableStartY,
-      head: [['#', 'Material', 'Part No.', 'Category', 'Qty Required', 'Qty Issued', 'Status']],
+      head: [
+        [
+          '#',
+          'Material',
+          'Part No.',
+          'Category',
+          'Qty Required',
+          'Qty Issued',
+          'Status',
+        ],
+      ],
       body: tableRows,
       headStyles: {
         fillColor: primaryColor,
@@ -189,12 +258,23 @@ export async function GET(
           };
           if (status && colors[status]) {
             doc.setFillColor(...colors[status]);
-            doc.rect(data.cell.x + 1, data.cell.y + 1, data.cell.width - 2, data.cell.height - 2, 'F');
+            doc.rect(
+              data.cell.x + 1,
+              data.cell.y + 1,
+              data.cell.width - 2,
+              data.cell.height - 2,
+              'F',
+            );
             doc.setTextColor(...textColors[status]);
             doc.setFontSize(7.5);
             doc.setFont('helvetica', 'bold');
             const label = data.cell.raw as string;
-            doc.text(label, data.cell.x + data.cell.width / 2, data.cell.y + data.cell.height / 2 + 1, { align: 'center' });
+            doc.text(
+              label,
+              data.cell.x + data.cell.width / 2,
+              data.cell.y + data.cell.height / 2 + 1,
+              { align: 'center' },
+            );
           }
         }
       },
@@ -204,12 +284,18 @@ export async function GET(
 
     // === Summary row ===
     const totalItems = requisition.items.length;
-    const issuedItems = requisition.items.filter((i) => i.status === 'ISSUED').length;
+    const issuedItems = requisition.items.filter(
+      (i) => i.status === 'ISSUED',
+    ).length;
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...accentColor);
-    doc.text(`${totalItems} item${totalItems !== 1 ? 's' : ''} requested  ·  ${issuedItems} issued`, 15, afterTableY);
+    doc.text(
+      `${totalItems} item${totalItems !== 1 ? 's' : ''} requested  ·  ${issuedItems} issued`,
+      15,
+      afterTableY,
+    );
 
     // === Signature block ===
     const sigY = afterTableY + 14;
@@ -250,10 +336,10 @@ export async function GET(
     doc.setFontSize(7.5);
     doc.setTextColor(...accentColor);
     doc.text(
-      `${requisition.requisitionNumber}  ·  ${requisition.productionOrder?.orderNumber ?? '—'}  ·  Generated ${new Date().toLocaleString('en-GB')}  ·  Greenage Production Manager`,
+      `${requisition.requisitionNumber}  ·  ${requisition.productionOrder?.orderNumber ?? '—'}  ·  Generated ${new Date().toLocaleString('en-GB')}  `,
       105,
       pageHeight - 7,
-      { align: 'center' }
+      { align: 'center' },
     );
 
     const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
@@ -267,6 +353,9 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error generating requisition PDF:', error);
-    return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to generate PDF' },
+      { status: 500 },
+    );
   }
 }
