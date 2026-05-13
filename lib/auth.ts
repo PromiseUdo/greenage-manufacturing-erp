@@ -237,6 +237,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         );
 
         if (!valid) return null;
+        if (!user.isActive) return null;
         if (!user.isVerified) throw new EmailNotVerifiedError();
 
         return {

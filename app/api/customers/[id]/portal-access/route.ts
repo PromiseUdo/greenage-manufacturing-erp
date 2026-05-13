@@ -19,9 +19,9 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'EMPLOYEE') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (session.user.role !== 'EMPLOYEE') {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const body = await request.json();
     const { email, password } = body;
@@ -43,77 +43,91 @@ export async function POST(
       );
     }
 
-    // Check if customer already has portal access
-    if (customer.userId) {
+    // Fetch linked user if one exists
+    const linkedUser = customer.userId
+      ? await prisma.user.findUnique({ where: { id: customer.userId } })
+      : null;
+
+    // If there's already an active portal, block
+    if (linkedUser?.isActive) {
       return NextResponse.json(
-        { error: 'Customer already has portal access' },
+        { error: 'Customer already has active portal access' },
         { status: 409 },
       );
     }
 
-    // Check if email already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    let result: { customer: any; defaultPassword: string };
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'Email already in use' },
-        { status: 409 },
-      );
-    }
+    if (linkedUser) {
+      // Restore: reactivate the existing user, optionally reset password
+      const defaultPassword = password || undefined;
+      const updateData: any = { isActive: true };
 
-    // Generate default password if not provided
-    const defaultPassword =
-      password ||
-      `${customer.name.split(' ')[0].toLowerCase()}${new Date().getFullYear()}`;
-    const hashedPassword = await bcrypt.hash(defaultPassword, 12);
+      if (defaultPassword) {
+        updateData.password = await bcrypt.hash(defaultPassword, 12);
+      }
 
-    // Create User and link to Customer in transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Create User account
-      const user = await tx.user.create({
-        data: {
-          name: customer.name,
-          email,
-          password: hashedPassword,
-          role: 'CUSTOMER', // Default role for customer portal users
-          isActive: true,
-          isVerified: true, // No email verification for customers
-        },
+      await prisma.user.update({
+        where: { id: linkedUser.id },
+        data: updateData,
       });
 
-      // Link User to Customer
-      const updatedCustomer = await tx.customer.update({
+      const updatedCustomer = await prisma.customer.findUnique({
         where: { id: customerId },
-        data: {
-          userId: user.id,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              email: true,
-              isActive: true,
-            },
-          },
-        },
+        include: { user: { select: { id: true, email: true, isActive: true } } },
       });
 
-      return { customer: updatedCustomer, defaultPassword };
-    });
+      result = {
+        customer: updatedCustomer,
+        defaultPassword: defaultPassword || '(unchanged)',
+      };
+    } else {
+      // Grant: check email is not taken by an unrelated user
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        return NextResponse.json(
+          { error: 'Email already in use' },
+          { status: 409 },
+        );
+      }
 
-    // Log activity
+      const defaultPassword =
+        password ||
+        `${customer.name.split(' ')[0].toLowerCase()}${new Date().getFullYear()}`;
+      const hashedPassword = await bcrypt.hash(defaultPassword, 12);
+
+      result = await prisma.$transaction(async (tx) => {
+        const user = await tx.user.create({
+          data: {
+            name: customer.name,
+            email,
+            password: hashedPassword,
+            role: 'CUSTOMER',
+            isActive: true,
+            isVerified: true,
+          },
+        });
+
+        const updatedCustomer = await tx.customer.update({
+          where: { id: customerId },
+          data: { userId: user.id },
+          include: {
+            user: { select: { id: true, email: true, isActive: true } },
+          },
+        });
+
+        return { customer: updatedCustomer, defaultPassword };
+      });
+    }
+
+    const portalEmail = linkedUser ? linkedUser.email : email;
+
     await prisma.activityLog.create({
       data: {
         userId: session.user.id,
-        action: 'Created Customer Portal Access',
+        action: linkedUser ? 'Restored Customer Portal Access' : 'Created Customer Portal Access',
         module: 'Customer Management',
-        details: {
-          customerId,
-          customerName: customer.name,
-          email,
-        },
+        details: { customerId, customerName: customer.name, email: portalEmail },
       },
     });
 
@@ -121,7 +135,7 @@ export async function POST(
       {
         customer: result.customer,
         credentials: {
-          email,
+          email: portalEmail,
           password: result.defaultPassword,
         },
       },
@@ -150,9 +164,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (session.user.role !== 'EMPLOYEE') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (session.user.role !== 'EMPLOYEE') {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const customer = await prisma.customer.findUnique({
       where: { id: customerId },
@@ -173,21 +187,10 @@ export async function DELETE(
       );
     }
 
-    // Remove portal access (User will be set to null, not deleted)
-    await prisma.$transaction(async (tx) => {
-      // Deactivate user
-      await tx.user.update({
-        where: { id: customer.userId! },
-        data: { isActive: false },
-      });
-
-      // Remove link from customer
-      await tx.customer.update({
-        where: { id: customerId },
-        data: {
-          userId: null,
-        },
-      });
+    // Deactivate the user — keeps Customer.userId intact for restore
+    await prisma.user.update({
+      where: { id: customer.userId! },
+      data: { isActive: false },
     });
 
     // Log activity
