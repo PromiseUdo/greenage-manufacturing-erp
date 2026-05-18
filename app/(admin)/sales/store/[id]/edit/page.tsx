@@ -154,6 +154,8 @@ export default function EditStoreItemPage() {
             productionDate: formatDateForInput(storeItem.productionDate),
             warrantyExpiry: formatDateForInput(storeItem.warrantyExpiry),
             notes: storeItem.notes || "",
+            imageUrl: storeItem.imageUrl || undefined,
+            imagePublicId: storeItem.imagePublicId || undefined,
           }}
           onSubmit={handleSubmit}
           onCancel={handleCancel}

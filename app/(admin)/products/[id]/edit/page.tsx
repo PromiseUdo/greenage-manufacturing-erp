@@ -40,6 +40,7 @@ import {
 import SimpleMaterialDialog from "@/components/inventory/simple-material-dialog";
 import FileUpload from "@/components/inventory/file-upload";
 import { FileAttachment } from "@/types/inventory";
+import ImageUpload, { ImageUploadResult } from "@/components/shared/ImageUpload";
 
 // --- Design Tokens ---
 const SectionHeader = styled(Typography)(({ theme }) => ({
@@ -129,6 +130,10 @@ export default function EditProductPage({
   // Design Files State
   const [designFiles, setDesignFiles] = useState<FileAttachment[]>([]);
 
+  // Image State
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imagePublicId, setImagePublicId] = useState<string | null>(null);
+
   // --- Fetch Data ---
   useEffect(() => {
     const init = async () => {
@@ -185,6 +190,9 @@ export default function EditProductPage({
       if (data.designFiles && Array.isArray(data.designFiles)) {
         setDesignFiles(data.designFiles);
       }
+
+      if (data.primaryImage) setImageUrl(data.primaryImage);
+      if (data.imagePublicId) setImagePublicId(data.imagePublicId);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -308,6 +316,8 @@ export default function EditProductPage({
           quantity: item.quantity,
         })),
         designFiles,
+        primaryImage: imageUrl,
+        imagePublicId: imagePublicId,
       };
 
       const res = await fetch(`/api/products/${resolvedParams.id}`, {
@@ -825,6 +835,25 @@ export default function EditProductPage({
                 value={formData.notes}
                 onChange={(e) => handleChange("notes", e.target.value)}
                 placeholder="Private notes..."
+              />
+            </FormCard>
+
+            {/* Product Image */}
+            <FormCard>
+              <ImageUpload
+                label="Product Image"
+                currentUrl={imageUrl}
+                currentPublicId={imagePublicId || undefined}
+                folder="greenage/products"
+                disabled={loading}
+                onUpload={(result: ImageUploadResult) => {
+                  setImageUrl(result.url);
+                  setImagePublicId(result.publicId);
+                }}
+                onRemove={() => {
+                  setImageUrl(null);
+                  setImagePublicId(null);
+                }}
               />
             </FormCard>
 

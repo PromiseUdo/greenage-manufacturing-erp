@@ -86,6 +86,8 @@ export async function PATCH(
       notes,
       designFiles,
       materials,
+      primaryImage,
+      imagePublicId,
     } = body;
 
     const product = await prisma.product.findUnique({ where: { id } });
@@ -109,6 +111,8 @@ export async function PATCH(
         ...(isAvailable !== undefined && { isAvailable }),
         ...(notes !== undefined && { notes }),
         ...(designFiles !== undefined && { designFiles }),
+        ...(primaryImage !== undefined && { primaryImage: primaryImage || null }),
+        ...(imagePublicId !== undefined && { imagePublicId: imagePublicId || null }),
         ...(materials && {
           materials: {
             deleteMany: {},

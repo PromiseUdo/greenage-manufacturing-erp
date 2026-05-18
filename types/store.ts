@@ -23,6 +23,8 @@ export interface StoreItemFormData {
   productionDate?: string;
   warrantyExpiry?: string;
   notes?: string;
+  imageUrl?: string;
+  imagePublicId?: string;
 }
 
 // Store Receipt (SRN) types

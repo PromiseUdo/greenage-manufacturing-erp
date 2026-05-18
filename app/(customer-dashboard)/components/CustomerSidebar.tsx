@@ -18,6 +18,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import MenuOpenRoundedIcon from '@mui/icons-material/MenuOpenRounded';
 import { useSession, signOut } from 'next-auth/react';
@@ -34,6 +35,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Overview', path: '/customer/overview', icon: DashboardIcon },
+  { label: 'Products', path: '/customer/products', icon: Inventory2OutlinedIcon },
   { label: 'Quotes', path: '/customer/quotes', icon: DescriptionIcon },
   { label: 'Invoices', path: '/customer/invoices', icon: ReceiptIcon },
   { label: 'Orders', path: '/customer/orders', icon: ShoppingCartIcon },
@@ -126,7 +128,7 @@ export default function CustomerSidebar() {
         <List disablePadding sx={{ px: collapsed ? 1 : 2 }}>
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.path;
+            const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
 
             return (
               <Box key={item.label} sx={{ mb: 0.5 }}>

@@ -107,6 +107,8 @@ export async function POST(request: NextRequest) {
       productionDate,
       warrantyExpiry,
       notes,
+      imageUrl,
+      imagePublicId,
     } = body;
 
     // Validate required fields
@@ -166,6 +168,8 @@ export async function POST(request: NextRequest) {
         productionDate: productionDate ? new Date(productionDate) : null,
         warrantyExpiry: warrantyExpiry ? new Date(warrantyExpiry) : null,
         notes: notes || null,
+        imageUrl: imageUrl || null,
+        imagePublicId: imagePublicId || null,
       },
       include: {
         product: true,

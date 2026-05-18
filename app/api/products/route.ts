@@ -100,17 +100,18 @@ export async function POST(request: NextRequest) {
       description,
       category,
       specifications,
-      costPrice, // Renamed from basePrice
+      costPrice,
       model,
       warranty,
       leadTime,
       images,
       productCode,
       primaryImage,
+      imagePublicId,
       notes,
       tags,
-      designFiles, // New
-      materials, // New: [{ materialId, quantity }]
+      designFiles,
+      materials,
     } = body;
 
     // Validation
@@ -189,7 +190,8 @@ export async function POST(request: NextRequest) {
           warranty,
           leadTime,
           images: images || [],
-          primaryImage,
+          primaryImage: primaryImage || null,
+          imagePublicId: imagePublicId || null,
           notes,
           tags: tags || [],
           designFiles: designFiles || [],

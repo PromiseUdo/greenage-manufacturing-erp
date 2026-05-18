@@ -123,15 +123,15 @@ export async function POST(
           },
         });
 
-        // Auto-generate production request if backordered
-        if (qli.quantityBackordered && qli.quantityBackordered > 0) {
+        // Auto-generate production request if backordered (only for line items with a store item)
+        if (qli.storeItemId && qli.quantityBackordered && qli.quantityBackordered > 0) {
           lastPRNum++;
           const requestNumber = `PR-${prYear}-${String(lastPRNum).padStart(3, '0')}`;
 
           const productionRequest = await tx.productionRequest.create({
             data: {
               requestNumber,
-              storeItemId: qli.storeItemId,
+              storeItemId: qli.storeItemId!,
               quoteId: quote.id,
               quoteLineItemId: qli.id,
               quantityNeeded: qli.quantityBackordered,

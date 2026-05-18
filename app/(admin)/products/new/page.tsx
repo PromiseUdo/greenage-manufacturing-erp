@@ -40,6 +40,7 @@ import {
 import SimpleMaterialDialog from "@/components/inventory/simple-material-dialog";
 import FileUpload from "@/components/inventory/file-upload";
 import { FileAttachment } from "@/types/inventory";
+import ImageUpload, { ImageUploadResult } from "@/components/shared/ImageUpload";
 
 // --- Design Tokens ---
 const SectionHeader = styled(Typography)(({ theme }) => ({
@@ -118,6 +119,10 @@ export default function NewProductPage() {
 
   // Design Files State
   const [designFiles, setDesignFiles] = useState<FileAttachment[]>([]);
+
+  // Image State
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imagePublicId, setImagePublicId] = useState<string | null>(null);
 
   // --- handlers ---
   const handleChange = (field: string, value: any) => {
@@ -240,6 +245,8 @@ export default function NewProductPage() {
           quantity: item.quantity,
         })),
         designFiles,
+        primaryImage: imageUrl || undefined,
+        imagePublicId: imagePublicId || undefined,
       };
 
       const res = await fetch("/api/products", {
@@ -710,6 +717,25 @@ export default function NewProductPage() {
                 value={formData.notes}
                 onChange={(e) => handleChange("notes", e.target.value)}
                 placeholder="Private notes..."
+              />
+            </FormCard>
+
+            {/* Product Image */}
+            <FormCard>
+              <ImageUpload
+                label="Product Image"
+                currentUrl={imageUrl}
+                currentPublicId={imagePublicId || undefined}
+                folder="greenage/products"
+                disabled={loading}
+                onUpload={(result: ImageUploadResult) => {
+                  setImageUrl(result.url);
+                  setImagePublicId(result.publicId);
+                }}
+                onRemove={() => {
+                  setImageUrl(null);
+                  setImagePublicId(null);
+                }}
               />
             </FormCard>
 

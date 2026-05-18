@@ -2,9 +2,10 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
+  Divider,
   TextField,
   Button,
   MenuItem,
@@ -16,6 +17,7 @@ import {
 import { Controller, useForm } from "react-hook-form";
 import { StoreItemFormData } from "@/types/store";
 import Grid from "@mui/material/GridLegacy";
+import ImageUpload, { ImageUploadResult } from "@/components/shared/ImageUpload";
 
 const CATEGORIES = [
   { value: "INVERTER", label: "Inverter" },
@@ -78,13 +80,25 @@ export default function StoreForm({
     },
   });
 
+  // Image state managed outside RHF due to async upload flow
+  const [imageUrl, setImageUrl] = useState<string | null>(initialData?.imageUrl ?? null);
+  const [imagePublicId, setImagePublicId] = useState<string | null>(initialData?.imagePublicId ?? null);
+
   useEffect(() => {
-    if (initialData) reset({ ...initialData });
+    if (initialData) {
+      reset({ ...initialData });
+      setImageUrl(initialData.imageUrl ?? null);
+      setImagePublicId(initialData.imagePublicId ?? null);
+    }
   }, [initialData, reset]);
+
+  const handleFormSubmit = async (data: StoreItemFormData) => {
+    await onSubmit({ ...data, imageUrl: imageUrl || undefined, imagePublicId: imagePublicId || undefined });
+  };
 
   return (
     <Paper sx={{ p: 4, borderRadius: 2, marginBottom: "20px" }}>
-      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <Box component="form" onSubmit={handleSubmit(handleFormSubmit)} noValidate>
         <Grid container spacing={2.5}>
           {/* ── Identification ── */}
           <Grid item xs={12}>
@@ -461,8 +475,28 @@ export default function StoreForm({
             />
           </Grid>
 
+          {/* ── Item Image ── */}
+          <Grid item xs={12}>
+            <Divider sx={{ mb: 2.5 }} />
+            <ImageUpload
+              label="Item Image"
+              currentUrl={imageUrl}
+              currentPublicId={imagePublicId || undefined}
+              folder="greenage/store"
+              disabled={isLoading}
+              onUpload={(result: ImageUploadResult) => {
+                setImageUrl(result.url);
+                setImagePublicId(result.publicId);
+              }}
+              onRemove={() => {
+                setImageUrl(null);
+                setImagePublicId(null);
+              }}
+            />
+          </Grid>
+
           {/* Actions */}
-          <Grid item xs={12} sx={{ mt: 3 }}>
+          <Grid item xs={12} sx={{ mt: 1 }}>
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
               <Button
                 variant="outlined"

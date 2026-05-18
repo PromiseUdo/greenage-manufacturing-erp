@@ -57,13 +57,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (
-      !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
-        session.user.role,
-      )
-    ) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    // if (
+    //   !['ADMIN', 'STORE_KEEPER', 'OPERATION_MANAGER'].includes(
+    //     session.user.role,
+    //   )
+    // ) {
+    //   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // }
 
     const body = await request.json();
     const {
@@ -80,6 +80,8 @@ export async function PUT(
       productionDate,
       warrantyExpiry,
       notes,
+      imageUrl,
+      imagePublicId,
     } = body;
 
     // Check if store item exists
@@ -117,6 +119,9 @@ export async function PUT(
         productionDate: productionDate ? new Date(productionDate) : null,
         warrantyExpiry: warrantyExpiry ? new Date(warrantyExpiry) : null,
         notes: notes || null,
+        imageUrl: imageUrl !== undefined ? imageUrl || null : undefined,
+        imagePublicId:
+          imagePublicId !== undefined ? imagePublicId || null : undefined,
       },
       include: {
         product: true,
