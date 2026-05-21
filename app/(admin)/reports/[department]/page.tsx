@@ -3543,6 +3543,17 @@ async function fetchFontBase64(url: string): Promise<string> {
   );
 }
 
+/** Fetch a PNG/JPG image and return its raw base64 string (no data-URL prefix). */
+async function fetchImageBase64(url: string): Promise<string> {
+  const res = await fetch(url);
+  const buf = await res.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++)
+    binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
 /**
  * Register Roboto (Regular + Bold) into a jsPDF doc so that Unicode
  * characters like ₦ render correctly instead of showing as ¦.
@@ -3599,27 +3610,90 @@ async function exportPDF(
     day: 'numeric',
   });
 
-  // ── Header band ────────────────────────────────────────────────────────────
-  doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, 210, 30, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(17);
-  doc.setFont('Roboto', 'bold');
-  doc.text(`${label} Department Report`, 14, 13);
-  doc.setFontSize(9.5);
-  doc.setFont('Roboto', 'normal');
-  doc.text(`Period: ${periodLabel}   |   Generated: ${now}`, 14, 22);
+  // ── Brand colors (Greenage palette) ──────────────────────────────────────
+  const isSales =
+    department === 'sales' ||
+    department === 'production' ||
+    department === 'inventory' ||
+    department === 'finance' ||
+    department === 'procurement';
 
-  doc.setTextColor(0, 0, 0);
-  let y = 38;
+  // ── Header ─────────────────────────────────────────────────────────────────
+  if (isSales) {
+    // Attempt to load the white logo; fall back gracefully if fetch fails
+    let logoB64: string | null = null;
+    try {
+      logoB64 = await fetchImageBase64('/greenage_logo_white.png');
+    } catch {}
+
+    // Primary header band — deep brand green (#003D34)
+    doc.setFillColor(0, 61, 52);
+    doc.rect(0, 0, 210, 32, 'F');
+
+    // Logo on the left
+    if (logoB64) {
+      doc.addImage(logoB64, 'PNG', 14, 7, 32, 11);
+    }
+
+    // Thin vertical separator in mid-green (#1FA43B)
+    doc.setFillColor(31, 164, 59);
+    doc.rect(52, 7, 0.6, 18, 'F');
+
+    // Report title — white
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont('Roboto', 'bold');
+    doc.text(`${label} Department Report`, 58, 15);
+
+    // Period & date — light green (#D3F2AF)
+    doc.setFontSize(8);
+    doc.setFont('Roboto', 'normal');
+    doc.setTextColor(211, 242, 175);
+    doc.text(`Period: ${periodLabel}   ·   Generated: ${now}`, 58, 22);
+
+    // Accent stripe under the header in mid-green
+    doc.setFillColor(31, 164, 59);
+    doc.rect(0, 32, 210, 1.5, 'F');
+
+    doc.setTextColor(0, 0, 0);
+  } else {
+    // Original header for all other departments
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(17);
+    doc.setFont('Roboto', 'bold');
+    doc.text(`${label} Department Report`, 14, 13);
+    doc.setFontSize(9.5);
+    doc.setFont('Roboto', 'normal');
+    doc.text(`Period: ${periodLabel}   |   Generated: ${now}`, 14, 22);
+    doc.setTextColor(0, 0, 0);
+  }
+
+  let y = isSales ? 42 : 38;
 
   const addSection = (title: string) => {
-    // small top gap + bold label
     doc.setFontSize(11);
     doc.setFont('Roboto', 'bold');
+    doc.setTextColor(0, 0, 0);
     doc.text(title, 14, y);
     y += 5;
   };
+
+  // Branded table styles used exclusively for the sales PDF
+  const salesTS = () => ({
+    theme: 'grid' as const,
+    styles: { font: 'Roboto', fontStyle: 'normal' as const, fontSize: 9 },
+    headStyles: {
+      font: 'Roboto',
+      fontStyle: 'bold' as const,
+      fillColor: [0, 0, 0] as [number, number, number],
+      textColor: [255, 255, 255] as [number, number, number],
+    },
+    alternateRowStyles: {
+      fillColor: [238, 249, 229] as [number, number, number],
+    },
+  });
 
   // ── Department-specific content ────────────────────────────────────────────
   if (department === 'sales') {
@@ -3637,7 +3711,7 @@ async function exportPDF(
         ['Amount Collected', fmt(data.totalCollected)],
         ['Outstanding', fmt(data.totalOutstanding)],
       ],
-      ...tableStyles([33, 150, 243]),
+      ...salesTS(),
     });
     y = (doc as any).lastAutoTable.finalY + 8;
 
@@ -3649,7 +3723,7 @@ async function exportPDF(
         s.status.replace(/_/g, ' '),
         s.count,
       ]),
-      ...tableStyles([33, 150, 243]),
+      ...salesTS(),
     });
     y = (doc as any).lastAutoTable.finalY + 8;
 
@@ -3661,7 +3735,7 @@ async function exportPDF(
         s.status.replace(/_/g, ' '),
         s.count,
       ]),
-      ...tableStyles([33, 150, 243]),
+      ...salesTS(),
     });
     y = (doc as any).lastAutoTable.finalY + 8;
 
@@ -3679,8 +3753,59 @@ async function exportPDF(
         fmt(c.collected ?? 0),
         fmt((c.revenue ?? 0) - (c.collected ?? 0)),
       ]),
-      ...tableStyles([33, 150, 243]),
+      ...salesTS(),
     });
+    y = (doc as any).lastAutoTable.finalY + 8;
+
+    if ((data.orderDetails ?? []).length > 0) {
+      addSection('Sales-Order Detail');
+      doc.setFontSize(8.5);
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(
+        'Individual orders for the selected period — discount and net sales from linked invoice',
+        14,
+        y,
+      );
+      doc.setTextColor(0, 0, 0);
+      y += 5;
+      autoTable(doc, {
+        startY: y,
+        head: [
+          [
+            'Date',
+            'Order ID',
+            'Customer',
+            'Product',
+            'Qty',
+            'Unit Price',
+            'Discount',
+            'Net Sales',
+          ],
+        ],
+        body: (data.orderDetails ?? []).map((o: any) => [
+          fmtDateTime(o.date),
+          o.orderNumber,
+          o.customer,
+          o.product,
+          o.qty > 0 ? o.qty.toLocaleString() : '—',
+          o.unitPrice != null ? fmt(o.unitPrice) : '—',
+          o.discount > 0 ? `-${fmt(o.discount)}` : '—',
+          fmt(o.netSales ?? 0),
+        ]),
+        ...salesTS(),
+        columnStyles: {
+          0: { cellWidth: 26 },
+          1: { cellWidth: 22, fontStyle: 'bold' as const },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 38 },
+          4: { cellWidth: 12, halign: 'right' as const },
+          5: { cellWidth: 22, halign: 'right' as const },
+          6: { cellWidth: 20, halign: 'right' as const },
+          7: { cellWidth: 22, halign: 'right' as const },
+        },
+      });
+    }
   } else if (department === 'production') {
     addSection('Key Metrics');
     autoTable(doc, {
@@ -3688,29 +3813,148 @@ async function exportPDF(
       head: [['Metric', 'Value']],
       body: [
         ['Production Orders', data.totalOrders],
-        ['Total Units', data.totalUnits],
+        ['Units Started', data.totalStarted ?? data.totalUnits],
+        ['Units Packaged', data.totalPackaged ?? 0],
+        ['Units Rejected', data.totalRejected ?? 0],
         [
           'Avg Yield Rate',
           data.avgYieldRate !== null ? `${data.avgYieldRate}%` : 'N/A',
         ],
         ['Reworks', data.reworkCount],
+        [
+          'Rework Rate',
+          data.reworkRate !== null && data.reworkRate !== undefined
+            ? `${data.reworkRate}%`
+            : 'N/A',
+        ],
       ],
-      ...tableStyles([255, 152, 0]),
+      ...salesTS(),
     });
     y = (doc as any).lastAutoTable.finalY + 8;
 
-    addSection('Top Products');
+    addSection('Orders by Status');
     autoTable(doc, {
       startY: y,
-      head: [['#', 'Product', 'Orders', 'Units Packaged']],
-      body: data.productionByProduct.map((p: any, i: number) => [
+      head: [['Status', 'Count']],
+      body: (data.ordersByStatus ?? []).map((s: any) => [
+        s.status.replace(/_/g, ' '),
+        s.count,
+      ]),
+      ...salesTS(),
+    });
+    y = (doc as any).lastAutoTable.finalY + 8;
+
+    addSection('Top Products in Production');
+    autoTable(doc, {
+      startY: y,
+      head: [
+        [
+          '#',
+          'Product',
+          'Orders',
+          'Started',
+          'Packaged',
+          'Rejected',
+          'Yield Rate',
+        ],
+      ],
+      body: (data.productionByProduct ?? []).map((p: any, i: number) => [
         i + 1,
         p.name,
         p.orders,
-        p.unitsPackaged,
+        p.started ?? 0,
+        p.packaged ?? 0,
+        p.rejected ?? 0,
+        p.yieldRate !== null && p.yieldRate !== undefined
+          ? `${p.yieldRate}%`
+          : 'N/A',
       ]),
-      ...tableStyles([255, 152, 0]),
+      ...salesTS(),
+      columnStyles: {
+        0: { cellWidth: 10 },
+        2: { halign: 'right' as const },
+        3: { halign: 'right' as const },
+        4: { halign: 'right' as const },
+        5: { halign: 'right' as const },
+        6: { halign: 'right' as const },
+      },
     });
+    y = (doc as any).lastAutoTable.finalY + 8;
+
+    if (Array.isArray(data.qcOutcomes) && data.qcOutcomes.length > 0) {
+      addSection('QC Checkpoint Outcomes');
+      autoTable(doc, {
+        startY: y,
+        head: [['Outcome', 'Count']],
+        body: data.qcOutcomes.map((e: any) => [
+          e.outcome.replace(/_/g, ' '),
+          e.count,
+        ]),
+        ...salesTS(),
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    if (Array.isArray(data.failCategories) && data.failCategories.length > 0) {
+      addSection('QC Failure Categories');
+      autoTable(doc, {
+        startY: y,
+        head: [['Category', 'Count']],
+        body: data.failCategories.map((f: any) => [
+          f.category.replace(/_/g, ' '),
+          f.count,
+        ]),
+        ...salesTS(),
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    if ((data.workOrderDetails ?? []).length > 0) {
+      addSection('Work-Order Detail');
+      doc.setFontSize(8.5);
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(
+        'Individual production orders for the selected period',
+        14,
+        y,
+      );
+      doc.setTextColor(0, 0, 0);
+      y += 5;
+      autoTable(doc, {
+        startY: y,
+        head: [
+          [
+            'Order ID',
+            'Product',
+            'Volume',
+            'Current Stage',
+            'Status',
+            'Start',
+            'Completion',
+          ],
+        ],
+        body: (data.workOrderDetails ?? []).map((o: any) => [
+          o.orderNumber,
+          o.product,
+          o.volume,
+          o.currentStage ?? '—',
+          o.status.replace(/_/g, ' '),
+          fmtDateTime(o.startedAt),
+          o.completedAt ? fmtDateTime(o.completedAt) : 'Pending',
+        ]),
+        ...salesTS(),
+        columnStyles: {
+          0: { cellWidth: 28, fontStyle: 'bold' as const },
+          1: { cellWidth: 35 },
+          2: { cellWidth: 14, halign: 'right' as const },
+          3: { cellWidth: 28 },
+          4: { cellWidth: 24 },
+          5: { cellWidth: 26 },
+          6: { cellWidth: 27 },
+        },
+      });
+    }
   } else if (department === 'inventory') {
     addSection('Key Metrics');
     autoTable(doc, {
@@ -3718,38 +3962,182 @@ async function exportPDF(
       head: [['Metric', 'Value']],
       body: [
         ['Total Materials', data.totalMaterials],
-        ['Low Stock Items', data.lowStockCount],
+        ['Healthy Stock', data.healthyCount ?? 0],
+        ['Low Stock', data.lowStockCount],
         ['Out of Stock', data.outOfStockCount],
-        ['Total Inventory Value', fmt(data.totalInventoryValue)],
-        ['PO Spend', fmt(data.totalPOSpend)],
+        ['Inventory Value', fmt(data.totalInventoryValue)],
+        ['GRN Receipts', data.grnCount ?? 0],
         ['Material Issuances', data.issuanceCount],
+        ['PO Total Spend', fmt(data.totalPOSpend ?? 0)],
+        ['PO Amount Paid', fmt(data.totalPOPaid ?? 0)],
+        ['PO Outstanding', fmt(data.totalPOOutstanding ?? 0)],
       ],
-      ...tableStyles([76, 175, 80]),
+      ...salesTS(),
     });
     y = (doc as any).lastAutoTable.finalY + 8;
 
-    if (data.lowStockItems.length > 0) {
-      addSection('Low Stock Items');
-      autoTable(doc, {
-        startY: y,
-        head: [['#', 'Material', 'Current Stock', 'Reorder Level', 'Deficit']],
-        body: data.lowStockItems.map((m: any, i: number) => [
+    // Stock Alert — Critical Items
+    addSection('Stock Alert — Critical Items');
+    doc.setFontSize(8.5);
+    doc.setFont('Roboto', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.text(
+      'Sorted by severity (out-of-stock first, then lowest stock %)',
+      14,
+      y,
+    );
+    doc.setTextColor(0, 0, 0);
+    y += 5;
+    autoTable(doc, {
+      startY: y,
+      head: [
+        [
+          '#',
+          'Material',
+          'Category',
+          'Unit',
+          'Stock',
+          'Reorder At',
+          'Stock %',
+          'Unit Cost',
+        ],
+      ],
+      body: (data.lowStockItems ?? []).map((m: any, i: number) => {
+        const isOut = m.currentStock === 0;
+        return [
           i + 1,
           m.name,
-          m.currentStock,
+          m.category?.replace(/_/g, ' ') ?? '—',
+          m.unit || '—',
+          isOut ? 'OUT' : m.currentStock,
           m.reorderLevel,
-          m.reorderLevel - m.currentStock,
+          m.stockPct != null ? `${m.stockPct}%` : '—',
+          m.unitCost > 0 ? fmt(m.unitCost) : '—',
+        ];
+      }),
+      ...salesTS(),
+      columnStyles: {
+        0: { cellWidth: 8 },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 15, halign: 'right' as const },
+        4: { cellWidth: 18, halign: 'right' as const },
+        5: { cellWidth: 20, halign: 'right' as const },
+        6: { cellWidth: 18, halign: 'right' as const },
+        7: { cellWidth: 28, halign: 'right' as const },
+      },
+    });
+    y = (doc as any).lastAutoTable.finalY + 8;
+
+    // Inventory Value by Category
+    if (Array.isArray(data.valueByCategory) && data.valueByCategory.length > 0) {
+      addSection('Inventory Value by Category');
+      autoTable(doc, {
+        startY: y,
+        head: [['Category', 'Value']],
+        body: data.valueByCategory.map((c: any) => [
+          c.category.replace(/_/g, ' '),
+          fmt(c.value),
         ]),
-        ...tableStyles([76, 175, 80]),
+        ...salesTS(),
+        columnStyles: {
+          1: { halign: 'right' as const },
+        },
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    // Purchase Orders by Status
+    if (Array.isArray(data.poByStatus) && data.poByStatus.length > 0) {
+      addSection('Purchase Orders by Status');
+      autoTable(doc, {
+        startY: y,
+        head: [['Status', 'Count']],
+        body: data.poByStatus.map((s: any) => [
+          s.status.replace(/_/g, ' '),
+          s.count,
+        ]),
+        ...salesTS(),
+        columnStyles: {
+          1: { halign: 'right' as const },
+        },
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    // Top Suppliers by PO Spend
+    if (Array.isArray(data.topSuppliers) && data.topSuppliers.length > 0) {
+      addSection('Top Suppliers by PO Spend');
+      autoTable(doc, {
+        startY: y,
+        head: [
+          [
+            '#',
+            'Supplier',
+            'POs',
+            'Total Spend',
+            'Amount Paid',
+            'Outstanding',
+          ],
+        ],
+        body: data.topSuppliers.map((s: any, i: number) => {
+          const outstanding = (s.spend ?? 0) - (s.paid ?? 0);
+          return [
+            i + 1,
+            s.name,
+            s.poCount,
+            fmt(s.spend ?? 0),
+            fmt(s.paid ?? 0),
+            fmt(outstanding),
+          ];
+        }),
+        ...salesTS(),
+        columnStyles: {
+          0: { cellWidth: 8 },
+          1: { cellWidth: 52 },
+          2: { cellWidth: 18, halign: 'right' as const },
+          3: { cellWidth: 34, halign: 'right' as const },
+          4: { cellWidth: 34, halign: 'right' as const },
+          5: { cellWidth: 36, halign: 'right' as const },
+        },
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    // Top Consumed Materials
+    if (Array.isArray(data.topConsumed) && data.topConsumed.length > 0) {
+      addSection('Top Consumed Materials');
+      doc.setFontSize(8.5);
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text('Ranked by quantity issued in the selected period', 14, y);
+      doc.setTextColor(0, 0, 0);
+      y += 5;
+      autoTable(doc, {
+        startY: y,
+        head: [['#', 'Material', 'Qty Issued']],
+        body: data.topConsumed.map((m: any, i: number) => [
+          i + 1,
+          m.name,
+          m.quantityIssued,
+        ]),
+        ...salesTS(),
+        columnStyles: {
+          0: { cellWidth: 8 },
+          1: { cellWidth: 140 },
+          2: { cellWidth: 34, halign: 'right' as const },
+        },
       });
     }
   } else if (department === 'finance') {
+    // ── Cash-flow Key Metrics ───────────────────────────────────────────────
     addSection('Key Metrics');
     autoTable(doc, {
       startY: y,
       head: [['Metric', 'Value']],
       body: [
         ['Total Invoiced', fmt(data.totalInvoiced)],
+        ['Invoice Count', data.totalInvoiceCount ?? 0],
         ['Total Collected', fmt(data.totalCollected)],
         ['Outstanding (AR)', fmt(data.totalOutstanding)],
         ['Collection Rate', `${data.collectionRate}%`],
@@ -3760,10 +4148,30 @@ async function exportPDF(
         ['Tax Collected', fmt(data.totalTax)],
         ['Total Discounts', fmt(data.totalDiscount)],
       ],
-      ...tableStyles([156, 39, 176]),
+      ...salesTS(),
     });
     y = (doc as any).lastAutoTable.finalY + 8;
 
+    // ── Profitability Overview ──────────────────────────────────────────────
+    addSection('Profitability Overview');
+    autoTable(doc, {
+      startY: y,
+      head: [['Metric', 'Value']],
+      body: [
+        ['Sales Units', (data.salesUnits ?? 0).toLocaleString()],
+        ['Net Revenue', fmt(data.totalInvoiced ?? 0)],
+        ['Total COGS', fmt(data.totalCogs ?? 0)],
+        ['Gross Profit', fmt(data.grossProfit ?? 0)],
+        [
+          'Profit Margin',
+          data.profitMargin != null ? `${data.profitMargin}%` : 'N/A',
+        ],
+      ],
+      ...salesTS(),
+    });
+    y = (doc as any).lastAutoTable.finalY + 8;
+
+    // ── Invoice Status Summary ──────────────────────────────────────────────
     addSection('Invoice Status Summary');
     autoTable(doc, {
       startY: y,
@@ -3788,10 +4196,18 @@ async function exportPDF(
           `${rate}%`,
         ];
       }),
-      ...tableStyles([156, 39, 176]),
+      ...salesTS(),
+      columnStyles: {
+        1: { halign: 'right' as const },
+        2: { halign: 'right' as const },
+        3: { halign: 'right' as const },
+        4: { halign: 'right' as const },
+        5: { halign: 'right' as const },
+      },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
 
+    // ── Receivables Aging ───────────────────────────────────────────────────
     if (
       Array.isArray(data.receivablesAging) &&
       data.receivablesAging.length > 0
@@ -3799,13 +4215,17 @@ async function exportPDF(
       addSection('Receivables Aging');
       autoTable(doc, {
         startY: y,
-        head: [['Bucket', 'Outstanding Amount']],
+        head: [['Aging Bucket', 'Outstanding Amount']],
         body: data.receivablesAging.map((a: any) => [a.label, fmt(a.value)]),
-        ...tableStyles([156, 39, 176]),
+        ...salesTS(),
+        columnStyles: {
+          1: { halign: 'right' as const },
+        },
       });
       y = (doc as any).lastAutoTable.finalY + 8;
     }
 
+    // ── Monthly Revenue Trend ───────────────────────────────────────────────
     if (Array.isArray(data.monthlyTrend) && data.monthlyTrend.length > 1) {
       addSection('Monthly Revenue Trend');
       autoTable(doc, {
@@ -3816,13 +4236,45 @@ async function exportPDF(
           fmt(m.invoiced),
           fmt(m.collected),
         ]),
-        ...tableStyles([156, 39, 176]),
+        ...salesTS(),
+        columnStyles: {
+          1: { halign: 'right' as const },
+          2: { halign: 'right' as const },
+        },
       });
       y = (doc as any).lastAutoTable.finalY + 8;
     }
 
+    // ── Payment Methods ─────────────────────────────────────────────────────
+    if (Array.isArray(data.paymentMethods) && data.paymentMethods.length > 0) {
+      addSection('Payment Methods');
+      doc.setFontSize(8.5);
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text('Cash received in the selected period, broken down by method', 14, y);
+      doc.setTextColor(0, 0, 0);
+      y += 5;
+      autoTable(doc, {
+        startY: y,
+        head: [['Method', 'Amount Collected']],
+        body: data.paymentMethods.map((m: any) => [m.method, fmt(m.amount)]),
+        ...salesTS(),
+        columnStyles: {
+          1: { halign: 'right' as const },
+        },
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    // ── Top Debtors ─────────────────────────────────────────────────────────
     if (Array.isArray(data.topDebtors) && data.topDebtors.length > 0) {
-      addSection('Top Debtors (Current Outstanding)');
+      addSection('Top Debtors — Highest Outstanding Balances');
+      doc.setFontSize(8.5);
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text('Current state across all time, not filtered by period', 14, y);
+      doc.setTextColor(0, 0, 0);
+      y += 5;
       autoTable(doc, {
         startY: y,
         head: [['#', 'Customer', 'Invoices', 'Total Invoiced', 'Outstanding']],
@@ -3833,7 +4285,71 @@ async function exportPDF(
           fmt(d.totalInvoiced),
           fmt(d.outstanding),
         ]),
-        ...tableStyles([156, 39, 176]),
+        ...salesTS(),
+        columnStyles: {
+          0: { cellWidth: 8 },
+          2: { halign: 'right' as const },
+          3: { halign: 'right' as const },
+          4: { halign: 'right' as const },
+        },
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    // ── Revenue & Profitability Detail ──────────────────────────────────────
+    if ((data.productDetails ?? []).length > 0) {
+      addSection('Revenue & Profitability Detail — by Product');
+      doc.setFontSize(8.5);
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(
+        'Aggregated per product · unit cost from current cost price · discount prorated from invoice',
+        14,
+        y,
+      );
+      doc.setTextColor(0, 0, 0);
+      y += 5;
+      autoTable(doc, {
+        startY: y,
+        head: [
+          [
+            'Date',
+            'Product',
+            'Units Sold',
+            'Unit Price',
+            'Discount',
+            'Returns',
+            'Unit Cost',
+            'Net Revenue',
+            'COGS',
+            'Profit/Unit',
+          ],
+        ],
+        body: (data.productDetails ?? []).map((row: any) => [
+          fmtDateTime(row.date),
+          row.product,
+          (row.unitsSold ?? 0).toLocaleString(),
+          fmt(row.unitPrice ?? 0),
+          row.discount > 0 ? `-${fmt(row.discount)}` : '—',
+          row.returns > 0 ? row.returns : '—',
+          row.unitCost > 0 ? fmt(row.unitCost) : '—',
+          fmt(row.netRevenue ?? 0),
+          row.cogs > 0 ? fmt(row.cogs) : '—',
+          row.unitCost > 0 ? fmt(row.profitPerUnit ?? 0) : '—',
+        ]),
+        ...salesTS(),
+        columnStyles: {
+          0: { cellWidth: 22 },
+          1: { cellWidth: 32 },
+          2: { cellWidth: 14, halign: 'right' as const },
+          3: { cellWidth: 18, halign: 'right' as const },
+          4: { cellWidth: 16, halign: 'right' as const },
+          5: { cellWidth: 12, halign: 'right' as const },
+          6: { cellWidth: 16, halign: 'right' as const },
+          7: { cellWidth: 18, halign: 'right' as const },
+          8: { cellWidth: 16, halign: 'right' as const },
+          9: { cellWidth: 18, halign: 'right' as const },
+        },
       });
     }
   } else if (department === 'quality-control') {
@@ -3971,20 +4487,194 @@ async function exportPDF(
         ...tableStyles([244, 67, 54]),
       });
     }
+  } else if (department === 'procurement') {
+    // ── Key Metrics ─────────────────────────────────────────────────────────
+    addSection('Key Metrics');
+    autoTable(doc, {
+      startY: y,
+      head: [['Metric', 'Value']],
+      body: [
+        ['Total PO Value', fmt(data.totalSpend ?? 0)],
+        ['PO Amount Paid', fmt(data.totalPaid ?? 0)],
+        ['PO Outstanding', fmt(data.totalOutstanding ?? 0)],
+        ['PO Count', data.totalPOs ?? 0],
+        [
+          'Avg Cost / Unit',
+          data.avgCostPerUnit != null ? fmt(data.avgCostPerUnit) : 'N/A',
+        ],
+        [
+          'Avg Lead Time',
+          data.avgLeadTime != null ? `${data.avgLeadTime} days` : 'N/A',
+        ],
+        [
+          'On-Time Delivery Rate',
+          data.onTimeRate != null ? `${data.onTimeRate}%` : 'N/A',
+        ],
+        [
+          'On-Time Deliveries',
+          data.deliveredCount > 0
+            ? `${data.onTimeCount ?? 0} of ${data.deliveredCount}`
+            : 'No deliveries yet',
+        ],
+      ],
+      ...salesTS(),
+    });
+    y = (doc as any).lastAutoTable.finalY + 8;
+
+    // ── PO Status Summary ────────────────────────────────────────────────────
+    if (Array.isArray(data.poByStatus) && data.poByStatus.length > 0) {
+      addSection('PO Status Summary');
+      autoTable(doc, {
+        startY: y,
+        head: [['Status', 'Count', 'Total Value']],
+        body: data.poByStatus.map((s: any) => [
+          s.status.replace(/_/g, ' '),
+          s.count,
+          fmt(s.amount ?? 0),
+        ]),
+        ...salesTS(),
+        columnStyles: {
+          1: { halign: 'right' as const },
+          2: { halign: 'right' as const },
+        },
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    // ── Monthly PO Volume ────────────────────────────────────────────────────
+    if (Array.isArray(data.monthlyTrend) && data.monthlyTrend.length > 1) {
+      addSection('Monthly PO Volume');
+      autoTable(doc, {
+        startY: y,
+        head: [['Month', 'PO Count']],
+        body: data.monthlyTrend.map((m: any) => [m.month, m.count]),
+        ...salesTS(),
+        columnStyles: {
+          1: { halign: 'right' as const },
+        },
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    // ── Supplier Performance ─────────────────────────────────────────────────
+    if (Array.isArray(data.topSuppliers) && data.topSuppliers.length > 0) {
+      addSection('Supplier Performance');
+      doc.setFontSize(8.5);
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(
+        'Spend, PO count and on-time rate per supplier for the selected period',
+        14,
+        y,
+      );
+      doc.setTextColor(0, 0, 0);
+      y += 5;
+      autoTable(doc, {
+        startY: y,
+        head: [['#', 'Supplier', 'POs', 'Total Spend', 'On-Time Rate']],
+        body: data.topSuppliers.map((s: any, i: number) => [
+          i + 1,
+          s.name,
+          s.poCount,
+          fmt(s.spend ?? 0),
+          s.onTimeRate != null ? `${s.onTimeRate}%` : 'N/A',
+        ]),
+        ...salesTS(),
+        columnStyles: {
+          0: { cellWidth: 8 },
+          1: { cellWidth: 80 },
+          2: { cellWidth: 18, halign: 'right' as const },
+          3: { cellWidth: 38, halign: 'right' as const },
+          4: { cellWidth: 38, halign: 'right' as const },
+        },
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    // ── Purchase-Order Detail ────────────────────────────────────────────────
+    if ((data.poDetails ?? []).length > 0) {
+      addSection('Purchase-Order Detail');
+      doc.setFontSize(8.5);
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text('Line-level breakdown of every PO in the selected period', 14, y);
+      doc.setTextColor(0, 0, 0);
+      y += 5;
+      autoTable(doc, {
+        startY: y,
+        head: [
+          [
+            'PO ID',
+            'Supplier',
+            'Item',
+            'Qty',
+            'Unit Cost',
+            'Total Cost',
+            'Order Date',
+            'Delivery Date',
+            'Lead Time',
+            'On-Time',
+            'Cost Variance',
+          ],
+        ],
+        body: (data.poDetails ?? []).map((po: any) => [
+          po.poNumber,
+          po.supplier,
+          po.item,
+          po.qty > 0 ? po.qty.toLocaleString() : '—',
+          po.unitCost != null ? fmt(po.unitCost) : '—',
+          fmt(po.totalCost ?? 0),
+          fmtDateTime(po.orderDate),
+          po.deliveryDate ? fmtDateTime(po.deliveryDate) : 'Pending',
+          po.leadTime != null ? `${po.leadTime}d` : '—',
+          po.onTime === true ? '✓' : po.onTime === false ? '✗' : '—',
+          po.costVariance === 0 ? 'Settled' : fmt(po.costVariance ?? 0),
+        ]),
+        ...salesTS(),
+        columnStyles: {
+          0: { cellWidth: 18, fontStyle: 'bold' as const },
+          1: { cellWidth: 22 },
+          2: { cellWidth: 26 },
+          3: { cellWidth: 10, halign: 'right' as const },
+          4: { cellWidth: 16, halign: 'right' as const },
+          5: { cellWidth: 17, halign: 'right' as const },
+          6: { cellWidth: 18 },
+          7: { cellWidth: 18 },
+          8: { cellWidth: 12, halign: 'right' as const },
+          9: { cellWidth: 10, halign: 'center' as const },
+          10: { cellWidth: 15, halign: 'right' as const },
+        },
+      });
+    }
   }
 
   // ── Footer on every page ────────────────────────────────────────────────────
   const pageCount = (doc as any).internal.getNumberOfPages();
+  const pageH = doc.internal.pageSize.height;
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFont('Roboto', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text(
-      ` ${label} Report | Page ${i} of ${pageCount}`,
-      14,
-      doc.internal.pageSize.height - 8,
-    );
+    if (isSales) {
+      // Thin mid-green rule above footer text
+      doc.setFillColor(31, 164, 59);
+      doc.rect(14, pageH - 15, 182, 0.4, 'F');
+      // Left — company name in brand dark green
+      doc.setFontSize(7.5);
+      doc.setFont('Roboto', 'bold');
+      doc.setTextColor(0, 61, 52);
+      doc.text('Greenage Technologies Limited', 14, pageH - 9);
+      // Centre — report label in muted grey
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(120, 120, 120);
+      doc.text(`${label} Department Report`, 105, pageH - 9, { align: 'center' });
+      // Right — page number in brand dark green
+      doc.setTextColor(0, 61, 52);
+      doc.text(`Page ${i} of ${pageCount}`, 196, pageH - 9, { align: 'right' });
+    } else {
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(` ${label} Report | Page ${i} of ${pageCount}`, 14, pageH - 8);
+    }
   }
 
   doc.save(

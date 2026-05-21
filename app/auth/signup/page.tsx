@@ -214,16 +214,16 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       <CssBaseline enableColorScheme />
       <SignUpContainer direction="column" justifyContent="space-between">
         <Card variant="outlined">
-          <img
+          {/* <img
             src="/greenage_logo.png"
             alt="GreenAge logo"
             style={{
               width: '120px',
               height: 'auto',
             }}
-          />
+          /> */}
 
-          {/* <Typography
+          <Typography
             sx={{
               fontSize: '1.5rem',
               fontWeight: 700,
@@ -232,7 +232,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
             }}
           >
             LOGO
-          </Typography> */}
+          </Typography>
           <Typography
             component="h1"
             variant="h4"

@@ -35,7 +35,11 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: 'Overview', path: '/customer/overview', icon: DashboardIcon },
-  { label: 'Products', path: '/customer/products', icon: Inventory2OutlinedIcon },
+  {
+    label: 'Products',
+    path: '/customer/products',
+    icon: Inventory2OutlinedIcon,
+  },
   { label: 'Quotes', path: '/customer/quotes', icon: DescriptionIcon },
   { label: 'Invoices', path: '/customer/invoices', icon: ReceiptIcon },
   { label: 'Orders', path: '/customer/orders', icon: ShoppingCartIcon },
@@ -77,7 +81,7 @@ export default function CustomerSidebar() {
       }}
     >
       {/* Header */}
-      <Box
+      {/* <Box
         sx={{
           height: 80,
           display: 'flex',
@@ -103,7 +107,7 @@ export default function CustomerSidebar() {
         >
           {collapsed ? <MenuRoundedIcon /> : <MenuOpenRoundedIcon />}
         </IconButton>
-      </Box>
+      </Box> */}
 
       {/* Section label */}
       {!collapsed && (
@@ -128,11 +132,16 @@ export default function CustomerSidebar() {
         <List disablePadding sx={{ px: collapsed ? 1 : 2 }}>
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
+            const isActive =
+              pathname === item.path || pathname.startsWith(item.path + '/');
 
             return (
               <Box key={item.label} sx={{ mb: 0.5 }}>
-                <Tooltip title={collapsed ? item.label : ''} placement="right" arrow>
+                <Tooltip
+                  title={collapsed ? item.label : ''}
+                  placement="right"
+                  arrow
+                >
                   <ListItemButton
                     onClick={() => router.push(item.path)}
                     sx={{
@@ -212,7 +221,12 @@ export default function CustomerSidebar() {
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography
                 noWrap
-                sx={{ color: '#fff', fontSize: '0.825rem', fontWeight: 500, lineHeight: 1.2 }}
+                sx={{
+                  color: '#fff',
+                  fontSize: '0.825rem',
+                  fontWeight: 500,
+                  lineHeight: 1.2,
+                }}
               >
                 {isLoading ? 'Loading...' : userName}
               </Typography>
