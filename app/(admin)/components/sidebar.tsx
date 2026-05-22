@@ -230,13 +230,13 @@ export default function Sidebar() {
       >
         {!collapsed && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            {/* <Box
+            <Box
               component="img"
               src="/greenage_logo.png"
               alt="GreenAge"
               sx={{ height: 28, width: 'auto' }}
-            /> */}
-            <Typography
+            />
+            {/* <Typography
               sx={{
                 fontSize: '1.5rem',
                 fontWeight: 700,
@@ -245,7 +245,7 @@ export default function Sidebar() {
               }}
             >
               LOGO
-            </Typography>
+            </Typography> */}
           </Box>
         )}
         <IconButton
