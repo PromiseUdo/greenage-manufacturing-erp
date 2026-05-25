@@ -407,6 +407,16 @@ export async function GET(
 
       // ─── INVENTORY ────────────────────────────────────────────────────────────
       case 'inventory': {
+        const periodDaysMap: Record<string, number> = {
+          daily: 1,
+          monthly: 30,
+          quarterly: 90,
+          biannual: 180,
+          yearly: 365,
+          alltime: 365,
+        };
+        const periodDays = periodDaysMap[period] ?? 30;
+
         const [
           materials,
           poStatuses,
@@ -415,6 +425,8 @@ export async function GET(
           grnCount,
           topIssuancesRaw,
           topSuppliersRaw,
+          allIssuancesRaw,
+          allInflowsRaw,
         ] = await Promise.all([
           prisma.material.findMany({
             select: {
@@ -459,6 +471,19 @@ export async function GET(
             where: { createdAt: dateFilter },
             orderBy: { _sum: { totalAmount: 'desc' } },
             take: 5,
+          }),
+          // All material issuances (usage) per material for stock movement detail
+          prisma.materialIssuance.groupBy({
+            by: ['materialId'],
+            _sum: { quantity: true },
+            where: { issuedAt: dateFilter },
+          }),
+          // All material batch receipts (inflow) per material — covers both direct PO
+          // receiving and GRN-linked receipts since both write to MaterialBatch
+          prisma.materialBatch.groupBy({
+            by: ['materialId'],
+            _sum: { quantity: true },
+            where: { receivedDate: dateFilter },
           }),
         ]);
 
@@ -505,6 +530,42 @@ export async function GET(
 
         const totalPOSpend = poAgg._sum.totalAmount || 0;
         const totalPOPaid  = poAgg._sum.paidAmount  || 0;
+
+        // ── Stock movement detail — all materials ─────────────────────────
+        const usageMap = new Map(
+          allIssuancesRaw.map((r) => [r.materialId, r._sum.quantity ?? 0]),
+        );
+        const inflowMap = new Map(
+          allInflowsRaw.map((r) => [r.materialId, r._sum.quantity ?? 0]),
+        );
+
+        const stockMovementDetail = materials
+          .map((m) => {
+            const usage  = usageMap.get(m.id)  ?? 0;
+            const inflow = inflowMap.get(m.id) ?? 0;
+            const closingStock  = m.currentStock;
+            const openingStock  = Math.max(0, closingStock - inflow + usage);
+            const dailyUsage    = usage / periodDays;
+            const daysCover     = dailyUsage > 0 ? Math.round(closingStock / dailyUsage) : null;
+            const stockStatus   =
+              closingStock === 0
+                ? 'Out of Stock'
+                : closingStock <= m.reorderLevel
+                  ? 'Low Stock'
+                  : 'Healthy';
+            return {
+              name:         m.name,
+              unit:         m.unit,
+              reorderLevel: m.reorderLevel,
+              openingStock,
+              usage,
+              inflow,
+              closingStock,
+              stockStatus,
+              daysCover,
+            };
+          })
+          .sort((a, b) => a.name.localeCompare(b.name));
 
         return NextResponse.json({
           // ── KPI figures ────────────────────────────────────────────────
@@ -580,6 +641,9 @@ export async function GET(
             spend: s._sum.totalAmount || 0,
             paid: s._sum.paidAmount || 0,
           })),
+
+          // ── Stock movement detail (all materials, period-scoped) ───────
+          stockMovementDetail,
         });
       }
 

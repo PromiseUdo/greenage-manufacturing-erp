@@ -2167,6 +2167,134 @@ function InventoryReport({ data }: { data: any }) {
         </TableContainer>
       </Paper>
 
+      {/* ── Stock Movement Detail table ─────────────────────────────────── */}
+      {Array.isArray(data.stockMovementDetail) &&
+        data.stockMovementDetail.length > 0 && (
+          <Paper
+            elevation={0}
+            sx={{
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 3,
+              mb: 3,
+            }}
+          >
+            <Box sx={{ p: 2.5, pb: 1.5 }}>
+              <Typography variant="subtitle1" fontWeight={700}>
+                Stock Movement Detail
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Opening stock derived from closing stock adjusted for period inflows and usage
+              </Typography>
+            </Box>
+            <TableContainer sx={{ overflowX: 'auto' }}>
+              <Table size="small" sx={{ minWidth: 860 }}>
+                <StyledTableHead>
+                  <TableRow>
+                    <TableCell>#</TableCell>
+                    <TableCell>Item</TableCell>
+                    <TableCell align="right">Opening Stock</TableCell>
+                    <TableCell align="right">Usage</TableCell>
+                    <TableCell align="right">Inflow</TableCell>
+                    <TableCell align="right">Closing Stock</TableCell>
+                    <TableCell align="center">Stock Status</TableCell>
+                    <TableCell align="right">Reorder Level</TableCell>
+                    <TableCell align="right">Days Cover</TableCell>
+                    <TableCell align="center">UoM</TableCell>
+                  </TableRow>
+                </StyledTableHead>
+                <TableBody>
+                  {data.stockMovementDetail.map((m: any, i: number) => {
+                    const statusColor =
+                      m.stockStatus === 'Out of Stock'
+                        ? '#F44336'
+                        : m.stockStatus === 'Low Stock'
+                          ? '#FF9800'
+                          : '#4CAF50';
+                    const statusBg =
+                      m.stockStatus === 'Out of Stock'
+                        ? '#FFEBEE'
+                        : m.stockStatus === 'Low Stock'
+                          ? '#FFF3E0'
+                          : '#E8F5E9';
+                    return (
+                      <TableRow key={i} hover>
+                        <TableCell sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                          {i + 1}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, maxWidth: 200 }}>
+                          {m.name}
+                        </TableCell>
+                        <TableCell align="right">
+                          {(m.openingStock ?? 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ color: m.usage > 0 ? '#F44336' : 'text.secondary' }}
+                        >
+                          {m.usage > 0 ? `−${m.usage.toLocaleString()}` : '—'}
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ color: m.inflow > 0 ? '#4CAF50' : 'text.secondary' }}
+                        >
+                          {m.inflow > 0 ? `+${m.inflow.toLocaleString()}` : '—'}
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700 }}>
+                          {m.closingStock.toLocaleString()}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={m.stockStatus}
+                            size="small"
+                            sx={{
+                              fontSize: '0.68rem',
+                              fontWeight: 600,
+                              color: statusColor,
+                              bgcolor: statusBg,
+                              border: `1px solid ${statusColor}`,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell align="right" sx={{ color: 'text.secondary' }}>
+                          {m.reorderLevel.toLocaleString()}
+                        </TableCell>
+                        <TableCell align="right">
+                          {m.daysCover != null ? (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontWeight: 600,
+                                color:
+                                  m.daysCover < 7
+                                    ? '#F44336'
+                                    : m.daysCover < 14
+                                      ? '#FF9800'
+                                      : '#4CAF50',
+                              }}
+                            >
+                              {m.daysCover}d
+                            </Typography>
+                          ) : (
+                            <Typography variant="caption" color="text.disabled">
+                              ∞
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Typography variant="caption" color="text.secondary">
+                            {m.unit || '—'}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        )}
+
       {/* ── Top suppliers detail table ───────────────────────────────────── */}
       {hasTopSuppliers && (
         <Paper
@@ -3597,7 +3725,10 @@ async function exportPDF(
   const { default: jsPDF } = await import('jspdf');
   const { default: autoTable } = await import('jspdf-autotable');
 
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const isLandscape = department === 'inventory';
+  const pageWidth   = isLandscape ? 297 : 210;
+
+  const doc = new jsPDF({ orientation: isLandscape ? 'landscape' : 'portrait', unit: 'mm', format: 'a4' });
 
   // Embed Roboto so ₦ and other Unicode characters render correctly
   await registerRoboto(doc);
@@ -3628,7 +3759,7 @@ async function exportPDF(
 
     // Primary header band — deep brand green (#003D34)
     doc.setFillColor(0, 61, 52);
-    doc.rect(0, 0, 210, 32, 'F');
+    doc.rect(0, 0, pageWidth, 32, 'F');
 
     // Logo on the left
     if (logoB64) {
@@ -3653,7 +3784,7 @@ async function exportPDF(
 
     // Accent stripe under the header in mid-green
     doc.setFillColor(31, 164, 59);
-    doc.rect(0, 32, 210, 1.5, 'F');
+    doc.rect(0, 32, pageWidth, 1.5, 'F');
 
     doc.setTextColor(0, 0, 0);
   } else {
@@ -4124,8 +4255,96 @@ async function exportPDF(
         ...salesTS(),
         columnStyles: {
           0: { cellWidth: 8 },
-          1: { cellWidth: 140 },
+          1: { cellWidth: 170 },
           2: { cellWidth: 34, halign: 'right' as const },
+        },
+      });
+      y = (doc as any).lastAutoTable.finalY + 8;
+    }
+
+    // Stock Movement Detail
+    if (
+      Array.isArray(data.stockMovementDetail) &&
+      data.stockMovementDetail.length > 0
+    ) {
+      addSection('Stock Movement Detail');
+      doc.setFontSize(8.5);
+      doc.setFont('Roboto', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(
+        'Opening stock = Closing − Inflow + Usage  ·  Days Cover = Closing ÷ (Usage ÷ Period Days)',
+        14,
+        y,
+      );
+      doc.setTextColor(0, 0, 0);
+      y += 5;
+      autoTable(doc, {
+        startY: y,
+        head: [
+          [
+            '#',
+            'Item',
+            'Opening Stock',
+            'Usage',
+            'Inflow',
+            'Closing Stock',
+            'Stock Status',
+            'Reorder Level',
+            'Days Cover',
+            'UoM',
+          ],
+        ],
+        body: data.stockMovementDetail.map((m: any, i: number) => [
+          i + 1,
+          m.name,
+          (m.openingStock ?? 0).toLocaleString(),
+          m.usage > 0 ? m.usage.toLocaleString() : '—',
+          m.inflow > 0 ? m.inflow.toLocaleString() : '—',
+          m.closingStock.toLocaleString(),
+          m.stockStatus,
+          m.reorderLevel.toLocaleString(),
+          m.daysCover != null ? `${m.daysCover}d` : '∞',
+          m.unit || '—',
+        ]),
+        ...salesTS(),
+        didParseCell: (hookData: any) => {
+          if (hookData.section === 'body' && hookData.column.index === 6) {
+            const status = hookData.cell.raw as string;
+            if (status === 'Out of Stock') {
+              hookData.cell.styles.textColor = [244, 67, 54];
+              hookData.cell.styles.fontStyle = 'bold';
+            } else if (status === 'Low Stock') {
+              hookData.cell.styles.textColor = [255, 152, 0];
+              hookData.cell.styles.fontStyle = 'bold';
+            } else {
+              hookData.cell.styles.textColor = [76, 175, 80];
+              hookData.cell.styles.fontStyle = 'bold';
+            }
+          }
+          // Colour usage column red when there is a value
+          if (hookData.section === 'body' && hookData.column.index === 3) {
+            if (hookData.cell.raw !== '—') {
+              hookData.cell.styles.textColor = [244, 67, 54];
+            }
+          }
+          // Colour inflow column green when there is a value
+          if (hookData.section === 'body' && hookData.column.index === 4) {
+            if (hookData.cell.raw !== '—') {
+              hookData.cell.styles.textColor = [76, 175, 80];
+            }
+          }
+        },
+        columnStyles: {
+          0:  { cellWidth: 8,  halign: 'center' as const },
+          1:  { cellWidth: 62 },
+          2:  { cellWidth: 26, halign: 'right' as const },
+          3:  { cellWidth: 22, halign: 'right' as const },
+          4:  { cellWidth: 22, halign: 'right' as const },
+          5:  { cellWidth: 26, halign: 'right' as const },
+          6:  { cellWidth: 28, halign: 'center' as const },
+          7:  { cellWidth: 26, halign: 'right' as const },
+          8:  { cellWidth: 24, halign: 'right' as const },
+          9:  { cellWidth: 18, halign: 'center' as const },
         },
       });
     }
