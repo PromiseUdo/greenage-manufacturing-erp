@@ -21,11 +21,34 @@ import {
   RequestQuote,
   ArrowForward,
   BarChart,
+  TrendingUp,
 } from '@mui/icons-material';
 
 // ─── Department config ────────────────────────────────────────────────────────
 
-const DEPARTMENTS = [
+const DEPARTMENTS: {
+  id: string;
+  label: string;
+  description: string;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+  metrics: string[];
+  href?: string;
+  badge?: string;
+}[] = [
+  {
+    id: 'investor',
+    label: 'Investor Report',
+    description:
+      'Executive-level company overview combining financial, operational, and strategic data into a single boardroom-ready report with PDF export and email delivery.',
+    icon: TrendingUp,
+    color: '#003D34',
+    bg: 'rgba(0,61,52,0.08)',
+    metrics: ['Revenue', 'Profit', 'Production Volume', 'Inventory Value'],
+    href: '/reports/investor',
+    badge: 'Executive',
+  },
   {
     id: 'sales',
     label: 'Sales',
@@ -109,7 +132,11 @@ export default function ReportsHubPage() {
   const isSuperUser = role === 'SUPERADMIN';
 
   const visibleDepts = DEPARTMENTS.filter(
-    (d) => isSuperUser || permissions.includes(`reports:${d.id}`),
+    (d) =>
+      isSuperUser ||
+      permissions.includes(`reports:${d.id}`) ||
+      // Investor report shares the same permission check
+      (d.id === 'investor' && (isSuperUser || permissions.includes('reports:investor'))),
   );
 
   return (
@@ -168,9 +195,25 @@ export default function ReportsHubPage() {
                   >
                     <Icon sx={{ color: dept.color, fontSize: 26 }} />
                   </Box>
-                  <Typography variant="h6" fontWeight={700}>
-                    {dept.label}
-                  </Typography>
+                  <Box>
+                    <Typography variant="h6" fontWeight={700} lineHeight={1.2}>
+                      {dept.label}
+                    </Typography>
+                    {dept.badge && (
+                      <Chip
+                        label={dept.badge}
+                        size="small"
+                        sx={{
+                          height: 18,
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          bgcolor: dept.bg,
+                          color: dept.color,
+                          mt: 0.25,
+                        }}
+                      />
+                    )}
+                  </Box>
                 </Stack>
 
                 {/* Description */}
@@ -203,7 +246,7 @@ export default function ReportsHubPage() {
                 <Button
                   variant="outlined"
                   endIcon={<ArrowForward />}
-                  onClick={() => router.push(`/reports/${dept.id}`)}
+                  onClick={() => router.push(dept.href ?? `/reports/${dept.id}`)}
                   sx={{
                     mt: 0.5,
                     borderColor: dept.color,

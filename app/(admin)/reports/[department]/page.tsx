@@ -20,7 +20,10 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Divider,
+  TextField,
+  InputAdornment,
 } from '@mui/material';
 import { styled, alpha } from '@mui/material/styles';
 import {
@@ -44,6 +47,7 @@ import {
   CheckCircleOutline,
   Cancel,
   Remove,
+  Search,
 } from '@mui/icons-material';
 import {
   PieChart,
@@ -1697,6 +1701,239 @@ function WorkOrderDetailTable({ orders }: { orders: any[] }) {
   );
 }
 
+// ─── Status filter options ────────────────────────────────────────────────────
+const STOCK_STATUSES = ['All', 'Healthy', 'Low Stock', 'Out of Stock'] as const;
+
+const STATUS_COLORS: Record<string, { text: string; bg: string; border: string }> = {
+  Healthy:        { text: '#2E7D32', bg: '#E8F5E9', border: '#4CAF50' },
+  'Low Stock':    { text: '#E65100', bg: '#FFF3E0', border: '#FF9800' },
+  'Out of Stock': { text: '#C62828', bg: '#FFEBEE', border: '#F44336' },
+};
+
+function StockMovementTable({ rows }: { rows: any[] }) {
+  const [search, setSearch]             = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [page, setPage]                 = useState(0);
+  const ROWS_PER_PAGE = 10;
+
+  const filtered = rows.filter((m) => {
+    const matchSearch = m.name.toLowerCase().includes(search.toLowerCase().trim());
+    const matchStatus = statusFilter === 'All' || m.stockStatus === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  const paged = filtered.slice(page * ROWS_PER_PAGE, (page + 1) * ROWS_PER_PAGE);
+
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setPage(0);
+  };
+
+  const handleStatusFilter = (status: string) => {
+    setStatusFilter(status);
+    setPage(0);
+  };
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, mb: 3 }}
+    >
+      {/* ── Toolbar ──────────────────────────────────────────────────────── */}
+      <Box
+        sx={{
+          p: 2.5,
+          pb: 2,
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 2,
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+        }}
+      >
+        {/* Title + subtitle */}
+        <Box>
+          <Typography variant="subtitle1" fontWeight={700}>
+            Stock Movement Detail
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Opening stock derived from closing stock adjusted for period inflows and usage
+          </Typography>
+        </Box>
+
+        {/* Controls */}
+        <Stack direction="row" spacing={1.5} flexWrap="wrap" alignItems="center">
+          {/* Search */}
+          <TextField
+            size="small"
+            placeholder="Search item…"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search sx={{ fontSize: 18, color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{ width: 210 }}
+          />
+
+          {/* Status filter chips */}
+          <Stack direction="row" spacing={0.75} flexWrap="wrap">
+            {STOCK_STATUSES.map((s) => {
+              const active   = statusFilter === s;
+              const palette  = STATUS_COLORS[s];
+              return (
+                <Chip
+                  key={s}
+                  label={s}
+                  size="small"
+                  clickable
+                  onClick={() => handleStatusFilter(s)}
+                  sx={{
+                    fontWeight:  active ? 700 : 500,
+                    fontSize:    '0.72rem',
+                    color:       active ? (palette?.text ?? '#003D34') : 'text.secondary',
+                    bgcolor:     active ? (palette?.bg   ?? 'rgba(0,61,52,0.08)') : 'transparent',
+                    border:      '1px solid',
+                    borderColor: active ? (palette?.border ?? '#003D34') : 'divider',
+                    transition:  'all 0.15s',
+                  }}
+                />
+              );
+            })}
+          </Stack>
+        </Stack>
+      </Box>
+
+      <Divider />
+
+      {/* ── Table ────────────────────────────────────────────────────────── */}
+      <TableContainer sx={{ overflowX: 'auto' }}>
+        <Table size="small" sx={{ minWidth: 860 }}>
+          <StyledTableHead>
+            <TableRow>
+              <TableCell>#</TableCell>
+              <TableCell>Item</TableCell>
+              <TableCell align="right">Opening Stock</TableCell>
+              <TableCell align="right">Usage</TableCell>
+              <TableCell align="right">Inflow</TableCell>
+              <TableCell align="right">Closing Stock</TableCell>
+              <TableCell align="center">Stock Status</TableCell>
+              <TableCell align="right">Reorder Level</TableCell>
+              <TableCell align="right">Days Cover</TableCell>
+              <TableCell align="center">UoM</TableCell>
+            </TableRow>
+          </StyledTableHead>
+          <TableBody>
+            {paged.length > 0 ? (
+              paged.map((m: any, i: number) => {
+                const palette = STATUS_COLORS[m.stockStatus];
+                // Global row number across pages
+                const rowNum = page * ROWS_PER_PAGE + i + 1;
+                return (
+                  <TableRow key={rowNum} hover>
+                    <TableCell sx={{ color: 'text.disabled', fontSize: '0.75rem' }}>
+                      {rowNum}
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 600, maxWidth: 200 }}>
+                      {m.name}
+                    </TableCell>
+                    <TableCell align="right">
+                      {(m.openingStock ?? 0).toLocaleString()}
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{ color: m.usage > 0 ? '#F44336' : 'text.disabled' }}
+                    >
+                      {m.usage > 0 ? `−${m.usage.toLocaleString()}` : '—'}
+                    </TableCell>
+                    <TableCell
+                      align="right"
+                      sx={{ color: m.inflow > 0 ? '#4CAF50' : 'text.disabled' }}
+                    >
+                      {m.inflow > 0 ? `+${m.inflow.toLocaleString()}` : '—'}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>
+                      {m.closingStock.toLocaleString()}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={m.stockStatus}
+                        size="small"
+                        sx={{
+                          fontSize:    '0.68rem',
+                          fontWeight:  600,
+                          color:       palette?.text ?? 'text.primary',
+                          bgcolor:     palette?.bg   ?? 'transparent',
+                          border:      `1px solid ${palette?.border ?? 'divider'}`,
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell align="right" sx={{ color: 'text.secondary' }}>
+                      {m.reorderLevel.toLocaleString()}
+                    </TableCell>
+                    <TableCell align="right">
+                      {m.daysCover != null ? (
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            color:
+                              m.daysCover < 7
+                                ? '#F44336'
+                                : m.daysCover < 14
+                                  ? '#FF9800'
+                                  : '#4CAF50',
+                          }}
+                        >
+                          {m.daysCover}d
+                        </Typography>
+                      ) : (
+                        <Typography variant="caption" color="text.disabled">∞</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="caption" color="text.secondary">
+                        {m.unit || '—'}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan={10} align="center" sx={{ py: 5 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No records match your search or filter.
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* ── Pagination ───────────────────────────────────────────────────── */}
+      <TablePagination
+        component="div"
+        count={filtered.length}
+        page={page}
+        rowsPerPage={ROWS_PER_PAGE}
+        rowsPerPageOptions={[10]}
+        onPageChange={(_, newPage) => setPage(newPage)}
+        labelDisplayedRows={({ from, to, count }) =>
+          `${from}–${to} of ${count} item${count !== 1 ? 's' : ''}`
+        }
+        sx={{ borderTop: '1px solid', borderColor: 'divider' }}
+      />
+    </Paper>
+  );
+}
+
 function InventoryReport({ data }: { data: any }) {
   const kpis: KpiCard[] = [
     {
@@ -2170,129 +2407,7 @@ function InventoryReport({ data }: { data: any }) {
       {/* ── Stock Movement Detail table ─────────────────────────────────── */}
       {Array.isArray(data.stockMovementDetail) &&
         data.stockMovementDetail.length > 0 && (
-          <Paper
-            elevation={0}
-            sx={{
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 3,
-              mb: 3,
-            }}
-          >
-            <Box sx={{ p: 2.5, pb: 1.5 }}>
-              <Typography variant="subtitle1" fontWeight={700}>
-                Stock Movement Detail
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Opening stock derived from closing stock adjusted for period inflows and usage
-              </Typography>
-            </Box>
-            <TableContainer sx={{ overflowX: 'auto' }}>
-              <Table size="small" sx={{ minWidth: 860 }}>
-                <StyledTableHead>
-                  <TableRow>
-                    <TableCell>#</TableCell>
-                    <TableCell>Item</TableCell>
-                    <TableCell align="right">Opening Stock</TableCell>
-                    <TableCell align="right">Usage</TableCell>
-                    <TableCell align="right">Inflow</TableCell>
-                    <TableCell align="right">Closing Stock</TableCell>
-                    <TableCell align="center">Stock Status</TableCell>
-                    <TableCell align="right">Reorder Level</TableCell>
-                    <TableCell align="right">Days Cover</TableCell>
-                    <TableCell align="center">UoM</TableCell>
-                  </TableRow>
-                </StyledTableHead>
-                <TableBody>
-                  {data.stockMovementDetail.map((m: any, i: number) => {
-                    const statusColor =
-                      m.stockStatus === 'Out of Stock'
-                        ? '#F44336'
-                        : m.stockStatus === 'Low Stock'
-                          ? '#FF9800'
-                          : '#4CAF50';
-                    const statusBg =
-                      m.stockStatus === 'Out of Stock'
-                        ? '#FFEBEE'
-                        : m.stockStatus === 'Low Stock'
-                          ? '#FFF3E0'
-                          : '#E8F5E9';
-                    return (
-                      <TableRow key={i} hover>
-                        <TableCell sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
-                          {i + 1}
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 600, maxWidth: 200 }}>
-                          {m.name}
-                        </TableCell>
-                        <TableCell align="right">
-                          {(m.openingStock ?? 0).toLocaleString()}
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ color: m.usage > 0 ? '#F44336' : 'text.secondary' }}
-                        >
-                          {m.usage > 0 ? `−${m.usage.toLocaleString()}` : '—'}
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ color: m.inflow > 0 ? '#4CAF50' : 'text.secondary' }}
-                        >
-                          {m.inflow > 0 ? `+${m.inflow.toLocaleString()}` : '—'}
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700 }}>
-                          {m.closingStock.toLocaleString()}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={m.stockStatus}
-                            size="small"
-                            sx={{
-                              fontSize: '0.68rem',
-                              fontWeight: 600,
-                              color: statusColor,
-                              bgcolor: statusBg,
-                              border: `1px solid ${statusColor}`,
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell align="right" sx={{ color: 'text.secondary' }}>
-                          {m.reorderLevel.toLocaleString()}
-                        </TableCell>
-                        <TableCell align="right">
-                          {m.daysCover != null ? (
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontWeight: 600,
-                                color:
-                                  m.daysCover < 7
-                                    ? '#F44336'
-                                    : m.daysCover < 14
-                                      ? '#FF9800'
-                                      : '#4CAF50',
-                              }}
-                            >
-                              {m.daysCover}d
-                            </Typography>
-                          ) : (
-                            <Typography variant="caption" color="text.disabled">
-                              ∞
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Typography variant="caption" color="text.secondary">
-                            {m.unit || '—'}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
+          <StockMovementTable rows={data.stockMovementDetail} />
         )}
 
       {/* ── Top suppliers detail table ───────────────────────────────────── */}
@@ -3725,7 +3840,7 @@ async function exportPDF(
   const { default: jsPDF } = await import('jspdf');
   const { default: autoTable } = await import('jspdf-autotable');
 
-  const isLandscape = department === 'inventory';
+  const isLandscape = department === 'inventory' || department === 'dispatch' || department === 'procurement' || department === 'finance' || department === 'sales';
   const pageWidth   = isLandscape ? 297 : 210;
 
   const doc = new jsPDF({ orientation: isLandscape ? 'landscape' : 'portrait', unit: 'mm', format: 'a4' });
@@ -3747,7 +3862,8 @@ async function exportPDF(
     department === 'production' ||
     department === 'inventory' ||
     department === 'finance' ||
-    department === 'procurement';
+    department === 'procurement' ||
+    department === 'dispatch';
 
   // ── Header ─────────────────────────────────────────────────────────────────
   if (isSales) {
@@ -4619,7 +4735,7 @@ async function exportPDF(
         ['Units Returned', data.totalUnitsReturned ?? 0],
         ['Total Repair Cost', fmt(data.totalRepairCost ?? 0)],
       ],
-      ...tableStyles([244, 67, 54]),
+      ...salesTS(),
     });
     y = (doc as any).lastAutoTable.finalY + 8;
 
@@ -4631,7 +4747,7 @@ async function exportPDF(
         s.status.replace(/_/g, ' '),
         s.count,
       ]),
-      ...tableStyles([244, 67, 54]),
+      ...salesTS(),
     });
     y = (doc as any).lastAutoTable.finalY + 8;
 
@@ -4643,7 +4759,7 @@ async function exportPDF(
         s.status.replace(/_/g, ' '),
         s.count,
       ]),
-      ...tableStyles([244, 67, 54]),
+      ...salesTS(),
     });
     y = (doc as any).lastAutoTable.finalY + 8;
 
@@ -4656,7 +4772,7 @@ async function exportPDF(
           s.status.replace(/_/g, ' '),
           s.count,
         ]),
-        ...tableStyles([244, 67, 54]),
+        ...salesTS(),
       });
       y = (doc as any).lastAutoTable.finalY + 8;
     }
@@ -4674,7 +4790,7 @@ async function exportPDF(
           r.returns,
           r.quantity,
         ]),
-        ...tableStyles([244, 67, 54]),
+        ...salesTS(),
       });
       y = (doc as any).lastAutoTable.finalY + 8;
     }
@@ -4689,7 +4805,7 @@ async function exportPDF(
           c.name,
           c.dispatches,
         ]),
-        ...tableStyles([244, 67, 54]),
+        ...salesTS(),
       });
       y = (doc as any).lastAutoTable.finalY + 8;
     }
@@ -4703,7 +4819,7 @@ async function exportPDF(
         startY: y,
         head: [['Method', 'Count']],
         body: data.deliveryMethods.map((m: any) => [m.method, m.count]),
-        ...tableStyles([244, 67, 54]),
+        ...salesTS(),
       });
     }
   } else if (department === 'procurement') {
@@ -4870,29 +4986,32 @@ async function exportPDF(
   // ── Footer on every page ────────────────────────────────────────────────────
   const pageCount = (doc as any).internal.getNumberOfPages();
   const pageH = doc.internal.pageSize.height;
+  const pageW = doc.internal.pageSize.width;
+  const fML = 14;
+  const fMR = 14;
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFont('Roboto', 'normal');
     if (isSales) {
       // Thin mid-green rule above footer text
       doc.setFillColor(31, 164, 59);
-      doc.rect(14, pageH - 15, 182, 0.4, 'F');
+      doc.rect(fML, pageH - 15, pageW - fML - fMR, 0.4, 'F');
       // Left — company name in brand dark green
       doc.setFontSize(7.5);
       doc.setFont('Roboto', 'bold');
       doc.setTextColor(0, 61, 52);
-      doc.text('Greenage Technologies Limited', 14, pageH - 9);
+      doc.text('Greenage Technologies Limited', fML, pageH - 9);
       // Centre — report label in muted grey
       doc.setFont('Roboto', 'normal');
       doc.setTextColor(120, 120, 120);
-      doc.text(`${label} Department Report`, 105, pageH - 9, { align: 'center' });
+      doc.text(`${label} Department Report`, pageW / 2, pageH - 9, { align: 'center' });
       // Right — page number in brand dark green
       doc.setTextColor(0, 61, 52);
-      doc.text(`Page ${i} of ${pageCount}`, 196, pageH - 9, { align: 'right' });
+      doc.text(`Page ${i} of ${pageCount}`, pageW - fMR, pageH - 9, { align: 'right' });
     } else {
       doc.setFontSize(8);
       doc.setTextColor(150);
-      doc.text(` ${label} Report | Page ${i} of ${pageCount}`, 14, pageH - 8);
+      doc.text(` ${label} Report | Page ${i} of ${pageCount}`, fML, pageH - 8);
     }
   }
 

@@ -21,6 +21,7 @@ import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import BlockIcon from '@mui/icons-material/Block';
 import ScienceIcon from '@mui/icons-material/Science';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 
 import SettingsIcon from '@mui/icons-material/Settings';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -337,6 +338,12 @@ export const navigation: {
             path: '/reports/dispatch',
             icon: LocalShippingIcon,
             permission: 'reports:dispatch',
+          },
+          {
+            label: 'Investor Report',
+            path: '/reports/investor',
+            icon: TrendingUpIcon,
+            permission: 'reports:investor',
           },
         ],
       },

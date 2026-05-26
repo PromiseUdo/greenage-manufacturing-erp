@@ -2020,3 +2020,39 @@ model ResearchNote {
 
   @@map("research_notes")
 }
+
+// ============================================
+// INVESTOR REPORT
+// ============================================
+
+model InvestorReportDraft {
+  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Period key this draft belongs to (e.g. "quarterly", "yearly", "alltime")
+  period               String
+
+  // KPI figures — auto-populated from live data on first load, editable by admin
+  revenue              Float?
+  profit               Float?
+  productionVolume     Float?
+  inventoryValue       Float?
+
+  // Narrative sections — entirely admin-authored
+  executiveSummary     String?
+  financialNarrative   String?
+  operationalNarrative String?
+  salesGrowthNarrative String?
+  strategyPipeline     String?
+  marketOpportunity    String?
+  riskMitigation       String?
+  outlookForecast      String?
+
+  // Audit fields
+  lastEditedBy         String?
+  lastEditedAt         DateTime?
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("investor_report_drafts")
+}
