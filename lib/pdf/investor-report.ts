@@ -97,7 +97,9 @@ export async function generateInvestorPDF(
   try {
     const logoPath = path.join(process.cwd(), 'public', 'greenage_logo_white.png');
     const logoData = fs.readFileSync(logoPath).toString('base64');
-    doc.addImage(logoData, 'PNG', ML, 10, 36, 12);
+    const logoH = 10; // fixed height in mm (mirrors sidebar's fixed-height approach)
+    const logoW = (logoH * 917) / 254; // width auto-calculated from true aspect ratio
+    doc.addImage(logoData, 'PNG', ML, 10, logoW, logoH);
   } catch { /* no logo — skip */ }
 
   doc.setTextColor(...WHITE);

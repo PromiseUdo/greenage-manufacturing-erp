@@ -41,6 +41,13 @@ import {
   Factory,
   InfoOutlined,
   CheckCircle,
+  Archive,
+  ExpandMore,
+  ExpandLess,
+  DeleteOutline,
+  ForwardToInbox,
+  FolderOpen,
+  WarningAmberOutlined,
 } from '@mui/icons-material';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -90,6 +97,23 @@ interface EmailState {
   bcc: string[];
   subject: string;
   message: string;
+}
+
+interface ArchiveRecord {
+  id: string;
+  period: string;
+  periodLabel: string;
+  title?: string | null;
+  revenue?: number | null;
+  profit?: number | null;
+  productionVolume?: number | null;
+  inventoryValue?: number | null;
+  lastSentTo: string[];
+  lastSentAt?: string | null;
+  sendCount: number;
+  archivedBy?: string | null;
+  generatedAt?: string | null;
+  createdAt: string;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -487,6 +511,30 @@ export default function InvestorReportPage() {
   });
   const [emailValidation, setEmailValidation] = useState({ to: '' });
 
+  // Archive panel
+  const [archives, setArchives] = useState<ArchiveRecord[]>([]);
+  const [archivesLoading, setArchivesLoading] = useState(false);
+  const [archivesOpen, setArchivesOpen] = useState(false);
+  const [archiving, setArchiving] = useState(false);
+
+  // Resend dialog
+  const [resendOpen, setResendOpen] = useState(false);
+  const [resendTarget, setResendTarget] = useState<ArchiveRecord | null>(null);
+  const [resendSending, setResendSending] = useState(false);
+  const [resendError, setResendError] = useState('');
+  const [resendState, setResendState] = useState<EmailState>({
+    to: [],
+    cc: [],
+    bcc: [],
+    subject: '',
+    message: '',
+  });
+  const [resendValidation, setResendValidation] = useState({ to: '' });
+
+  // Delete confirmation
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const role = (session?.user as any)?.role;
   const permissions: string[] = (session?.user as any)?.permissions ?? [];
   const hasAccess =
@@ -735,6 +783,161 @@ export default function InvestorReportPage() {
     }
   }
 
+  // ── Fetch archives ─────────────────────────────────────────────────────────
+  const fetchArchives = useCallback(async () => {
+    setArchivesLoading(true);
+    try {
+      const res = await fetch('/api/reports/investor/archives');
+      if (!res.ok) throw new Error('Failed to fetch archives');
+      const json = await res.json();
+      setArchives(json.archives);
+    } catch {
+      // non-blocking — archives are secondary to the main editor
+    } finally {
+      setArchivesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchArchives();
+  }, [fetchArchives]);
+
+  // ── Archive current report ──────────────────────────────────────────────────
+  async function handleArchive() {
+    setArchiving(true);
+    try {
+      const payload = buildReportPayload();
+      const res = await fetch('/api/reports/investor/archives', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok)
+        throw new Error((await res.json()).error || 'Archive failed');
+      await fetchArchives();
+      setArchivesOpen(true);
+      setSnack({
+        open: true,
+        message: 'Report archived successfully',
+        severity: 'success',
+      });
+    } catch (e: any) {
+      setSnack({
+        open: true,
+        message: e.message || 'Failed to archive report',
+        severity: 'error',
+      });
+    } finally {
+      setArchiving(false);
+    }
+  }
+
+  // ── Download archived report as PDF ────────────────────────────────────────
+  async function handleArchiveDownload(
+    archiveId: string,
+    label: string,
+    date: string,
+  ) {
+    try {
+      const res = await fetch(
+        `/api/reports/investor/archives/${archiveId}/pdf`,
+      );
+      if (!res.ok) throw new Error('PDF generation failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Greenage-Investor-Report-${label.replace(/\s+/g, '-')}-${date}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      setSnack({
+        open: true,
+        message: e.message || 'Download failed',
+        severity: 'error',
+      });
+    }
+  }
+
+  // ── Open resend dialog ─────────────────────────────────────────────────────
+  function openResendDialog(archive: ArchiveRecord) {
+    setResendTarget(archive);
+    setResendState({
+      to: archive.lastSentTo ?? [],
+      cc: [],
+      bcc: [],
+      subject: `Greenage Technologies — Investor Report (${archive.periodLabel} ${new Date().getFullYear()})`,
+      message: '',
+    });
+    setResendError('');
+    setResendValidation({ to: '' });
+    setResendOpen(true);
+  }
+
+  // ── Resend archived report ──────────────────────────────────────────────────
+  async function handleResendEmail() {
+    if (!resendTarget) return;
+    if (resendState.to.length === 0) {
+      setResendValidation({ to: 'At least one recipient is required' });
+      return;
+    }
+    setResendSending(true);
+    setResendError('');
+    try {
+      const res = await fetch(
+        `/api/reports/investor/archives/${resendTarget.id}/email`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: resendState.to,
+            cc: resendState.cc.length > 0 ? resendState.cc : undefined,
+            bcc: resendState.bcc.length > 0 ? resendState.bcc : undefined,
+            subject: resendState.subject,
+            message: resendState.message || undefined,
+          }),
+        },
+      );
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Send failed');
+      setResendOpen(false);
+      await fetchArchives();
+      setSnack({
+        open: true,
+        message: 'Report resent successfully',
+        severity: 'success',
+      });
+    } catch (e: any) {
+      setResendError(e.message || 'Failed to send email');
+    } finally {
+      setResendSending(false);
+    }
+  }
+
+  // ── Delete archive ─────────────────────────────────────────────────────────
+  async function handleDeleteArchive(archiveId: string) {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/reports/investor/archives/${archiveId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Delete failed');
+      setDeleteConfirmId(null);
+      await fetchArchives();
+      setSnack({ open: true, message: 'Archive deleted', severity: 'success' });
+    } catch (e: any) {
+      setSnack({
+        open: true,
+        message: e.message || 'Failed to delete archive',
+        severity: 'error',
+      });
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   // ── Access guard ───────────────────────────────────────────────────────────
   if (session && !hasAccess) {
     return (
@@ -829,6 +1032,20 @@ export default function InvestorReportPage() {
             size="small"
           >
             {downloading ? 'Generating…' : 'Download PDF'}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={archiving ? <CircularProgress size={14} /> : <Archive />}
+            onClick={handleArchive}
+            disabled={archiving || loading}
+            size="small"
+            sx={{
+              borderColor: '#7B4F00',
+              color: '#7B4F00',
+              '&:hover': { bgcolor: 'rgba(123,79,0,0.05)' },
+            }}
+          >
+            {archiving ? 'Archiving…' : 'Archive Report'}
           </Button>
           <Button
             variant="contained"
@@ -1228,6 +1445,21 @@ export default function InvestorReportPage() {
               {downloading ? 'Generating…' : 'Download PDF'}
             </Button>
             <Button
+              variant="outlined"
+              startIcon={
+                archiving ? <CircularProgress size={14} /> : <Archive />
+              }
+              onClick={handleArchive}
+              disabled={archiving}
+              sx={{
+                borderColor: '#7B4F00',
+                color: '#7B4F00',
+                '&:hover': { bgcolor: 'rgba(123,79,0,0.05)' },
+              }}
+            >
+              {archiving ? 'Archiving…' : 'Archive Report'}
+            </Button>
+            <Button
               variant="contained"
               startIcon={<Email />}
               onClick={() => setEmailOpen(true)}
@@ -1399,6 +1631,446 @@ export default function InvestorReportPage() {
             }}
           >
             {emailSending ? 'Sending…' : 'Send Report'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Saved Reports Archive Panel ────────────────────────────────────── */}
+      <Box mt={4}>
+        <Paper
+          elevation={0}
+          sx={{
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 2,
+            overflow: 'hidden',
+          }}
+        >
+          {/* Panel header — always visible, acts as toggle */}
+          <Box
+            onClick={() => {
+              setArchivesOpen((v) => !v);
+              if (!archivesOpen && archives.length === 0) fetchArchives();
+            }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: 2.5,
+              py: 1.5,
+              cursor: 'pointer',
+              bgcolor: '#FAFAFA',
+              '&:hover': { bgcolor: '#F5F5F5' },
+              borderBottom: archivesOpen ? '1px solid' : 'none',
+              borderColor: 'divider',
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <FolderOpen sx={{ color: '#7B4F00', fontSize: 22 }} />
+              <Box>
+                <Typography variant="body2" fontWeight={700}>
+                  Saved Reports
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {archives.length > 0
+                    ? `${archives.length} archived report${archives.length > 1 ? 's' : ''}`
+                    : 'No archived reports yet'}
+                </Typography>
+              </Box>
+            </Stack>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              {archivesLoading && <CircularProgress size={16} />}
+              {archivesOpen ? (
+                <ExpandLess sx={{ color: 'text.secondary' }} />
+              ) : (
+                <ExpandMore sx={{ color: 'text.secondary' }} />
+              )}
+            </Stack>
+          </Box>
+
+          {/* Archive list */}
+          {archivesOpen && (
+            <Box
+              sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}
+            >
+              {archives.length === 0 && !archivesLoading && (
+                <Box
+                  sx={{
+                    py: 5,
+                    textAlign: 'center',
+                    color: 'text.disabled',
+                  }}
+                >
+                  <Archive sx={{ fontSize: 40, mb: 1, opacity: 0.4 }} />
+                  <Typography variant="body2">
+                    No archived reports yet. Click &quot;Archive Report&quot; to
+                    save a snapshot.
+                  </Typography>
+                </Box>
+              )}
+
+              {archives.map((arc) => {
+                const arcDate = new Date(arc.createdAt).toLocaleDateString(
+                  'en-NG',
+                  { day: '2-digit', month: 'short', year: 'numeric' },
+                );
+                const arcTime = new Date(arc.createdAt).toLocaleTimeString(
+                  'en-NG',
+                  { hour: '2-digit', minute: '2-digit' },
+                );
+                const isSuperAdmin = role === 'SUPERADMIN';
+
+                return (
+                  <Paper
+                    key={arc.id}
+                    elevation={0}
+                    sx={{
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1.5,
+                      p: 2,
+                      display: 'flex',
+                      alignItems: { xs: 'flex-start', sm: 'center' },
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      gap: 1.5,
+                    }}
+                  >
+                    {/* Left: identity */}
+                    <Box flex={1} minWidth={0}>
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        spacing={1}
+                        mb={0.25}
+                      >
+                        <Typography variant="body2" fontWeight={700} noWrap>
+                          {arc.title ?? arc.periodLabel}
+                        </Typography>
+                        {/* <Chip
+                          label={arc.periodLabel}
+                          size="small"
+                          sx={{
+                            height: 18,
+                            fontSize: '0.65rem',
+                            bgcolor: alpha(BRAND, 0.08),
+                            color: BRAND,
+                            fontWeight: 700,
+                          }}
+                        /> */}
+                        {arc.sendCount > 0 && (
+                          <Chip
+                            label={`Sent ${arc.sendCount}×`}
+                            size="small"
+                            icon={
+                              <ForwardToInbox
+                                sx={{ fontSize: '12px !important' }}
+                              />
+                            }
+                            sx={{
+                              height: 18,
+                              fontSize: '0.65rem',
+                              bgcolor: 'rgba(25,118,210,0.08)',
+                              color: '#1976D2',
+                              fontWeight: 700,
+                            }}
+                          />
+                        )}
+                      </Stack>
+                      <Typography variant="caption" color="text.secondary">
+                        Archived {arcDate} at {arcTime}
+                        {arc.archivedBy ? ` · by ${arc.archivedBy}` : ''}
+                      </Typography>
+                      {arc.revenue != null && (
+                        <Stack direction="row" spacing={2} mt={0.75}>
+                          {[
+                            { label: 'Revenue', value: fmt(arc.revenue) },
+                            { label: 'Profit', value: fmt(arc.profit ?? 0) },
+                          ].map((kpi) => (
+                            <Typography
+                              key={kpi.label}
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {kpi.label}:{' '}
+                              <strong style={{ color: '#1FA43B' }}>
+                                {kpi.value}
+                              </strong>
+                            </Typography>
+                          ))}
+                        </Stack>
+                      )}
+                    </Box>
+
+                    {/* Right: actions */}
+                    <Stack direction="row" spacing={0.75} flexShrink={0}>
+                      <Tooltip title="Download PDF">
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            handleArchiveDownload(
+                              arc.id,
+                              arc.periodLabel,
+                              new Date(arc.createdAt)
+                                .toISOString()
+                                .slice(0, 10),
+                            )
+                          }
+                          sx={{ color: BRAND }}
+                        >
+                          <FileDownload fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Resend">
+                        <IconButton
+                          size="small"
+                          onClick={() => openResendDialog(arc)}
+                          sx={{ color: '#1976D2' }}
+                        >
+                          <ForwardToInbox fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      {isSuperAdmin && (
+                        <Tooltip title="Delete archive">
+                          <IconButton
+                            size="small"
+                            onClick={() => setDeleteConfirmId(arc.id)}
+                            sx={{ color: 'error.main' }}
+                          >
+                            <DeleteOutline fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Stack>
+                  </Paper>
+                );
+              })}
+            </Box>
+          )}
+        </Paper>
+      </Box>
+
+      {/* ── Resend Dialog ──────────────────────────────────────────────────── */}
+      <Dialog
+        open={resendOpen}
+        onClose={() => {
+          if (!resendSending) setResendOpen(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle
+          sx={{
+            pb: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1.5,
+                bgcolor: 'rgba(25,118,210,0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ForwardToInbox sx={{ color: '#1976D2', fontSize: 20 }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" fontWeight={700}>
+                Resend Archived Report
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {resendTarget?.periodLabel} · archived{' '}
+                {resendTarget
+                  ? new Date(resendTarget.createdAt).toLocaleDateString(
+                      'en-NG',
+                      {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                      },
+                    )
+                  : ''}
+              </Typography>
+            </Box>
+          </Stack>
+          {!resendSending && (
+            <IconButton
+              size="small"
+              onClick={() => setResendOpen(false)}
+              aria-label="Close"
+            >
+              <Close fontSize="small" />
+            </IconButton>
+          )}
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent
+          sx={{ pt: 2.5, display: 'flex', flexDirection: 'column', gap: 2.5 }}
+        >
+          {resendError && (
+            <Alert severity="error" onClose={() => setResendError('')}>
+              {resendError}
+            </Alert>
+          )}
+
+          <Alert severity="info" icon={<InfoOutlined />} sx={{ py: 0.75 }}>
+            The PDF will be regenerated from the archived snapshot and attached
+            to this email.
+          </Alert>
+
+          <EmailChipInput
+            label="To"
+            value={resendState.to}
+            onChange={(emails) => {
+              setResendState((p) => ({ ...p, to: emails }));
+              setResendValidation({ to: '' });
+            }}
+            error={!!resendValidation.to}
+            helperText={
+              resendValidation.to || 'Press Enter or comma to add each address'
+            }
+            required
+          />
+
+          <EmailChipInput
+            label="CC"
+            value={resendState.cc}
+            onChange={(emails) => setResendState((p) => ({ ...p, cc: emails }))}
+            helperText="Optional"
+          />
+
+          <EmailChipInput
+            label="BCC"
+            value={resendState.bcc}
+            onChange={(emails) =>
+              setResendState((p) => ({ ...p, bcc: emails }))
+            }
+            helperText="Optional"
+          />
+
+          <TextField
+            label="Subject"
+            fullWidth
+            size="small"
+            value={resendState.subject}
+            onChange={(e) =>
+              setResendState((p) => ({ ...p, subject: e.target.value }))
+            }
+            error={resendState.subject.trim() === ''}
+            helperText={
+              resendState.subject.trim() === ''
+                ? 'Subject is required'
+                : undefined
+            }
+          />
+
+          <TextField
+            label="Message (optional)"
+            fullWidth
+            multiline
+            rows={3}
+            size="small"
+            value={resendState.message}
+            onChange={(e) =>
+              setResendState((p) => ({ ...p, message: e.target.value }))
+            }
+            placeholder="Add a note to accompany the archived report…"
+          />
+        </DialogContent>
+
+        <Divider />
+
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button
+            onClick={() => setResendOpen(false)}
+            disabled={resendSending}
+            variant="outlined"
+            color="inherit"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleResendEmail}
+            disabled={
+              resendSending ||
+              resendState.to.length === 0 ||
+              !resendState.subject.trim()
+            }
+            startIcon={
+              resendSending ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <ForwardToInbox />
+              )
+            }
+            sx={{
+              bgcolor: '#1976D2',
+              '&:hover': { bgcolor: '#1565C0' },
+              minWidth: 130,
+            }}
+          >
+            {resendSending ? 'Sending…' : 'Resend Report'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Delete Confirmation Dialog ─────────────────────────────────────── */}
+      <Dialog
+        open={!!deleteConfirmId}
+        onClose={() => {
+          if (!deleting) setDeleteConfirmId(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <WarningAmberOutlined color="error" />
+          <Typography variant="subtitle1" fontWeight={700}>
+            Delete Archive?
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            This archived report will be permanently deleted and cannot be
+            recovered.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+          <Button
+            onClick={() => setDeleteConfirmId(null)}
+            disabled={deleting}
+            variant="outlined"
+            color="inherit"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() =>
+              deleteConfirmId && handleDeleteArchive(deleteConfirmId)
+            }
+            disabled={deleting}
+            startIcon={
+              deleting ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <DeleteOutline />
+              )
+            }
+          >
+            {deleting ? 'Deleting…' : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>

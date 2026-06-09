@@ -3879,7 +3879,9 @@ async function exportPDF(
 
     // Logo on the left
     if (logoB64) {
-      doc.addImage(logoB64, 'PNG', 14, 7, 32, 11);
+      const logoH = 10;
+      const logoW = (logoH * 917) / 254; // width from true aspect ratio
+      doc.addImage(logoB64, 'PNG', 14, 7, logoW, logoH);
     }
 
     // Thin vertical separator in mid-green (#1FA43B)

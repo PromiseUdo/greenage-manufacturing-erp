@@ -2056,3 +2056,55 @@ model InvestorReportDraft {
 
   @@map("investor_report_drafts")
 }
+
+model InvestorReportArchive {
+  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
+
+  // Identity
+  period               String
+  periodLabel          String
+  title                String?
+
+  // KPI snapshot
+  revenue              Float?
+  profit               Float?
+  productionVolume     Float?
+  inventoryValue       Float?
+
+  // Derived metrics snapshot
+  profitMargin         Float?
+  collectionRate       Float?
+  yieldRate            Float?
+  reworkRate           Float?
+  lowStockCount        Int?
+  outOfStockCount      Int?
+
+  // Supporting tables stored as JSON
+  topProducts          Json?
+  topCustomers         Json?
+  receivablesAging     Json?
+
+  // Narrative sections
+  executiveSummary     String?
+  financialNarrative   String?
+  operationalNarrative String?
+  salesGrowthNarrative String?
+  strategyPipeline     String?
+  marketOpportunity    String?
+  riskMitigation       String?
+  outlookForecast      String?
+
+  // Email send tracking
+  lastSentTo           String[]
+  lastSentAt           DateTime?
+  sendCount            Int       @default(0)
+
+  // Audit
+  archivedBy           String?
+  generatedAt          String?
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("investor_report_archives")
+}
