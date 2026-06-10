@@ -29,7 +29,6 @@ import {
 import {
   ArrowBack as BackIcon,
   Edit as EditIcon,
-  Warning as WarningIcon,
   Print as PrintIcon,
   AttachFile as AttachIcon,
   PictureAsPdf as PdfIcon,
@@ -38,7 +37,6 @@ import {
   ZoomIn as ZoomIcon,
   Description as DescriptionIcon,
   Memory as MemoryIcon,
-  Inventory as InventoryIcon,
 } from '@mui/icons-material';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -181,6 +179,23 @@ const categoryColors: Record<string, { bg: string; text: string }> = {
   OTHER: { bg: '#f3f4f6', text: '#6b7280' },
 };
 
+// Load an image URL as a base64 data URL
+async function loadImageAsDataUrl(src: string): Promise<string | null> {
+  try {
+    const res = await fetch(src);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export default function ProductDetailPage({
   params,
 }: {
@@ -194,6 +209,7 @@ export default function ProductDetailPage({
   const [success, setSuccess] = useState('');
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [previewFile, setPreviewFile] = useState<FileAttachment | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   useEffect(() => {
     fetchProduct();
@@ -203,11 +219,7 @@ export default function ProductDetailPage({
     try {
       const res = await fetch(`/api/products/${resolvedParams.id}`);
       const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to fetch product');
-      }
-
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch product');
       setProduct(data);
     } catch (err: any) {
       setError(err.message);
@@ -224,13 +236,317 @@ export default function ProductDetailPage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: !product.isActive }),
       });
-
       if (!res.ok) throw new Error('Failed to update product status');
-
       setSuccess('Product status updated successfully');
       fetchProduct();
     } catch (err: any) {
       setError(err.message);
+    }
+  };
+
+  const handlePrintTechSpec = async () => {
+    if (!product) return;
+    setGeneratingPdf(true);
+
+    try {
+      const doc = new jsPDF({ format: 'a4', unit: 'mm' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      const contentW = pageW - margin * 2;
+
+      // Color palette
+      const C = {
+        navy: [15, 23, 42] as [number, number, number],
+        navyMid: [30, 41, 59] as [number, number, number],
+        slate: [71, 85, 105] as [number, number, number],
+        muted: [148, 163, 184] as [number, number, number],
+        divider: [226, 232, 240] as [number, number, number],
+        surface: [248, 250, 252] as [number, number, number],
+        white: [255, 255, 255] as [number, number, number],
+        accent: [34, 197, 94] as [number, number, number], // green accent
+      };
+
+      // Load white logo for dark header
+      const whiteLogo = await loadImageAsDataUrl('/greenage_logo_white.png');
+
+      // ── HEADER BAND ──────────────────────────────────────────────
+      const headerH = 26;
+      doc.setFillColor(...C.navy);
+      doc.rect(0, 0, pageW, headerH, 'F');
+
+      // Green accent line at very top
+      doc.setFillColor(...C.accent);
+      doc.rect(0, 0, pageW, 1.5, 'F');
+
+      if (whiteLogo) {
+        doc.addImage(whiteLogo, 'PNG', margin, 6, 36, 12, undefined, 'FAST');
+      } else {
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C.white);
+        doc.text('GREENAGE', margin, 15);
+      }
+
+      // Right: document type
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...C.muted);
+      doc.text('TECHNICAL SPECIFICATION', pageW - margin, 11, {
+        align: 'right',
+      });
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...C.white);
+      doc.text(
+        new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        pageW - margin,
+        17,
+        { align: 'right' },
+      );
+
+      // ── PRODUCT HERO ─────────────────────────────────────────────
+      let y = headerH + 10;
+
+      // Product name
+      doc.setFontSize(20);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...C.navy);
+      // Wrap if name is long
+      const nameLines = doc.splitTextToSize(product.name, contentW - 30);
+      doc.text(nameLines, margin, y);
+      y += nameLines.length * 9;
+
+      // Status badge (active / inactive)
+      const statusLabel = product.isActive ? 'ACTIVE' : 'INACTIVE';
+      const statusColor: [number, number, number] = product.isActive
+        ? [34, 197, 94]
+        : [239, 68, 68];
+      doc.setFillColor(...statusColor);
+      doc.setTextColor(...C.white);
+      doc.setFontSize(6.5);
+      doc.setFont('helvetica', 'bold');
+      doc.roundedRect(margin, y, 18, 5.5, 1, 1, 'F');
+      doc.text(statusLabel, margin + 9, y + 3.8, { align: 'center' });
+      y += 10;
+
+      // Meta info row (5 columns)
+      const metaItems = [
+        { label: 'PRODUCT CODE', value: product.productCode },
+        { label: 'MODEL', value: product.model || '—' },
+        {
+          label: 'CATEGORY',
+          value: (product.category || '').replace(/_/g, ' ') || '—',
+        },
+        { label: 'WARRANTY', value: product.warranty || '—' },
+        {
+          label: 'LEAD TIME',
+          value: product.leadTime ? `${product.leadTime} days` : '—',
+        },
+      ];
+
+      // Light surface background for meta row
+      doc.setFillColor(...C.surface);
+      doc.rect(margin, y, contentW, 18, 'F');
+      doc.setDrawColor(...C.divider);
+      doc.setLineWidth(0.3);
+      doc.rect(margin, y, contentW, 18, 'S');
+
+      const colW = contentW / metaItems.length;
+      metaItems.forEach((item, i) => {
+        const x = margin + i * colW + 4;
+        // Vertical separator
+        if (i > 0) {
+          doc.setDrawColor(...C.divider);
+          doc.setLineWidth(0.3);
+          doc.line(margin + i * colW, y + 2, margin + i * colW, y + 16);
+        }
+        doc.setFontSize(6.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...C.muted);
+        doc.text(item.label, x, y + 6);
+
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C.navy);
+        const valLines = doc.splitTextToSize(item.value, colW - 6);
+        doc.text(valLines[0] || item.value, x, y + 13);
+      });
+
+      y += 24;
+
+      // ── DESCRIPTION ──────────────────────────────────────────────
+      if (product.description && product.description.trim()) {
+        // doc.setDrawColor(...C.accent);
+        // doc.setLineWidth(1);
+        // doc.line(margin, y, margin, y + 12);
+
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(...C.slate);
+        const descLines = doc.splitTextToSize(
+          product.description,
+          contentW - 8,
+        );
+        const visibleLines = descLines.slice(0, 3);
+        doc.text(visibleLines, margin + 4, y + 4);
+        y += Math.max(14, visibleLines.length * 4.5 + 4);
+      }
+
+      y += 4;
+
+      // ── SECTION HELPER ───────────────────────────────────────────
+      const drawSectionHeader = (title: string, currentY: number) => {
+        doc.setFillColor(...C.navy);
+        doc.rect(margin, currentY, contentW, 7.5, 'F');
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C.white);
+        doc.text(title, margin + 4, currentY + 5);
+        return currentY + 7.5;
+      };
+
+      // ── TECHNICAL SPECIFICATIONS ──────────────────────────────────
+      if (product.specifications && product.specifications.length > 0) {
+        if (y > pageH - 60) {
+          doc.addPage();
+          y = margin + 8;
+        }
+
+        y = drawSectionHeader('TECHNICAL SPECIFICATIONS', y);
+
+        autoTable(doc, {
+          startY: y,
+          margin: { left: margin, right: margin },
+          head: [['Parameter', 'Value']],
+          body: product.specifications.map((s) => [s.label, s.value]),
+          styles: {
+            fontSize: 8.5,
+            cellPadding: { top: 3.5, bottom: 3.5, left: 4, right: 4 },
+            lineColor: C.divider,
+            lineWidth: 0.3,
+            textColor: C.navyMid,
+          },
+          headStyles: {
+            fillColor: C.navyMid,
+            textColor: C.white,
+            fontStyle: 'bold',
+            fontSize: 7.5,
+          },
+          alternateRowStyles: {
+            fillColor: C.surface,
+          },
+          columnStyles: {
+            0: {
+              fontStyle: 'bold',
+              textColor: C.navy,
+              cellWidth: contentW * 0.42,
+            },
+            1: { textColor: C.navyMid },
+          },
+          didDrawPage: () => {},
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 10;
+      }
+
+      // ── BILL OF MATERIALS ─────────────────────────────────────────
+      if (product.materials && product.materials.length > 0) {
+        if (y > pageH - 60) {
+          doc.addPage();
+          y = margin + 8;
+        }
+
+        y = drawSectionHeader('BILL OF MATERIALS', y);
+
+        autoTable(doc, {
+          startY: y,
+          margin: { left: margin, right: margin },
+          head: [['#', 'Material', 'Part Number', 'Category', 'Qty Required']],
+          body: product.materials.map((pm, i) => [
+            String(i + 1),
+            pm.material.name,
+            pm.material.partNumber,
+            pm.material.category.replace(/_/g, ' '),
+            `${pm.quantity} ${pm.material.unit}`,
+          ]),
+          styles: {
+            fontSize: 8.5,
+            cellPadding: { top: 3.5, bottom: 3.5, left: 4, right: 4 },
+            lineColor: C.divider,
+            lineWidth: 0.3,
+            textColor: C.navyMid,
+          },
+          headStyles: {
+            fillColor: C.navyMid,
+            textColor: C.white,
+            fontStyle: 'bold',
+            fontSize: 7.5,
+          },
+          alternateRowStyles: {
+            fillColor: C.surface,
+          },
+          columnStyles: {
+            0: {
+              halign: 'center',
+              cellWidth: 10,
+              textColor: C.muted,
+              fontSize: 7.5,
+            },
+            1: { fontStyle: 'bold', textColor: C.navy },
+            2: { textColor: C.slate, fontSize: 7.5, cellWidth: 35 },
+            3: { textColor: C.slate, cellWidth: 38 },
+            4: {
+              halign: 'right',
+              fontStyle: 'bold',
+              textColor: C.navy,
+              cellWidth: 28,
+            },
+          },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 5;
+
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(...C.muted);
+        doc.text(
+          `Total: ${product.materials.length} component${product.materials.length !== 1 ? 's' : ''}`,
+          margin,
+          y,
+        );
+      }
+
+      // ── FOOTER ON ALL PAGES ───────────────────────────────────────
+      const totalPages = doc.getNumberOfPages();
+      for (let pg = 1; pg <= totalPages; pg++) {
+        doc.setPage(pg);
+        const footerY = pageH - 9;
+
+        doc.setDrawColor(...C.divider);
+        doc.setLineWidth(0.3);
+        doc.line(margin, footerY - 3, pageW - margin, footerY - 3);
+
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...C.muted);
+        doc.text('Greenage Technologies Ltd  |  Confidential', margin, footerY);
+        doc.text(`Page ${pg} of ${totalPages}`, pageW - margin, footerY, {
+          align: 'right',
+        });
+        doc.text(`Doc: ${product.productCode}_TechSpec`, pageW / 2, footerY, {
+          align: 'center',
+        });
+      }
+
+      doc.save(`${product.productCode}_TechSpec.pdf`);
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
@@ -325,116 +641,14 @@ export default function ProductDetailPage({
 
   return (
     <Box sx={{ pb: 5 }}>
-      {/* Print Header */}
-      <Box
-        sx={{ display: 'none', '@media print': { display: 'block', mb: 4 } }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-end',
-            mb: 2,
-            borderBottom: '2px solid #0F172A',
-            pb: 2,
-          }}
-        >
-          <Box>
-            {/* <Typography variant="h4" fontWeight={700} color="#0F172A">
-              GREENAGE
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              POWER SOLUTIONS
-            </Typography> */}
-            <img
-              src="/greenage_logo_black.png"
-              alt="Greenage Technologies"
-              style={{
-                height: '60px',
-                maxWidth: '200px',
-                objectFit: 'contain',
-              }}
-            />
-            {/* <Typography
-              sx={{
-                fontSize: '1.5rem',
-                fontWeight: 700,
-                color: '#fff',
-                letterSpacing: '0.02em',
-              }}
-            >
-              LOGO
-            </Typography> */}
-          </Box>
-          <Box sx={{ textAlign: 'right' }}>
-            <Typography variant="h5" fontWeight={600} color="#0F172A">
-              Technical Specification
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {new Date().toLocaleDateString()}
-            </Typography>
-          </Box>
-        </Box>
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>
+          {success}
+        </Alert>
+      )}
 
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h3" fontWeight={700} gutterBottom>
-            {product.name}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 4 }}>
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-              >
-                Product Code
-              </Typography>
-              <Typography variant="subtitle1" fontWeight={600}>
-                {product.productCode}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-              >
-                Model
-              </Typography>
-              <Typography variant="subtitle1" fontWeight={600}>
-                {product.model || 'N/A'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-              >
-                Category
-              </Typography>
-              <Typography variant="subtitle1" fontWeight={600}>
-                {product.category?.replace(/_/g, ' ') || '-'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-              >
-                Warranty
-              </Typography>
-              <Typography variant="subtitle1" fontWeight={600}>
-                {product.warranty || 'N/A'}
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Default Header */}
-      <Box sx={{ mb: 3, '@media print': { display: 'none' } }}>
+      {/* Header */}
+      <Box sx={{ mb: 3 }}>
         <Button
           startIcon={<BackIcon />}
           onClick={() => router.push('/products')}
@@ -480,21 +694,20 @@ export default function ProductDetailPage({
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
               variant="outlined"
-              startIcon={<PrintIcon />}
-              onClick={() => window.print()}
-              sx={{ '@media print': { display: 'none' } }} // Hide button when printing
+              startIcon={
+                generatingPdf ? <CircularProgress size={16} /> : <PrintIcon />
+              }
+              onClick={handlePrintTechSpec}
+              disabled={generatingPdf}
+              sx={{ minWidth: 180 }}
             >
-              Print Tech Spec
+              {generatingPdf ? 'Generating PDF…' : 'Print Tech Spec Sheet'}
             </Button>
             <Button
               variant="contained"
               startIcon={<EditIcon />}
               onClick={() => router.push(`/products/${product.id}/edit`)}
-              sx={{
-                bgcolor: '#0F172A',
-                '&:hover': { bgcolor: '#1e293b' },
-                '@media print': { display: 'none' },
-              }}
+              sx={{ bgcolor: '#0F172A', '&:hover': { bgcolor: '#1e293b' } }}
             >
               Edit Product
             </Button>
@@ -504,10 +717,7 @@ export default function ProductDetailPage({
 
       <Grid container spacing={3}>
         {/* LEFT COLUMN */}
-        <Grid
-          size={{ xs: 12, md: 8 }}
-          sx={{ '@media print': { flexBasis: '100%', maxWidth: '100%' } }}
-        >
+        <Grid size={{ xs: 12, md: 8 }}>
           {/* Technical Specifications */}
           <Paper
             elevation={0}
@@ -546,7 +756,7 @@ export default function ProductDetailPage({
             </Box>
           </Paper>
 
-          {/* Bill of Materials (BOM) */}
+          {/* Bill of Materials */}
           <Paper
             elevation={0}
             sx={{
@@ -555,7 +765,6 @@ export default function ProductDetailPage({
               borderColor: 'divider',
               mb: 3,
               overflow: 'hidden',
-              '@media print': { breakBefore: 'page' },
             }}
           >
             <Box
@@ -575,9 +784,8 @@ export default function ProductDetailPage({
                 startIcon={<DownloadIcon />}
                 size="small"
                 onClick={handleDownloadBOM}
-                sx={{ '@media print': { display: 'none' } }}
               >
-                Download PDF
+                Download BOM PDF
               </Button>
             </Box>
 
@@ -651,102 +859,56 @@ export default function ProductDetailPage({
             </SectionHeader>
 
             {product.designFiles && product.designFiles.length > 0 ? (
-              <>
-                {/* Screen View */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1.5,
-                    '@media print': { display: 'none' },
-                  }}
-                >
-                  {product.designFiles.map((file, index) => (
-                    <Paper
-                      key={index}
-                      elevation={0}
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                {product.designFiles.map((file, index) => (
+                  <Paper
+                    key={index}
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      '&:hover': { bgcolor: 'action.hover', cursor: 'pointer' },
+                    }}
+                  >
+                    <Box
                       sx={{
-                        p: 2,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                        '&:hover': {
-                          bgcolor: 'action.hover',
-                          cursor: 'pointer',
-                        },
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: 1.5,
                       }}
                     >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 1.5,
-                        }}
-                      >
-                        {getFileIcon(file.type)}
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="body2" fontWeight={500} noWrap>
-                            {file.name}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatFileSize(file.size)} •{' '}
-                            {new Date(file.uploadedAt).toLocaleDateString()}
-                          </Typography>
-                          <Box sx={{ mt: 1, display: 'flex', gap: 0.5 }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => setPreviewFile(file)}
-                              sx={{ bgcolor: 'action.hover' }}
-                            >
-                              <ZoomIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleDownload(file)}
-                              sx={{ bgcolor: 'action.hover' }}
-                            >
-                              <DownloadIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  ))}
-                </Box>
-
-                {/* Print View - Full Images */}
-                <Box
-                  sx={{
-                    display: 'none',
-                    '@media print': { display: 'block' },
-                  }}
-                >
-                  {product.designFiles
-                    .filter((file) => file.type.startsWith('image/'))
-                    .map((file, index) => (
-                      <Box key={index} sx={{ mb: 4, breakInside: 'avoid' }}>
-                        <Typography
-                          variant="subtitle2"
-                          fontWeight={600}
-                          gutterBottom
-                        >
+                      {getFileIcon(file.type)}
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="body2" fontWeight={500} noWrap>
                           {file.name}
                         </Typography>
-                        <Box
-                          component="img"
-                          src={file.url}
-                          alt={file.name}
-                          sx={{
-                            width: '100%',
-                            maxHeight: '800px',
-                            objectFit: 'contain',
-                            border: '1px solid #ddd',
-                          }}
-                        />
+                        <Typography variant="caption" color="text.secondary">
+                          {formatFileSize(file.size)} •{' '}
+                          {new Date(file.uploadedAt).toLocaleDateString()}
+                        </Typography>
+                        <Box sx={{ mt: 1, display: 'flex', gap: 0.5 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => setPreviewFile(file)}
+                            sx={{ bgcolor: 'action.hover' }}
+                          >
+                            <ZoomIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDownload(file)}
+                            sx={{ bgcolor: 'action.hover' }}
+                          >
+                            <DownloadIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
                       </Box>
-                    ))}
-                </Box>
-              </>
+                    </Box>
+                  </Paper>
+                ))}
+              </Box>
             ) : (
               <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
                 <AttachIcon sx={{ fontSize: 40, opacity: 0.3, mb: 1 }} />
@@ -759,10 +921,7 @@ export default function ProductDetailPage({
         </Grid>
 
         {/* RIGHT COLUMN */}
-        <Grid
-          size={{ xs: 12, md: 4 }}
-          sx={{ '@media print': { display: 'none' } }}
-        >
+        <Grid size={{ xs: 12, md: 4 }}>
           {/* Basic Info & Metadata */}
           <Paper
             elevation={0}
@@ -775,26 +934,21 @@ export default function ProductDetailPage({
             }}
           >
             <SectionHeader>Product Information</SectionHeader>
-            <Box>
-              <InfoRow label="Product Code" value={product.productCode} bold />
-              <InfoRow label="Model" value={product.model || 'N/A'} />
-              <InfoRow label="Warranty" value={product.warranty || 'None'} />
-              <InfoRow
-                label="Lead Time"
-                value={product.leadTime ? `${product.leadTime} days` : 'N/A'}
-              />
-              <InfoRow
-                label="Created By"
-                value={product.createdBy?.name || 'Unknown'}
-              />
-              <InfoRow
-                label="Created On"
-                value={formatDate(product.createdAt)}
-              />
-            </Box>
+            <InfoRow label="Product Code" value={product.productCode} bold />
+            <InfoRow label="Model" value={product.model || 'N/A'} />
+            <InfoRow label="Warranty" value={product.warranty || 'None'} />
+            <InfoRow
+              label="Lead Time"
+              value={product.leadTime ? `${product.leadTime} days` : 'N/A'}
+            />
+            <InfoRow
+              label="Created By"
+              value={product.createdBy?.name || 'Unknown'}
+            />
+            <InfoRow label="Created On" value={formatDate(product.createdAt)} />
           </Paper>
 
-          {/* Financials - Cost Price */}
+          {/* Financials */}
           <Paper
             elevation={0}
             sx={{
@@ -807,25 +961,22 @@ export default function ProductDetailPage({
                 theme.palette.mode === 'dark'
                   ? 'rgba(255,255,255,0.05)'
                   : '#F8FAFC',
-              '@media print': { display: 'none' },
             }}
           >
             <SectionHeader>Financials</SectionHeader>
-            <Box sx={{ mt: 2 }}>
-              <InfoRow
-                label="Cost Price (Production)"
-                value={formatCurrency(product.costPrice)}
-                bold
-                valueColor="#0F172A"
-              />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mt: 1 }}
-              >
-                * This is the internal production cost.
-              </Typography>
-            </Box>
+            <InfoRow
+              label="Cost Price (Production)"
+              value={formatCurrency(product.costPrice)}
+              bold
+              valueColor="#0F172A"
+            />
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', mt: 1 }}
+            >
+              * This is the internal production cost.
+            </Typography>
           </Paper>
 
           {/* Settings */}
@@ -837,27 +988,24 @@ export default function ProductDetailPage({
               border: '1px solid',
               borderColor: 'divider',
               mb: 3,
-              '@media print': { display: 'none' },
             }}
           >
             <SectionHeader>Settings</SectionHeader>
-            <Box sx={{ mt: 0 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    size="small"
-                    checked={product.isActive}
-                    onChange={handleToggleActive}
-                  />
-                }
-                label={
-                  <Typography variant="body2">
-                    Product is{' '}
-                    <strong>{product.isActive ? 'Active' : 'Inactive'}</strong>
-                  </Typography>
-                }
-              />
-            </Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  checked={product.isActive}
+                  onChange={handleToggleActive}
+                />
+              }
+              label={
+                <Typography variant="body2">
+                  Product is{' '}
+                  <strong>{product.isActive ? 'Active' : 'Inactive'}</strong>
+                </Typography>
+              }
+            />
           </Paper>
 
           {/* Tags */}
@@ -869,7 +1017,6 @@ export default function ProductDetailPage({
                 borderRadius: 2,
                 border: '1px solid',
                 borderColor: 'divider',
-                '@media print': { display: 'none' },
               }}
             >
               <SectionHeader>Tags</SectionHeader>
@@ -922,11 +1069,7 @@ export default function ProductDetailPage({
                 <Box
                   component="iframe"
                   src={previewFile.url}
-                  sx={{
-                    width: '100%',
-                    height: '70vh',
-                    border: 'none',
-                  }}
+                  sx={{ width: '100%', height: '70vh', border: 'none' }}
                 />
               ) : (
                 <Alert severity="info">
