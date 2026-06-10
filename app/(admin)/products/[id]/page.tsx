@@ -255,87 +255,98 @@ export default function ProductDetailPage({
       const margin = 15;
       const contentW = pageW - margin * 2;
 
-      // Color palette
+      // Greenage brand palette — mirrors the finance/sales report PDF
       const C = {
-        navy: [15, 23, 42] as [number, number, number],
-        navyMid: [30, 41, 59] as [number, number, number],
-        slate: [71, 85, 105] as [number, number, number],
-        muted: [148, 163, 184] as [number, number, number],
-        divider: [226, 232, 240] as [number, number, number],
-        surface: [248, 250, 252] as [number, number, number],
+        brandGreen: [0, 61, 52] as [number, number, number], // #003D34
+        midGreen: [31, 164, 59] as [number, number, number], // #1FA43B
+        lightGreen: [211, 242, 175] as [number, number, number], // #D3F2AF — header sub-text
+        rowGreen: [238, 249, 229] as [number, number, number], // #EEF9E5 — alt rows
+        black: [0, 0, 0] as [number, number, number],
         white: [255, 255, 255] as [number, number, number],
-        accent: [34, 197, 94] as [number, number, number], // green accent
+        muted: [120, 120, 120] as [number, number, number],
+        divider: [210, 235, 210] as [number, number, number],
       };
 
       // Load white logo for dark header
       const whiteLogo = await loadImageAsDataUrl('/greenage_logo_white.png');
 
-      // ── HEADER BAND ──────────────────────────────────────────────
-      const headerH = 26;
-      doc.setFillColor(...C.navy);
+      // ── HEADER BAND (matches finance/sales report) ────────────────
+      const headerH = 32;
+      doc.setFillColor(...C.brandGreen);
       doc.rect(0, 0, pageW, headerH, 'F');
 
-      // Green accent line at very top
-      doc.setFillColor(...C.accent);
-      doc.rect(0, 0, pageW, 1.5, 'F');
-
+      // Logo — natural aspect ratio 917:254, h=11 → w≈39.7
       if (whiteLogo) {
-        doc.addImage(whiteLogo, 'PNG', margin, 6, 36, 12, undefined, 'FAST');
+        const logoH = 11;
+        const logoW = logoH * (917 / 254);
+        doc.addImage(
+          whiteLogo,
+          'PNG',
+          margin,
+          7,
+          logoW,
+          logoH,
+          undefined,
+          'FAST',
+        );
       } else {
         doc.setFontSize(13);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...C.white);
-        doc.text('GREENAGE', margin, 15);
+        doc.text('GREENAGE', margin, 16);
       }
 
-      // Right: document type
-      doc.setFontSize(7.5);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...C.muted);
-      doc.text('TECHNICAL SPECIFICATION', pageW - margin, 11, {
-        align: 'right',
-      });
+      // Thin vertical separator in mid-green (same as report header)
+      doc.setFillColor(...C.midGreen);
+      doc.rect(57, 7, 0.6, 18, 'F');
 
-      doc.setFontSize(8);
+      // Document title — white
+      doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...C.white);
+      doc.text('Technical Specification', 62, 15);
+
+      // Subtitle — light green tint, matches report period line
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...C.lightGreen);
       doc.text(
-        new Date().toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
-        pageW - margin,
-        17,
-        { align: 'right' },
+        `Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+        62,
+        22,
       );
 
+      // Accent stripe below header (matches report)
+      doc.setFillColor(...C.midGreen);
+      doc.rect(0, headerH, pageW, 1.5, 'F');
+
+      doc.setTextColor(...C.black);
+
       // ── PRODUCT HERO ─────────────────────────────────────────────
-      let y = headerH + 10;
+      let y = headerH + 12;
 
       // Product name
       doc.setFontSize(20);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...C.navy);
-      // Wrap if name is long
+      doc.setTextColor(...C.brandGreen);
       const nameLines = doc.splitTextToSize(product.name, contentW - 30);
       doc.text(nameLines, margin, y);
       y += nameLines.length * 9;
 
-      // Status badge (active / inactive)
+      // Status badge
       const statusLabel = product.isActive ? 'ACTIVE' : 'INACTIVE';
-      const statusColor: [number, number, number] = product.isActive
-        ? [34, 197, 94]
-        : [239, 68, 68];
-      doc.setFillColor(...statusColor);
+      const statusFill: [number, number, number] = product.isActive
+        ? C.midGreen
+        : [220, 38, 38];
+      doc.setFillColor(...statusFill);
       doc.setTextColor(...C.white);
       doc.setFontSize(6.5);
       doc.setFont('helvetica', 'bold');
-      doc.roundedRect(margin, y, 18, 5.5, 1, 1, 'F');
-      doc.text(statusLabel, margin + 9, y + 3.8, { align: 'center' });
+      doc.roundedRect(margin, y, 20, 5.5, 1, 1, 'F');
+      doc.text(statusLabel, margin + 10, y + 3.8, { align: 'center' });
       y += 10;
 
-      // Meta info row (5 columns)
+      // Meta info row — 5 columns with light green tint background
       const metaItems = [
         { label: 'PRODUCT CODE', value: product.productCode },
         { label: 'MODEL', value: product.model || '—' },
@@ -350,8 +361,7 @@ export default function ProductDetailPage({
         },
       ];
 
-      // Light surface background for meta row
-      doc.setFillColor(...C.surface);
+      doc.setFillColor(...C.rowGreen);
       doc.rect(margin, y, contentW, 18, 'F');
       doc.setDrawColor(...C.divider);
       doc.setLineWidth(0.3);
@@ -360,7 +370,6 @@ export default function ProductDetailPage({
       const colW = contentW / metaItems.length;
       metaItems.forEach((item, i) => {
         const x = margin + i * colW + 4;
-        // Vertical separator
         if (i > 0) {
           doc.setDrawColor(...C.divider);
           doc.setLineWidth(0.3);
@@ -373,7 +382,7 @@ export default function ProductDetailPage({
 
         doc.setFontSize(9);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...C.navy);
+        doc.setTextColor(...C.brandGreen);
         const valLines = doc.splitTextToSize(item.value, colW - 6);
         doc.text(valLines[0] || item.value, x, y + 13);
       });
@@ -382,32 +391,32 @@ export default function ProductDetailPage({
 
       // ── DESCRIPTION ──────────────────────────────────────────────
       if (product.description && product.description.trim()) {
-        // doc.setDrawColor(...C.accent);
-        // doc.setLineWidth(1);
-        // doc.line(margin, y, margin, y + 12);
+        // Left accent bar in mid-green
+        // doc.setFillColor(...C.midGreen);
+        // doc.rect(margin, y, 1.2, 14, 'F');
 
         doc.setFontSize(8);
         doc.setFont('helvetica', 'italic');
-        doc.setTextColor(...C.slate);
+        doc.setTextColor(...C.muted);
         const descLines = doc.splitTextToSize(
           product.description,
           contentW - 8,
         );
         const visibleLines = descLines.slice(0, 3);
-        doc.text(visibleLines, margin + 4, y + 4);
-        y += Math.max(14, visibleLines.length * 4.5 + 4);
+        doc.text(visibleLines, margin, y + 4.5);
+        y += Math.max(16, visibleLines.length * 4.5 + 5);
       }
 
       y += 4;
 
-      // ── SECTION HELPER ───────────────────────────────────────────
+      // ── SECTION HEADER — black bar / white text (matches finance report table heads) ──
       const drawSectionHeader = (title: string, currentY: number) => {
-        doc.setFillColor(...C.navy);
+        doc.setFillColor(...C.black);
         doc.rect(margin, currentY, contentW, 7.5, 'F');
-        doc.setFontSize(7.5);
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...C.white);
-        doc.text(title, margin + 4, currentY + 5);
+        doc.text(title, margin + 4, currentY + 5.2);
         return currentY + 7.5;
       };
 
@@ -423,33 +432,31 @@ export default function ProductDetailPage({
         autoTable(doc, {
           startY: y,
           margin: { left: margin, right: margin },
+          theme: 'grid',
           head: [['Parameter', 'Value']],
           body: product.specifications.map((s) => [s.label, s.value]),
           styles: {
-            fontSize: 8.5,
+            fontSize: 9,
             cellPadding: { top: 3.5, bottom: 3.5, left: 4, right: 4 },
             lineColor: C.divider,
             lineWidth: 0.3,
-            textColor: C.navyMid,
+            textColor: C.black,
           },
           headStyles: {
-            fillColor: C.navyMid,
+            fillColor: C.black,
             textColor: C.white,
             fontStyle: 'bold',
-            fontSize: 7.5,
+            fontSize: 8,
           },
-          alternateRowStyles: {
-            fillColor: C.surface,
-          },
+          alternateRowStyles: { fillColor: C.rowGreen },
           columnStyles: {
             0: {
               fontStyle: 'bold',
-              textColor: C.navy,
+              textColor: C.brandGreen,
               cellWidth: contentW * 0.42,
             },
-            1: { textColor: C.navyMid },
+            1: { textColor: C.black },
           },
-          didDrawPage: () => {},
         });
 
         y = (doc as any).lastAutoTable.finalY + 10;
@@ -467,6 +474,7 @@ export default function ProductDetailPage({
         autoTable(doc, {
           startY: y,
           margin: { left: margin, right: margin },
+          theme: 'grid',
           head: [['#', 'Material', 'Part Number', 'Category', 'Qty Required']],
           body: product.materials.map((pm, i) => [
             String(i + 1),
@@ -476,21 +484,19 @@ export default function ProductDetailPage({
             `${pm.quantity} ${pm.material.unit}`,
           ]),
           styles: {
-            fontSize: 8.5,
+            fontSize: 9,
             cellPadding: { top: 3.5, bottom: 3.5, left: 4, right: 4 },
             lineColor: C.divider,
             lineWidth: 0.3,
-            textColor: C.navyMid,
+            textColor: C.black,
           },
           headStyles: {
-            fillColor: C.navyMid,
+            fillColor: C.black,
             textColor: C.white,
             fontStyle: 'bold',
-            fontSize: 7.5,
+            fontSize: 8,
           },
-          alternateRowStyles: {
-            fillColor: C.surface,
-          },
+          alternateRowStyles: { fillColor: C.rowGreen },
           columnStyles: {
             0: {
               halign: 'center',
@@ -498,13 +504,13 @@ export default function ProductDetailPage({
               textColor: C.muted,
               fontSize: 7.5,
             },
-            1: { fontStyle: 'bold', textColor: C.navy },
-            2: { textColor: C.slate, fontSize: 7.5, cellWidth: 35 },
-            3: { textColor: C.slate, cellWidth: 38 },
+            1: { fontStyle: 'bold', textColor: C.brandGreen },
+            2: { textColor: C.muted, fontSize: 8, cellWidth: 35 },
+            3: { textColor: C.muted, cellWidth: 38 },
             4: {
               halign: 'right',
               fontStyle: 'bold',
-              textColor: C.navy,
+              textColor: C.brandGreen,
               cellWidth: 28,
             },
           },
@@ -512,7 +518,7 @@ export default function ProductDetailPage({
 
         y = (doc as any).lastAutoTable.finalY + 5;
 
-        doc.setFontSize(7);
+        doc.setFontSize(7.5);
         doc.setFont('helvetica', 'italic');
         doc.setTextColor(...C.muted);
         doc.text(
@@ -522,25 +528,33 @@ export default function ProductDetailPage({
         );
       }
 
-      // ── FOOTER ON ALL PAGES ───────────────────────────────────────
+      // ── FOOTER — mirrors finance report footer exactly ────────────
       const totalPages = doc.getNumberOfPages();
       for (let pg = 1; pg <= totalPages; pg++) {
         doc.setPage(pg);
         const footerY = pageH - 9;
 
-        doc.setDrawColor(...C.divider);
-        doc.setLineWidth(0.3);
-        doc.line(margin, footerY - 3, pageW - margin, footerY - 3);
+        // Mid-green rule above footer text
+        doc.setFillColor(...C.midGreen);
+        doc.rect(margin, footerY - 4, contentW, 0.4, 'F');
 
-        doc.setFontSize(7);
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C.brandGreen);
+        doc.text('Greenage Technologies Limited', margin, footerY);
+
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...C.muted);
-        doc.text('Greenage Technologies Ltd  |  Confidential', margin, footerY);
+        doc.text(
+          `Technical Specification — ${product.productCode}`,
+          pageW / 2,
+          footerY,
+          { align: 'center' },
+        );
+
+        doc.setTextColor(...C.brandGreen);
         doc.text(`Page ${pg} of ${totalPages}`, pageW - margin, footerY, {
           align: 'right',
-        });
-        doc.text(`Doc: ${product.productCode}_TechSpec`, pageW / 2, footerY, {
-          align: 'center',
         });
       }
 

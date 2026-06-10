@@ -3879,7 +3879,9 @@ async function exportPDF(
 
     // Logo on the left
     if (logoB64) {
-      doc.addImage(logoB64, 'PNG', 15, 6, 36, 12, undefined, 'FAST');
+      const logoH = 11;
+      const logoW = logoH * (917 / 254);
+      doc.addImage(logoB64, 'PNG', 15, 7, logoW, logoH, undefined, 'FAST');
     }
 
     // Thin vertical separator in mid-green (#1FA43B)
