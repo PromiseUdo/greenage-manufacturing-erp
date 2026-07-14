@@ -1,10 +1,10 @@
 // // src/app/dashboard/sales/invoices/page.tsx
 
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { styled } from "@mui/material/styles";
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { styled } from '@mui/material/styles';
 import {
   Box,
   Typography,
@@ -29,7 +29,7 @@ import {
   ListItemText,
   LinearProgress,
   Tooltip,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Search,
   Add,
@@ -41,36 +41,36 @@ import {
   Payment,
   Cancel,
   AttachMoney,
-} from "@mui/icons-material";
+} from '@mui/icons-material';
 
 // --- Replicated Styled Components (From Orders Table) ---
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
-    backgroundColor: "#0F172A",
+    backgroundColor: '#0F172A',
     color: theme.palette.common.white,
     fontWeight: 600,
     fontSize: 13,
-    letterSpacing: "0.5px",
-    padding: "8px 16px",
-    borderBottom: "none",
+    letterSpacing: '0.5px',
+    padding: '8px 16px',
+    borderBottom: 'none',
   },
   [`&.${tableCellClasses.body}`]: {
     fontSize: 14,
-    padding: "14px 16px",
+    padding: '14px 16px',
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  cursor: "pointer",
-  "&:nth-of-type(odd)": {
+  cursor: 'pointer',
+  '&:nth-of-type(odd)': {
     backgroundColor: theme.palette.action.hover,
   },
-  "&:hover": {
+  '&:hover': {
     backgroundColor: theme.palette.action.selected,
-    transition: "background-color 0.2s ease",
+    transition: 'background-color 0.2s ease',
   },
-  "&:last-child td": {
+  '&:last-child td': {
     borderBottom: 0,
   },
 }));
@@ -122,11 +122,11 @@ interface Invoice {
 }
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-  PENDING: { bg: "#fff7ed", text: "#c2410c" }, // Orange
-  PARTIALLY_PAID: { bg: "#eff6ff", text: "#1d4ed8" }, // Blue
-  PAID: { bg: "#f0fdf4", text: "#15803d" }, // Green
-  OVERDUE: { bg: "#fef2f2", text: "#b91c1c" }, // Red
-  CANCELLED: { bg: "#f3f4f6", text: "#4b5563" }, // Gray
+  PENDING: { bg: '#fff7ed', text: '#c2410c' }, // Orange
+  PARTIALLY_PAID: { bg: '#eff6ff', text: '#1d4ed8' }, // Blue
+  PAID: { bg: '#f0fdf4', text: '#15803d' }, // Green
+  OVERDUE: { bg: '#fef2f2', text: '#b91c1c' }, // Red
+  CANCELLED: { bg: '#f3f4f6', text: '#4b5563' }, // Gray
 };
 
 export default function InvoicesPage() {
@@ -136,8 +136,8 @@ export default function InvoicesPage() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
 
   // Menu State
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -161,11 +161,13 @@ export default function InvoicesPage() {
       const data = await res.json();
 
       if (res.ok) {
+        console.log(data.invoices, 'invoices');
+
         setInvoices(data.invoices);
         setTotal(data.pagination.total);
       }
     } catch (error) {
-      console.error("Error fetching invoices:", error);
+      console.error('Error fetching invoices:', error);
     } finally {
       setLoading(false);
     }
@@ -191,23 +193,23 @@ export default function InvoicesPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
       minimumFractionDigits: 0,
     }).format(amount);
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
   const isOverdue = (invoice: Invoice) => {
-    if (invoice.status === "PAID" || invoice.status === "CANCELLED")
+    if (invoice.status === 'PAID' || invoice.status === 'CANCELLED')
       return false;
     return new Date(invoice.dueDate) < new Date();
   };
@@ -222,9 +224,9 @@ export default function InvoicesPage() {
       {/* Header */}
       <Box
         sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           mb: 3,
         }}
       >
@@ -243,8 +245,8 @@ export default function InvoicesPage() {
         <Button
           variant="contained"
           // startIcon={<Add />}
-          onClick={() => router.push("/sales/invoices/new")}
-          sx={{ fontWeight: "bold", textTransform: "uppercase" }}
+          onClick={() => router.push('/sales/invoices/new')}
+          sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}
         >
           Create Invoice
         </Button>
@@ -257,12 +259,12 @@ export default function InvoicesPage() {
           p: 2,
           mb: 3,
           borderRadius: 2,
-          border: "1px solid",
-          borderColor: "divider",
-          bgcolor: "background.paper",
+          border: '1px solid',
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
         }}
       >
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             placeholder="Search invoices, customers..."
             value={search}
@@ -291,7 +293,7 @@ export default function InvoicesPage() {
             <MenuItem value="">All Statuses</MenuItem>
             {Object.keys(statusColors).map((status) => (
               <MenuItem key={status} value={status}>
-                {status.replace(/_/g, " ")}
+                {status.replace(/_/g, ' ')}
               </MenuItem>
             ))}
           </TextField>
@@ -304,9 +306,9 @@ export default function InvoicesPage() {
           elevation={0}
           sx={{
             p: 6,
-            textAlign: "center",
-            border: "1px solid",
-            borderColor: "divider",
+            textAlign: 'center',
+            border: '1px solid',
+            borderColor: 'divider',
             borderRadius: 2,
           }}
         >
@@ -320,18 +322,18 @@ export default function InvoicesPage() {
           elevation={0}
           sx={{
             p: 6,
-            border: "1px dashed",
-            borderColor: "divider",
+            border: '1px dashed',
+            borderColor: 'divider',
             borderRadius: 3,
-            textAlign: "center",
-            backgroundColor: "background.paper",
+            textAlign: 'center',
+            backgroundColor: 'background.paper',
           }}
         >
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
               gap: 1.5,
             }}
           >
@@ -339,15 +341,15 @@ export default function InvoicesPage() {
               sx={{
                 width: 56,
                 height: 56,
-                borderRadius: "50%",
-                backgroundColor: "grey.100",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                borderRadius: '50%',
+                backgroundColor: 'grey.100',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 mb: 1,
               }}
             >
-              <AttachMoney sx={{ fontSize: 28, color: "action.active" }} />
+              <AttachMoney sx={{ fontSize: 28, color: 'action.active' }} />
             </Box>
             <Typography variant="h6" fontWeight={600}>
               No Invoices Found
@@ -363,11 +365,11 @@ export default function InvoicesPage() {
               variant="contained"
               sx={{
                 mt: 2,
-                bgcolor: "#0F172A",
-                "&:hover": { bgcolor: "#1e293b" },
+                bgcolor: '#0F172A',
+                '&:hover': { bgcolor: '#1e293b' },
               }}
               startIcon={<Add />}
-              onClick={() => router.push("/sales/invoices/new")}
+              onClick={() => router.push('/sales/invoices/new')}
             >
               Create Invoice
             </Button>
@@ -377,10 +379,10 @@ export default function InvoicesPage() {
         <Paper
           elevation={0}
           sx={{
-            width: "100%",
-            overflow: "hidden",
-            border: "1px solid",
-            borderColor: "divider",
+            width: '100%',
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: 'divider',
             borderRadius: 2,
           }}
         >
@@ -407,20 +409,32 @@ export default function InvoicesPage() {
                     onClick={() => router.push(`/sales/invoices/${invoice.id}`)}
                   >
                     <StyledTableCell>
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 0.5,
+                        }}
+                      >
                         <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                          }}
                         >
                           <Typography
                             variant="body2"
                             fontWeight={600}
-                            sx={{ color: "#0F172A" }}
+                            sx={{ color: '#0F172A' }}
                           >
                             {invoice.invoiceNumber}
                           </Typography>
                           {isOverdue(invoice) && (
                             <Tooltip title="Payment Overdue">
-                              <Warning sx={{ fontSize: 16, color: "#dc2626" }} />
+                              <Warning
+                                sx={{ fontSize: 16, color: '#dc2626' }}
+                              />
                             </Tooltip>
                           )}
                         </Box>
@@ -431,12 +445,12 @@ export default function InvoicesPage() {
                             label={`${invoice.lineItems.reduce((sum, li) => sum + (li.quantityBackordered || 0), 0)} on Backorder`}
                             size="small"
                             sx={{
-                              bgcolor: "#fef3c7",
-                              color: "#92400e",
+                              bgcolor: '#fef3c7',
+                              color: '#92400e',
                               fontWeight: 600,
                               fontSize: 10,
                               height: 20,
-                              alignSelf: "flex-start",
+                              alignSelf: 'flex-start',
                             }}
                           />
                         )}
@@ -462,20 +476,20 @@ export default function InvoicesPage() {
                         <Typography variant="body2" fontWeight={500}>
                           {invoice.lineItems?.[0]?.storeItem?.name ||
                             invoice.lineItems?.[0]?.product?.name ||
-                            "N/A"}
+                            'N/A'}
                           {invoice.lineItems?.length > 1 && (
                             <Typography
                               component="span"
                               variant="caption"
                               color="text.secondary"
                             >
-                              {" "}
+                              {' '}
                               +{invoice.lineItems.length - 1} more
                             </Typography>
                           )}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Qty:{" "}
+                          Qty:{' '}
                           {invoice.lineItems?.reduce(
                             (sum: number, li: any) => sum + li.quantity,
                             0,
@@ -495,7 +509,7 @@ export default function InvoicesPage() {
                           {invoice.lineItems.reduce(
                             (sum, li) => sum + (li.quantityBackordered || 0),
                             0,
-                          )}{" "}
+                          )}{' '}
                           Backordered
                         </Typography>
                       )}
@@ -508,11 +522,11 @@ export default function InvoicesPage() {
                     </StyledTableCell>
 
                     <StyledTableCell>
-                      <Box sx={{ width: "100%" }}>
+                      <Box sx={{ width: '100%' }}>
                         <Box
                           sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
+                            display: 'flex',
+                            justifyContent: 'space-between',
                             mb: 0.5,
                           }}
                         >
@@ -533,12 +547,12 @@ export default function InvoicesPage() {
                           sx={{
                             height: 6,
                             borderRadius: 3,
-                            bgcolor: "#e2e8f0",
-                            "& .MuiLinearProgress-bar": {
+                            bgcolor: '#e2e8f0',
+                            '& .MuiLinearProgress-bar': {
                               bgcolor:
-                                invoice.status === "PAID"
-                                  ? "#16a34a"
-                                  : "#2563eb",
+                                invoice.status === 'PAID'
+                                  ? '#16a34a'
+                                  : '#2563eb',
                             },
                           }}
                         />
@@ -550,7 +564,7 @@ export default function InvoicesPage() {
                         variant="body2"
                         fontWeight={isOverdue(invoice) ? 700 : 400}
                         sx={{
-                          color: isOverdue(invoice) ? "#dc2626" : "inherit",
+                          color: isOverdue(invoice) ? '#dc2626' : 'inherit',
                         }}
                       >
                         {formatDate(invoice.dueDate)}
@@ -559,18 +573,18 @@ export default function InvoicesPage() {
 
                     <StyledTableCell>
                       <Chip
-                        label={invoice.status.replace(/_/g, " ")}
+                        label={invoice.status.replace(/_/g, ' ')}
                         size="small"
                         icon={
-                          invoice.status === "PAID" ? (
+                          invoice.status === 'PAID' ? (
                             <CheckCircle style={{ fontSize: 14 }} />
                           ) : undefined
                         }
                         sx={{
                           bgcolor:
-                            statusColors[invoice.status]?.bg || "#f3f4f6",
+                            statusColors[invoice.status]?.bg || '#f3f4f6',
                           color:
-                            statusColors[invoice.status]?.text || "#6b7280",
+                            statusColors[invoice.status]?.text || '#6b7280',
                           fontWeight: 600,
                           fontSize: 11,
                         }}
@@ -605,9 +619,9 @@ export default function InvoicesPage() {
               setPage(0);
             }}
             sx={{
-              borderTop: "1px solid",
-              borderColor: "divider",
-              backgroundColor: "#F8FAFC",
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              backgroundColor: '#F8FAFC',
             }}
           />
         </Paper>
@@ -623,7 +637,7 @@ export default function InvoicesPage() {
             mt: 1,
             minWidth: 160,
             borderRadius: 2,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
           },
         }}
       >
@@ -638,7 +652,7 @@ export default function InvoicesPage() {
           </ListItemIcon>
           <ListItemText
             primary="View Details"
-            primaryTypographyProps={{ variant: "body2" }}
+            primaryTypographyProps={{ variant: 'body2' }}
           />
         </MenuItem>
       </Menu>

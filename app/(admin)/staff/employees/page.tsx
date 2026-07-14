@@ -23,6 +23,10 @@ import {
   TablePagination,
   styled,
   tableCellClasses,
+  alpha,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import Grid from '@mui/material/GridLegacy';
 import {
@@ -31,6 +35,9 @@ import {
   Edit as EditIcon,
   Lock as LockIcon,
   People as PeopleIcon,
+  PictureAsPdf as PdfIcon,
+  TableChart as ExcelIcon,
+  KeyboardArrowDown as ArrowDownIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
@@ -108,6 +115,13 @@ export default function EmployeesPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [dbDepartments, setDbDepartments] = useState<any[]>([]);
 
+  // Export menu state
+  const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(
+    null,
+  );
+  const [exporting, setExporting] = useState(false);
+  const exportMenuOpen = Boolean(exportAnchorEl);
+
   useEffect(() => {
     const fetchDepts = async () => {
       try {
@@ -163,6 +177,50 @@ export default function EmployeesPage() {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  // Export handlers
+  const handleExportClick = (event: React.MouseEvent<HTMLElement>) => {
+    setExportAnchorEl(event.currentTarget);
+  };
+
+  const handleExportClose = () => {
+    setExportAnchorEl(null);
+  };
+
+  const handleExport = async (exportFormat: 'excel' | 'pdf') => {
+    handleExportClose();
+    setExporting(true);
+
+    try {
+      const params = new URLSearchParams({
+        format: exportFormat,
+        ...(search && { search }),
+        ...(department && { department }),
+        ...(status && { isActive: status }),
+      });
+
+      const res = await fetch(`/api/employees/export?${params}`);
+
+      if (!res.ok) throw new Error('Export failed');
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `employees_${new Date().toISOString().split('T')[0]}.${
+        exportFormat === 'excel' ? 'xlsx' : 'pdf'
+      }`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error exporting employees:', error);
+      alert('Failed to export employees. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const getDepartmentColor = (dept: string) => {
     const colors: Record<string, string> = {
       OPERATIONS: '#10b981',
@@ -198,21 +256,93 @@ export default function EmployeesPage() {
             Manage staff members and their access
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          //   startIcon={<AddIcon />}
-          onClick={() => router.push('/staff/employees/new')}
-          sx={{
-            textTransform: 'uppercase',
-            bgcolor: '#0F172A',
-            color: '#ffffff',
-            fontWeight: 'bold',
-            fontSize: 14,
-          }}
-        >
-          Add Employee
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            disableElevation
+            endIcon={
+              exporting ? <CircularProgress size={16} /> : <ArrowDownIcon />
+            }
+            onClick={handleExportClick}
+            disabled={exporting || employees.length === 0}
+            sx={{
+              textTransform: 'uppercase',
+              borderColor: '#0F172A',
+              color: '#0F172A',
+              fontSize: 14,
+              '&:hover': {
+                borderColor: '#0F172A',
+                bgcolor: alpha('#0F172A', 0.04),
+              },
+            }}
+          >
+            {exporting ? 'Exporting...' : 'Export'}
+          </Button>
+
+          <Button
+            variant="contained"
+            //   startIcon={<AddIcon />}
+            onClick={() => router.push('/staff/employees/new')}
+            sx={{
+              textTransform: 'uppercase',
+              bgcolor: '#0F172A',
+              color: '#ffffff',
+              fontWeight: 'bold',
+              fontSize: 14,
+            }}
+          >
+            Add Employee
+          </Button>
+        </Box>
       </Box>
+
+      {/* Export Menu */}
+      <Menu
+        anchorEl={exportAnchorEl}
+        open={exportMenuOpen}
+        onClose={handleExportClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            minWidth: 180,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            borderRadius: 2,
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => handleExport('excel')}
+          sx={{ py: 1.5, gap: 1.5 }}
+        >
+          <ListItemIcon>
+            <ExcelIcon fontSize="small" sx={{ color: '#107C41' }} />
+          </ListItemIcon>
+          <ListItemText
+            primary="Download as Excel"
+            primaryTypographyProps={{ variant: 'body2' }}
+          />
+        </MenuItem>
+        <MenuItem
+          onClick={() => handleExport('pdf')}
+          sx={{ py: 1.5, gap: 1.5 }}
+        >
+          <ListItemIcon>
+            <PdfIcon fontSize="small" sx={{ color: '#DC2626' }} />
+          </ListItemIcon>
+          <ListItemText
+            primary="Download as PDF"
+            primaryTypographyProps={{ variant: 'body2' }}
+          />
+        </MenuItem>
+      </Menu>
 
       {/* Filters */}
       <Paper

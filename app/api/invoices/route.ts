@@ -87,6 +87,9 @@ export async function GET(request: NextRequest) {
       prisma.invoice.count({ where }),
     ]);
 
+    console.log('====================================');
+    console.log(invoices, 'invoices');
+    console.log('====================================');
     return NextResponse.json({
       invoices,
       pagination: {

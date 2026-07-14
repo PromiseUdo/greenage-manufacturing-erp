@@ -427,8 +427,8 @@ model Invoice {
   id              String      @id @default(auto()) @map("_id") @db.ObjectId
   invoiceNumber   String      @unique
   
-  quoteId         String      @unique @db.ObjectId
-  quote           Quote       @relation(fields: [quoteId], references: [id])
+  quoteId         String?     @unique @db.ObjectId
+  quote           Quote?      @relation(fields: [quoteId], references: [id])
   
   customerId      String      @db.ObjectId
   customer        Customer    @relation(fields: [customerId], references: [id])
