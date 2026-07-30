@@ -242,14 +242,14 @@ export default function InvoicesPage() {
             Track payments and outstanding balances
           </Typography>
         </Box>
-        <Button
+        {/* <Button
           variant="contained"
           // startIcon={<Add />}
           onClick={() => router.push('/sales/invoices/new')}
           sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}
         >
           Create Invoice
-        </Button>
+        </Button> */}
       </Box>
 
       {/* Filters Search Bar */}
