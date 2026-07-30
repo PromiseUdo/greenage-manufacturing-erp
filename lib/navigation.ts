@@ -107,9 +107,27 @@ export const navigation: {
   {
     section: 'Production',
     items: [
+      // {
+      //   label: 'Products',
+      //   icon: Inventory2Icon,
+      //   children: [
+      //     {
+      //       label: 'Active Products',
+      //       path: '/products',
+      //       icon: CheckCircleIcon,
+      //       permission: 'products:read',
+      //     },
+      //     {
+      //       label: 'Draft Products',
+      //       path: '/products/inactive',
+      //       icon: BlockIcon,
+      //       permission: 'products:read',
+      //     },
+      //   ],
+      // },
       {
-        label: 'Products',
-        icon: Inventory2Icon,
+        label: 'Production',
+        icon: PrecisionManufacturingIcon,
         children: [
           {
             label: 'Active Products',
@@ -123,12 +141,7 @@ export const navigation: {
             icon: BlockIcon,
             permission: 'products:read',
           },
-        ],
-      },
-      {
-        label: 'Production',
-        icon: PrecisionManufacturingIcon,
-        children: [
+
           {
             label: 'Orders',
             path: '/production/orders',
