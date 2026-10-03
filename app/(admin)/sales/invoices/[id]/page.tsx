@@ -5,6 +5,7 @@ import '@/lib/pdf/fonts'; // 👈 MUST be before styles or <Document />
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { styled } from '@mui/material/styles';
 import {
   Box,
@@ -44,6 +45,8 @@ import {
   CalendarMonth,
   CreditCard,
   Description,
+  Delete,
+  Edit,
 } from '@mui/icons-material';
 
 // Add these to your imports
@@ -592,6 +595,8 @@ export default function InvoiceDetailPage({
 }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const { data: session } = useSession();
+  const isAdmin = ['ADMIN', 'SUPERADMIN'].includes(session?.user?.role ?? '');
 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -605,6 +610,22 @@ export default function InvoiceDetailPage({
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentReference, setPaymentReference] = useState('');
   const [paymentNotes, setPaymentNotes] = useState('');
+
+  // Edit dialog states
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editDueDate, setEditDueDate] = useState('');
+  const [editPaymentTerms, setEditPaymentTerms] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [editTax, setEditTax] = useState('');
+  const [editDiscount, setEditDiscount] = useState('');
+  const [editPrices, setEditPrices] = useState<Record<string, string>>({});
+
+  // Delete dialog states
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const [isDownloading, setIsDownloading] = useState(false);
   const [companyDetails, setCompanyDetails] = useState<any>(null);
@@ -688,6 +709,86 @@ export default function InvoiceDetailPage({
       setError(err.message);
     } finally {
       setProcessing(false);
+    }
+  };
+
+  // Prices are locked once the first payment has created an order
+  const pricingLocked = !!invoice?.order;
+
+  const openEditDialog = () => {
+    setEditError('');
+    setEditDueDate(new Date(invoice.dueDate).toISOString().slice(0, 10));
+    setEditPaymentTerms(invoice.paymentTerms || '');
+    setEditNotes(invoice.notes || '');
+    setEditTax(String(invoice.taxAmount ?? 0));
+    setEditDiscount(String(invoice.discountAmount ?? 0));
+    setEditPrices(
+      Object.fromEntries(
+        invoice.lineItems.map((li: any) => [li.id, String(li.unitPrice)]),
+      ),
+    );
+    setShowEditDialog(true);
+  };
+
+  const editSubtotal = (invoice?.lineItems || []).reduce(
+    (sum: number, li: any) =>
+      sum + (parseFloat(editPrices[li.id]) || 0) * li.quantity,
+    0,
+  );
+  const editFinal =
+    editSubtotal + (parseFloat(editTax) || 0) - (parseFloat(editDiscount) || 0);
+
+  const handleSaveInvoice = async () => {
+    setSaving(true);
+    setEditError('');
+    try {
+      if (!editDueDate) throw new Error('Due date is required');
+
+      const payload: Record<string, any> = {
+        dueDate: editDueDate,
+        paymentTerms: editPaymentTerms,
+        notes: editNotes,
+      };
+      if (!pricingLocked) {
+        payload.taxAmount = parseFloat(editTax) || 0;
+        payload.discountAmount = parseFloat(editDiscount) || 0;
+        payload.lineItems = invoice.lineItems.map((li: any) => ({
+          id: li.id,
+          unitPrice: parseFloat(editPrices[li.id]) || 0,
+        }));
+      }
+
+      const res = await fetch(`/api/invoices/${resolvedParams.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update invoice');
+
+      setSuccess('Invoice updated successfully!');
+      setShowEditDialog(false);
+      fetchInvoice();
+    } catch (err: any) {
+      setEditError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteInvoice = async () => {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      const res = await fetch(`/api/invoices/${resolvedParams.id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete invoice');
+      router.push('/sales/invoices');
+    } catch (err: any) {
+      setDeleteError(err.message);
+      setDeleting(false);
     }
   };
 
@@ -803,6 +904,37 @@ export default function InvoiceDetailPage({
                 }}
               >
                 Record Payment
+              </Button>
+            )}
+
+            {isAdmin && (
+              <Button
+                variant="outlined"
+                startIcon={<Edit />}
+                onClick={openEditDialog}
+                sx={{
+                  borderColor: '#CBD5E1',
+                  color: '#334155',
+                  fontWeight: 600,
+                  '&:hover': { borderColor: '#94A3B8', bgcolor: '#F8FAFC' },
+                }}
+              >
+                Edit
+              </Button>
+            )}
+
+            {isAdmin && (
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<Delete />}
+                onClick={() => {
+                  setDeleteError('');
+                  setShowDeleteDialog(true);
+                }}
+                sx={{ fontWeight: 600 }}
+              >
+                Delete
               </Button>
             )}
           </Box>
@@ -1029,6 +1161,16 @@ export default function InvoiceDetailPage({
                   {invoice?.quote.quoteNumber}
                 </Button>
               </Box>
+              {invoice?.notes && (
+                <Box sx={{ borderTop: '1px dashed #E2E8F0', pt: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Notes
+                  </Typography>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {invoice.notes}
+                  </Typography>
+                </Box>
+              )}
             </Stack>
           </InfoCard>
         </Grid>
@@ -1393,6 +1535,270 @@ export default function InvoiceDetailPage({
             sx={{ bgcolor: '#10B981', '&:hover': { bgcolor: '#059669' } }}
           >
             {processing ? 'Processing...' : 'Confirm Payment'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Invoice Dialog */}
+      <Dialog
+        open={showEditDialog}
+        onClose={() => !saving && setShowEditDialog(false)}
+        PaperProps={{ sx: { borderRadius: 3, maxWidth: 720 } }}
+        fullWidth
+      >
+        <DialogTitle
+          sx={{ fontWeight: 700, borderBottom: '1px solid #E2E8F0' }}
+        >
+          Edit Invoice {invoice?.invoiceNumber}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <Stack spacing={2.5} sx={{ mt: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Due Date"
+                  type="date"
+                  value={editDueDate}
+                  onChange={(e) => setEditDueDate(e.target.value)}
+                  disabled={saving}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Payment Terms"
+                  value={editPaymentTerms}
+                  onChange={(e) => setEditPaymentTerms(e.target.value)}
+                  disabled={saving}
+                />
+              </Grid>
+            </Grid>
+
+            <TextField
+              fullWidth
+              label="Notes"
+              multiline
+              rows={2}
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+              disabled={saving}
+            />
+
+            <Divider />
+
+            <Typography variant="subtitle2" fontWeight={700}>
+              Pricing
+            </Typography>
+            {pricingLocked && (
+              <Alert severity="info" sx={{ borderRadius: 2 }}>
+                Prices are locked because payment has started and order{' '}
+                <strong>{invoice?.order?.orderNumber}</strong> was created from
+                this invoice.
+              </Alert>
+            )}
+
+            <TableContainer
+              sx={{ border: '1px solid #E2E8F0', borderRadius: 2 }}
+            >
+              <Table size="small">
+                <TableHead sx={{ bgcolor: '#F8FAFC' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Item</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 600 }}>
+                      Qty
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>
+                      Unit Price
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 600 }}>
+                      Total
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {invoice?.lineItems?.map((li: any) => (
+                    <TableRow key={li.id}>
+                      <TableCell>
+                        {li.storeItem?.name || li.product?.name || 'Item'}
+                      </TableCell>
+                      <TableCell align="center">{li.quantity}</TableCell>
+                      <TableCell align="right" sx={{ width: 180 }}>
+                        <TextField
+                          size="small"
+                          type="number"
+                          value={editPrices[li.id] ?? ''}
+                          onChange={(e) =>
+                            setEditPrices((prev) => ({
+                              ...prev,
+                              [li.id]: e.target.value,
+                            }))
+                          }
+                          disabled={saving || pricingLocked}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">₦</InputAdornment>
+                            ),
+                          }}
+                          inputProps={{ min: 0, step: 0.01 }}
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <MoneyText variant="body2">
+                          {formatCurrency(
+                            (parseFloat(editPrices[li.id]) || 0) * li.quantity,
+                          )}
+                        </MoneyText>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Grid container spacing={2}>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Tax (VAT)"
+                  type="number"
+                  value={editTax}
+                  onChange={(e) => setEditTax(e.target.value)}
+                  disabled={saving || pricingLocked}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">₦</InputAdornment>
+                    ),
+                  }}
+                  inputProps={{ min: 0, step: 0.01 }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <TextField
+                  fullWidth
+                  label="Discount"
+                  type="number"
+                  value={editDiscount}
+                  onChange={(e) => setEditDiscount(e.target.value)}
+                  disabled={saving || pricingLocked}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">₦</InputAdornment>
+                    ),
+                  }}
+                  inputProps={{ min: 0, step: 0.01 }}
+                />
+              </Grid>
+            </Grid>
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Box sx={{ width: '100%', maxWidth: 300 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Subtotal
+                  </Typography>
+                  <MoneyText variant="body2">
+                    {formatCurrency(editSubtotal)}
+                  </MoneyText>
+                </Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    mt: 1,
+                  }}
+                >
+                  <Typography variant="subtitle2" fontWeight={700}>
+                    New Grand Total
+                  </Typography>
+                  <MoneyText variant="subtitle2">
+                    {formatCurrency(editFinal)}
+                  </MoneyText>
+                </Box>
+              </Box>
+            </Box>
+          </Stack>
+
+          {editError && (
+            <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
+              {editError}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions
+          sx={{ p: 3, borderTop: '1px solid #E2E8F0', bgcolor: '#F8FAFC' }}
+        >
+          <Button
+            onClick={() => setShowEditDialog(false)}
+            disabled={saving}
+            sx={{ color: 'text.secondary' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveInvoice}
+            disabled={saving || !editDueDate}
+            sx={{
+              bgcolor: '#0F172A',
+              fontWeight: 600,
+              '&:hover': { bgcolor: '#334155' },
+            }}
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Invoice Dialog */}
+      <Dialog
+        open={showDeleteDialog}
+        onClose={() => !deleting && setShowDeleteDialog(false)}
+        PaperProps={{ sx: { borderRadius: 3, maxWidth: 500 } }}
+        fullWidth
+      >
+        <DialogTitle
+          sx={{ fontWeight: 700, borderBottom: '1px solid #E2E8F0' }}
+        >
+          Delete Invoice
+        </DialogTitle>
+        <DialogContent sx={{ pt: 3 }}>
+          <Typography variant="body2" sx={{ mt: 2 }}>
+            Permanently delete <strong>{invoice?.invoiceNumber}</strong> for{' '}
+            <strong>{invoice?.customer.name}</strong>? This cannot be undone.
+          </Typography>
+          {invoice?.payments?.length > 0 && (
+            <Alert severity="warning" sx={{ mt: 2, borderRadius: 2 }}>
+              {invoice.payments.length} recorded payment
+              {invoice.payments.length > 1 ? 's' : ''} totalling{' '}
+              <strong>{formatCurrency(invoice.paidAmount)}</strong> will also be
+              deleted.
+            </Alert>
+          )}
+          {deleteError && (
+            <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
+              {deleteError}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions
+          sx={{ p: 3, borderTop: '1px solid #E2E8F0', bgcolor: '#F8FAFC' }}
+        >
+          <Button
+            onClick={() => setShowDeleteDialog(false)}
+            disabled={deleting}
+            sx={{ color: 'text.secondary' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteInvoice}
+            disabled={deleting}
+          >
+            {deleting ? 'Deleting...' : 'Delete Invoice'}
           </Button>
         </DialogActions>
       </Dialog>
